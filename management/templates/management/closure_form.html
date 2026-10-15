@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ page_title }}</title>
+</head>
+<body>
+
+<h1>{{ page_title }}</h1>
+
+<a href="{% url 'manage_closures' %}">
+    Back to Facility Closures
+</a>
+
+<hr>
+
+{% for message in messages %}
+    <p>{{ message }}</p>
+{% endfor %}
+
+<form method="POST">
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+        <p>
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+            </label>
+
+            <br>
+
+            {{ field }}
+
+            <br>
+
+            {{ field.errors }}
+        </p>
+    {% endfor %}
+
+    <button type="submit">
+        Save Closure
+    </button>
+</form>
+
+</body>
+</html>

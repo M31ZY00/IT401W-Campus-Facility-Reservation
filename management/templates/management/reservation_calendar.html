@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Calendar</title>
+</head>
+
+<body>
+
+<h1>Reservation Calendar</h1>
+
+<a href="{% url 'admin_dashboard' %}">
+    Back to Dashboard
+</a>
+
+<br><br>
+
+<a href="{% url 'reservation_calendar' %}?view=day&date={{ selected_date|date:'Y-m-d' }}">
+    Daily View
+</a>
+
+|
+
+<a href="{% url 'reservation_calendar' %}?view=week&date={{ selected_date|date:'Y-m-d' }}">
+    Weekly View
+</a>
+
+<hr>
+
+<form method="GET">
+
+    <input
+        type="hidden"
+        name="view"
+        value="{{ selected_view }}"
+    >
+
+    <label>Select Date:</label>
+
+    <input
+        type="date"
+        name="date"
+        value="{{ selected_date|date:'Y-m-d' }}"
+    >
+
+    <button type="submit">
+        View Calendar
+    </button>
+
+</form>
+
+<br>
+
+<a href="?view={{ selected_view }}&date={{ previous_date|date:'Y-m-d' }}">
+    Previous
+</a>
+
+|
+
+<a href="?view={{ selected_view }}&date={{ next_date|date:'Y-m-d' }}">
+    Next
+</a>
+
+<h2>
+    {{ start_date|date:"F d, Y" }}
+
+    {% if selected_view == 'week' %}
+        - {{ end_date|date:"F d, Y" }}
+    {% endif %}
+</h2>
+
+{% for day in calendar_days %}
+
+    <hr>
+
+    <h3>
+        {{ day.date|date:"l, F d, Y" }}
+    </h3>
+
+    {% if day.reservations %}
+
+        <table border="1" cellpadding="10">
+
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Facility</th>
+                    <th>Event</th>
+                    <th>Reserved By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for reservation in day.reservations %}
+
+                    <tr>
+
+                        <td>
+                            {{ reservation.start_time|date:"h:i A" }}
+                            -
+                            {{ reservation.end_time|date:"h:i A" }}
+                        </td>
+
+                        <td>
+                            {{ reservation.facility.name }}
+                        </td>
+
+                        <td>
+                            {{ reservation.event_title|default:reservation.purpose }}
+                        </td>
+
+                        <td>
+                            {{ reservation.user.username }}
+                        </td>
+
+                        <td>
+                            {{ reservation.get_status_display }}
+                        </td>
+
+                        <td>
+
+                            <a href="{% url 'reservation_history' reservation.id %}">
+                                View Details
+                            </a>
+
+                            {% if reservation.status == 'approved' %}
+
+                                <br>
+
+                                <a href="{% url 'reschedule_reservation' reservation.id %}">
+                                    Reschedule
+                                </a>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    {% else %}
+
+        <p>No scheduled reservations.</p>
+
+    {% endif %}
+
+{% endfor %}
+
+</body>
+</html>

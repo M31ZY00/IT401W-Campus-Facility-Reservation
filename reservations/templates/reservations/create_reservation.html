@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reserve {{ facility.name }}</title>
+</head>
+
+<body>
+
+<h1>Reserve {{ facility.name }}</h1>
+
+<p>
+    <strong>Location:</strong>
+    {{ facility.location }}
+</p>
+
+<p>
+    <strong>Capacity:</strong>
+    {{ facility.capacity }} students
+</p>
+
+<hr>
+
+<h2>Reservation Details</h2>
+
+<h3>Reservation Guidelines</h3>
+
+<ul>
+    <li>
+        Reservations can be made up to
+        {{ system_setting.advance_booking_days }}
+        calendar days in advance.
+    </li>
+
+    <li>
+        Maximum reservation duration:
+        {{ system_setting.max_booking_hours }} hours.
+    </li>
+
+    <li>
+        Reservations must be within the facility's operating hours.
+    </li>
+
+    <li>
+        All reservation requests require administrator approval.
+    </li>
+</ul>
+
+<hr>
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        Submit Reservation Request
+    </button>
+
+</form>
+
+<br>
+
+<a href="{% url 'facility_detail' facility.id %}">
+    Back to Facility Details
+</a>
+
+</body>
+</html>

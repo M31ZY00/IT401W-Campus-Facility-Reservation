@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Facility Closures</title>
+</head>
+<body>
+
+<h1>Manage Facility Closures</h1>
+
+<a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
+<br><br>
+<a href="{% url 'add_closure' %}">Add New Closure</a>
+
+<hr>
+
+{% for message in messages %}
+    <p>{{ message }}</p>
+{% endfor %}
+
+<form method="GET">
+    <input
+        type="text"
+        name="search"
+        placeholder="Search facility or reason"
+        value="{{ search_query }}"
+    >
+
+<select name="status">
+    <option value="active" {% if status_filter == 'active' %}selected="selected"{% endif %}>Active</option>
+    <option value="archived" {% if status_filter == 'archived' %}selected="selected"{% endif %}>Archived</option>
+    <option value="all" {% if status_filter == 'all' %}selected="selected"{% endif %}>All</option>
+</select>
+
+    <button type="submit">Search</button>
+</form>
+
+<hr>
+
+<table border="1" cellpadding="10">
+    <thead>
+        <tr>
+            <th>Facility</th>
+            <th>Start Date & Time</th>
+            <th>End Date & Time</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for closure in page_obj %}
+        <tr>
+            <td>{{ closure.facility.name }}</td>
+
+            <td>
+                {{ closure.start_time|date:"M d, Y h:i A" }}
+            </td>
+
+            <td>
+                {{ closure.end_time|date:"M d, Y h:i A" }}
+            </td>
+
+            <td>{{ closure.reason }}</td>
+
+            <td>
+                {% if closure.is_active %}
+                    Active
+                {% else %}
+                    Archived
+                {% endif %}
+            </td>
+
+            <td>
+                {% if closure.is_active %}
+
+                    <a href="{% url 'edit_closure' closure.id %}">
+                        Edit
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{% url 'archive_closure' closure.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <button type="submit">
+                            Archive
+                        </button>
+                    </form>
+
+                {% else %}
+                    Archived
+                {% endif %}
+            </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="6">
+                No facility closures found.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br>
+
+{% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
+        Previous
+    </a>
+{% endif %}
+
+Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+
+{% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
+        Next
+    </a>
+{% endif %}
+
+</body>
+</html>

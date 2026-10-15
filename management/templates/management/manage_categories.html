@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Management</title>
+</head>
+
+<body>
+
+    <h1>Category Management</h1>
+{% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endif %}
+    <a href="{% url 'admin_dashboard' %}">
+        Back to ADMIN Dashboard
+    </a>
+
+    <hr>
+
+    <h2>All Facility Categories</h2>
+
+    <a href="{% url 'add_category' %}">
+        + Add New Category
+    </a>
+
+    <br><br>
+
+    <form method="GET">
+        <input
+            type="text"
+            name="search"
+            placeholder="Search categories..."
+            value="{{ search_query }}"
+        >
+
+        <button type="submit">Search</button>
+
+        <a href="{% url 'manage_categories' %}">
+            Clear
+        </a>
+    </form>
+
+    <br>
+
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Category Name</th>
+                <th>Description</th>
+                <th>Number of Facilities</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>{{ category.name }}</td>
+
+                    <td>
+                        {{ category.description|default:"No description" }}
+                    </td>
+
+                    <td>{{ category.facility_count }}</td>
+                    <td>
+    {% if category.is_active %}
+        Active
+    {% else %}
+        Archived
+    {% endif %}
+</td>
+<td>
+    <a href="{% url 'edit_category' category.id %}">
+        Edit
+    </a>
+
+    <br><br>
+
+    <form
+        method="POST"
+        action="{% url 'toggle_category_status' category.id %}"
+        onsubmit="return confirm('Are you sure you want to change this category status?');"
+    >
+        {% csrf_token %}
+
+        {% if category.is_active %}
+            <button type="submit">
+                Archive
+            </button>
+        {% else %}
+            <button type="submit">
+                Reactivate
+            </button>
+        {% endif %}
+    </form>
+</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">
+                        No categories found.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings</title>
+</head>
+
+<body>
+
+<h1>System Settings</h1>
+
+<p>
+    Configure reservation policies for the
+    Campus Facility Reservation System.
+</p>
+
+<a href="{% url 'admin_dashboard' %}">
+    Back to Dashboard
+</a>
+
+<hr>
+
+{% if messages %}
+
+    {% for message in messages %}
+
+        <p>{{ message }}</p>
+
+    {% endfor %}
+
+{% endif %}
+
+<h2>Reservation Rules</h2>
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    <p>
+        <label>
+            Maximum Booking Duration (Hours)
+        </label>
+    </p>
+
+    <p>
+        {{ form.max_booking_hours }}
+    </p>
+
+    {{ form.max_booking_hours.errors }}
+
+    <p>
+        Maximum number of hours allowed
+        for a single reservation.
+    </p>
+
+    <br>
+
+    <p>
+        <label>
+            Advance Booking Window (Days)
+        </label>
+    </p>
+
+    <p>
+        {{ form.advance_booking_days }}
+    </p>
+
+    {{ form.advance_booking_days.errors }}
+
+    <p>
+        Maximum number of days before an event
+        that a student can submit a reservation.
+    </p>
+
+    <br>
+
+    <button type="submit">
+        Save Settings
+    </button>
+
+</form>
+
+<hr>
+
+<h2>Current Configuration</h2>
+
+<p>
+    Maximum Booking Duration:
+    <strong>{{ setting.max_booking_hours }} hours</strong>
+</p>
+
+<p>
+    Advance Booking Window:
+    <strong>{{ setting.advance_booking_days }} days</strong>
+</p>
+
+<p>
+    Last Updated:
+    {{ setting.updated_at|date:"M d, Y h:i A" }}
+</p>
+
+<p>
+    Updated By:
+
+    {% if setting.updated_by %}
+
+        {{ setting.updated_by.username }}
+
+    {% else %}
+
+        System Default
+
+    {% endif %}
+
+</p>
+
+</body>
+</html>

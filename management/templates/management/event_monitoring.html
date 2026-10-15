@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Monitoring</title>
+</head>
+<body>
+
+<h1>Event Monitoring</h1>
+
+<a href="{% url 'admin_dashboard' %}">
+    Back to Dashboard
+</a>
+
+{% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+<h2>Scheduled Events</h2>
+
+<form method="GET">
+
+    <label>Select Date:</label>
+
+    <input
+        type="date"
+        name="date"
+        value="{{ selected_date|date:'Y-m-d' }}"
+    >
+
+    <button type="submit">View Events</button>
+
+</form>
+
+<br>
+
+<table border="1" cellpadding="10">
+
+    <thead>
+        <tr>
+            <th>Reservation ID</th>
+            <th>Facility</th>
+            <th>Event</th>
+            <th>User</th>
+            <th>Scheduled Start</th>
+            <th>Scheduled End</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for reservation in reservations %}
+
+        <tr>
+
+            <td>{{ reservation.id }}</td>
+
+            <td>{{ reservation.facility.name }}</td>
+
+            <td>
+                {{ reservation.event_title|default:reservation.purpose }}
+            </td>
+
+            <td>{{ reservation.user.username }}</td>
+
+            <td>
+                {{ reservation.start_time|date:"h:i A" }}
+            </td>
+
+            <td>
+                {{ reservation.end_time|date:"h:i A" }}
+            </td>
+
+            <td>
+                {{ reservation.get_status_display }}
+            </td>
+
+            <td>
+
+                <a href="{% url 'event_detail' reservation.id %}">
+                    View Event
+                </a>
+
+                <br>
+
+                <a href="{% url 'printable_event_slip' reservation.id %}">
+                    Print Slip
+                </a>
+
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+            <td colspan="8">
+                No events scheduled for this date.
+            </td>
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</body>
+</html>

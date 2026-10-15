@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Management</title>
+</head>
+<body>
+
+<h1>Reservation Management</h1>
+
+<a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
+
+{% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+<form method="GET">
+
+    <input
+        type="text"
+        name="search"
+        value="{{ search_query }}"
+        placeholder="Search reservations"
+    >
+
+    <select name="status">
+
+        <option value="">All Statuses</option>
+
+        {% for value, label in status_choices %}
+
+            <option
+                value="{{ value }}"
+                {% if status_filter == value %}selected{% endif %}
+            >
+                {{ label }}
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+    <button type="submit">Search</button>
+
+    <a href="{% url 'manage_reservations' %}">
+        Clear
+    </a>
+
+</form>
+
+<br>
+
+<table border="1" cellpadding="10">
+
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Facility</th>
+            <th>Event</th>
+            <th>Participants</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for reservation in page_obj %}
+
+        <tr>
+
+            <td>{{ reservation.id }}</td>
+
+            <td>{{ reservation.user.username }}</td>
+
+            <td>{{ reservation.facility.name }}</td>
+
+            <td>
+                {% if reservation.event_title %}
+                    {{ reservation.event_title }}
+                {% else %}
+                    {{ reservation.purpose }}
+                {% endif %}
+            </td>
+
+            <td>{{ reservation.participant_count }}</td>
+
+            <td>
+                {{ reservation.start_time|date:"M d, Y h:i A" }}
+            </td>
+
+            <td>
+                {{ reservation.end_time|date:"M d, Y h:i A" }}
+            </td>
+
+            <td>
+                {{ reservation.get_status_display }}
+            </td>
+
+            <td>
+
+                <a href="{% url 'reservation_history' reservation.id %}">
+                    View History
+                </a>
+
+                <br><br>
+
+                {% if reservation.status == 'pending' %}
+
+                    <form
+                        method="POST"
+                        action="{% url 'update_reservation_status' reservation.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="APPROVE"
+                        >
+
+                        <button type="submit">
+                            Approve
+                        </button>
+
+                    </form>
+
+                    <br>
+
+                    <form
+                        method="POST"
+                        action="{% url 'update_reservation_status' reservation.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="REJECT"
+                        >
+
+                        <input
+                            type="text"
+                            name="reason"
+                            placeholder="Rejection reason"
+                            required
+                        >
+
+                        <button type="submit">
+                            Reject
+                        </button>
+
+                    </form>
+
+                {% elif reservation.status == 'approved' %}
+            <a href="{% url 'reschedule_reservation' reservation.id %}">Reschedule</a>
+            <br><br>
+
+                    <form
+                        method="POST"
+                        action="{% url 'update_reservation_status' reservation.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="CHECK_IN"
+                        >
+
+                        <button type="submit">
+                            Check In
+                        </button>
+
+                    </form>
+
+                    <br>
+
+                    <form
+                        method="POST"
+                        action="{% url 'update_reservation_status' reservation.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="NO_SHOW"
+                        >
+
+                        <button type="submit">
+                            No Show
+                        </button>
+
+                    </form>
+
+                    <br>
+
+                    <form
+                        method="POST"
+                        action="{% url 'update_reservation_status' reservation.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="CANCEL"
+                        >
+
+                        <input
+                            type="text"
+                            name="reason"
+                            placeholder="Cancellation reason"
+                            required
+                        >
+
+                        <button type="submit">
+                            Cancel
+                        </button>
+
+                    </form>
+
+                {% elif reservation.status == 'checked_in' %}
+
+                    <form
+                        method="POST"
+                        action="{% url 'update_reservation_status' reservation.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="COMPLETE"
+                        >
+
+                        <button type="submit">
+                            Complete
+                        </button>
+
+                    </form>
+
+                {% else %}
+
+                    No actions available
+
+                {% endif %}
+
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+            <td colspan="9">
+                No reservations found.
+            </td>
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+<br>
+
+<div>
+
+    {% if page_obj.has_previous %}
+
+        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
+            Previous
+        </a>
+
+    {% endif %}
+
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+
+    {% if page_obj.has_next %}
+
+        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
+            Next
+        </a>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>

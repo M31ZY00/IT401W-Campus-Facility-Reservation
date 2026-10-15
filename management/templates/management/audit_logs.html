@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs</title>
+</head>
+
+<body>
+
+<h1>Audit Logs</h1>
+
+<p>View and search recorded system activities.</p>
+
+<a href="{% url 'admin_dashboard' %}">
+    Back to Dashboard
+</a>
+
+<hr>
+
+<h2>Search and Filter</h2>
+
+<form method="GET">
+
+    <label>Search</label>
+    <input
+        type="text"
+        name="search"
+        value="{{ search }}"
+        placeholder="Username, action, description"
+    >
+
+    <br><br>
+
+    <label>Action</label>
+
+    <select name="action">
+
+        <option value="">All Actions</option>
+
+        {% for value, label in action_choices %}
+
+            <option
+                value="{{ value }}"
+                {% if selected_action == value %}selected{% endif %}
+            >
+                {{ label }}
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+    <br><br>
+
+    <label>From Date</label>
+
+    <input
+        type="date"
+        name="date_from"
+        value="{{ date_from }}"
+    >
+
+    <br><br>
+
+    <label>To Date</label>
+
+    <input
+        type="date"
+        name="date_to"
+        value="{{ date_to }}"
+    >
+
+    <br><br>
+
+    <button type="submit">
+        Apply Filters
+    </button>
+
+    <a href="{% url 'view_audit_logs' %}">
+        Reset
+    </a>
+
+</form>
+
+<hr>
+
+<h2>Activity History</h2>
+
+<p>Total Records: {{ total_logs }}</p>
+
+<table border="1" cellpadding="8" cellspacing="0">
+
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Date and Time</th>
+            <th>Performed By</th>
+            <th>Action</th>
+            <th>Model</th>
+            <th>Object ID</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for log in page_obj %}
+
+        <tr>
+            <td>{{ log.id }}</td>
+
+            <td>
+                {{ log.timestamp|date:"M d, Y h:i A" }}
+            </td>
+
+            <td>
+                {{ log.admin_user.username }}
+            </td>
+
+            <td>
+                {{ log.get_action_display }}
+            </td>
+
+            <td>
+                {{ log.model_name }}
+            </td>
+
+            <td>
+                {{ log.object_id }}
+            </td>
+
+            <td>
+                {{ log.description }}
+            </td>
+        </tr>
+
+        {% empty %}
+
+        <tr>
+            <td colspan="7">
+                No audit logs found.
+            </td>
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+<br>
+
+{% if page_obj.has_other_pages %}
+
+    <div>
+
+        {% if page_obj.has_previous %}
+
+            <a href="?search={{ search|urlencode }}&action={{ selected_action|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}&page={{ page_obj.previous_page_number }}">
+                Previous
+            </a>
+
+        {% endif %}
+
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+
+        {% if page_obj.has_next %}
+
+            <a href="?search={{ search|urlencode }}&action={{ selected_action|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}&page={{ page_obj.next_page_number }}">
+                Next
+            </a>
+
+        {% endif %}
+
+    </div>
+
+{% endif %}
+
+</body>
+</html>

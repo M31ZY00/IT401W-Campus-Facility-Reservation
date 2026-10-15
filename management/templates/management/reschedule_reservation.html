@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reschedule Reservation</title>
+</head>
+
+<body>
+
+<h1>Reschedule Reservation</h1>
+
+<a href="{% url 'reservation_calendar' %}">
+    Back to Calendar
+</a>
+
+<hr>
+
+{% if messages %}
+
+    {% for message in messages %}
+
+        <p>{{ message }}</p>
+
+    {% endfor %}
+
+{% endif %}
+
+<h2>Reservation Details</h2>
+
+<p>
+    <strong>Reservation ID:</strong>
+    {{ reservation.id }}
+</p>
+
+<p>
+    <strong>Facility:</strong>
+    {{ reservation.facility.name }}
+</p>
+
+<p>
+    <strong>User:</strong>
+    {{ reservation.user.username }}
+</p>
+
+<p>
+    <strong>Event:</strong>
+    {{ reservation.event_title|default:reservation.purpose }}
+</p>
+
+<p>
+    <strong>Status:</strong>
+    {{ reservation.get_status_display }}
+</p>
+
+<p>
+    <strong>Current Start:</strong>
+    {{ reservation.start_time|date:"F d, Y h:i A" }}
+</p>
+
+<p>
+    <strong>Current End:</strong>
+    {{ reservation.end_time|date:"F d, Y h:i A" }}
+</p>
+
+<hr>
+
+<h2>New Schedule</h2>
+
+{% if reservation.status == 'approved' %}
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    <p>
+        <label>New Start Time:</label>
+
+        <br>
+
+        <input
+            type="datetime-local"
+            name="start_time"
+            value="{{ start_value }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>New End Time:</label>
+
+        <br>
+
+        <input
+            type="datetime-local"
+            name="end_time"
+            value="{{ end_value }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Reason for Rescheduling:</label>
+
+        <br>
+
+        <textarea
+            name="reason"
+            rows="4"
+            cols="50"
+            required
+        ></textarea>
+    </p>
+
+    <button type="submit">
+        Save New Schedule
+    </button>
+
+</form>
+
+{% else %}
+
+<p>
+    Only approved reservations can be rescheduled.
+</p>
+
+{% endif %}
+
+</body>
+</html>

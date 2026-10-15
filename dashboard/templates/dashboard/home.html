@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Facility Reservation System</title>
+</head>
+
+<body>
+
+    <h1>Campus Facility Reservation System</h1>
+
+    <p>Welcome to the Campus Facility Reservation System!</p>
+
+    <p>Browse available campus facilities and manage your reservations.</p>
+
+    <hr>
+
+    {% if user.is_authenticated %}
+
+        <p>Welcome, {{ user.username }}!</p>
+
+        <a href="{% url 'facility_list' %}">
+            Browse Facilities
+        </a>
+
+        <br><br>
+
+        <a href="{% url 'my_reservations' %}">
+            My Reservations
+        </a>
+
+        <br><br>
+
+        <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+
+    {% else %}
+
+        <h3>Student Access</h3>
+
+        <a href="{% url 'facility_list' %}">
+            Browse Facilities
+        </a>
+
+        <br><br>
+
+        <a href="{% url 'login' %}">
+            Student Login
+        </a>
+
+        <br><br>
+
+        <a href="{% url 'register' %}">
+            Student Registration
+        </a>
+
+        <hr>
+
+        <h3>Administrator Access</h3>
+
+        <a href="{% url 'admin_login' %}">
+            Administrator Login
+        </a>
+
+    {% endif %}
+
+</body>
+</html>

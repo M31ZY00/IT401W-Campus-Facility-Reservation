@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details</title>
+</head>
+<body>
+
+<h1>Event Details</h1>
+
+<a href="{% url 'event_monitoring' %}">
+    Back to Event Monitoring
+</a>
+
+{% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+<hr>
+
+<h2>Reservation Information</h2>
+
+<p><strong>ID:</strong> {{ reservation.id }}</p>
+
+<p><strong>Facility:</strong> {{ reservation.facility.name }}</p>
+
+<p><strong>User:</strong> {{ reservation.user.username }}</p>
+
+<p>
+    <strong>Event:</strong>
+    {{ reservation.event_title|default:reservation.purpose }}
+</p>
+
+<p><strong>Purpose:</strong> {{ reservation.purpose }}</p>
+
+<p><strong>Participants:</strong> {{ reservation.participant_count }}</p>
+
+<p>
+    <strong>Scheduled Start:</strong>
+    {{ reservation.start_time|date:"M d, Y h:i A" }}
+</p>
+
+<p>
+    <strong>Scheduled End:</strong>
+    {{ reservation.end_time|date:"M d, Y h:i A" }}
+</p>
+
+<p>
+    <strong>Status:</strong>
+    {{ reservation.get_status_display }}
+</p>
+
+<hr>
+
+<h2>Actual Event Record</h2>
+
+{% if event_record %}
+
+    <p>
+        <strong>Actual Start:</strong>
+        {{ event_record.actual_start|date:"M d, Y h:i A"|default:"Not recorded" }}
+    </p>
+
+    <p>
+        <strong>Actual End:</strong>
+        {{ event_record.actual_end|date:"M d, Y h:i A"|default:"Not recorded" }}
+    </p>
+
+    <p>
+        <strong>Checked In By:</strong>
+
+        {% if event_record.checked_in_by %}
+            {{ event_record.checked_in_by.username }}
+        {% else %}
+            Not recorded
+        {% endif %}
+    </p>
+
+    <p>
+        <strong>Completed By:</strong>
+
+        {% if event_record.completed_by %}
+            {{ event_record.completed_by.username }}
+        {% else %}
+            Not recorded
+        {% endif %}
+    </p>
+
+    {% if event_record.no_show_at %}
+
+        <p>
+            <strong>No-Show Recorded:</strong>
+            {{ event_record.no_show_at|date:"M d, Y h:i A" }}
+        </p>
+
+    {% endif %}
+
+{% else %}
+
+    <p>No actual event record yet.</p>
+
+{% endif %}
+
+<hr>
+
+<h2>Incident Reports</h2>
+
+{% for incident in incidents %}
+
+    <p>
+        <strong>Date:</strong>
+        {{ incident.reported_at|date:"M d, Y h:i A" }}
+    </p>
+
+    <p>
+        <strong>Reported By:</strong>
+        {{ incident.reported_by.username }}
+    </p>
+
+    <p>
+        <strong>Description:</strong>
+        {{ incident.description }}
+    </p>
+
+    <hr>
+
+{% empty %}
+
+    <p>No incidents reported.</p>
+
+{% endfor %}
+
+{% if reservation.status == 'checked_in' or reservation.status == 'completed' or reservation.status == 'no_show' %}
+
+    <h3>Report an Incident</h3>
+
+    <form
+        method="POST"
+        action="{% url 'report_event_incident' reservation.id %}"
+    >
+
+        {% csrf_token %}
+
+        <textarea
+            name="description"
+            rows="5"
+            cols="60"
+            placeholder="Describe the incident"
+            required
+        ></textarea>
+
+        <br><br>
+
+        <button type="submit">
+            Save Incident Report
+        </button>
+
+    </form>
+
+{% endif %}
+
+<hr>
+
+<a href="{% url 'printable_event_slip' reservation.id %}">
+    Print Event Slip
+</a>
+
+</body>
+</html>

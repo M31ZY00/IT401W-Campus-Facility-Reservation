@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {% if is_edit %}
+            Edit Amenity
+        {% else %}
+            Add Amenity
+        {% endif %}
+    </title>
+</head>
+
+<body>
+
+    <h1>
+        {% if is_edit %}
+            Edit Amenity: {{ amenity.name }}
+        {% else %}
+            Add New Amenity
+        {% endif %}
+    </h1>
+
+    <a href="{% url 'manage_amenities' %}">
+        Back to Amenity Management
+    </a>
+
+    <hr>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            {% if is_edit %}
+                Update Amenity
+            {% else %}
+                Save Amenity
+            {% endif %}
+        </button>
+    </form>
+
+</body>
+</html>

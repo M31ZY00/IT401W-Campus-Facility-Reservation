@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN Dashboard | Campus Facility Reservation</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1050px; margin: 28px auto; padding: 0 18px; color: #172033; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+        .card { border: 1px solid #dce3ee; border-radius: 8px; padding: 16px; }
+        .card strong { display: block; font-size: 29px; margin-top: 10px; }
+        .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 24px; }
+        .chart { border: 1px solid #dce3ee; border-radius: 8px; padding: 16px; }
+        .bar-row { margin-bottom: 14px; }
+        .bar-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+        .bar-track { background: #e8edf4; height: 15px; border-radius: 4px; overflow: hidden; }
+        .bar-fill { background: #2865c7; height: 100%; }
+        .nav a { display: inline-block; margin: 0 16px 12px 0; }
+    </style>
+</head>
+<body>
+    <h1>Campus Facility Reservation System</h1>
+    <h2>ADMIN Dashboard</h2>
+    <p>Welcome, {{ request.user.username }}!</p>
+    <hr>
+
+    <h3>Live Statistics</h3>
+    <div class="cards">
+        <div class="card">Active Basic Users<strong>{{ cards.basic_users }}</strong></div>
+        <div class="card">Active Facilities<strong>{{ cards.active_facilities }}</strong></div>
+        <div class="card">Pending Reservations<strong>{{ cards.pending_reservations }}</strong></div>
+        <div class="card">Upcoming Approved Events<strong>{{ cards.upcoming_events }}</strong></div>
+    </div>
+
+    <p><strong>Total booked hours:</strong> {{ booked_hours }} &nbsp; | &nbsp; <strong>Completed events:</strong> {{ completed_events }}</p>
+
+    <h3>Analytics</h3>
+    <div class="charts">
+        <div class="chart">
+            <h4>Monthly Reservations (Last 6 Months)</h4>
+            <p>Excludes rejected and cancelled reservations. Grouped by scheduled month.</p>
+            {% for row in monthly_rows %}
+                <div class="bar-row">
+                    <div class="bar-label"><span>{{ row.label }}</span><strong>{{ row.count }}</strong></div>
+                    <div class="bar-track"><div class="bar-fill" style="width: {{ row.width }}%;"></div></div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="chart">
+            <h4>Facility Usage (Top 8)</h4>
+            <p>Approved, checked-in, completed and no-show reservations.</p>
+            {% for row in facility_rows %}
+                <div class="bar-row">
+                    <div class="bar-label"><span>{{ row.label }}</span><strong>{{ row.count }}</strong></div>
+                    <div class="bar-track"><div class="bar-fill" style="width: {{ row.width }}%;"></div></div>
+                </div>
+            {% empty %}
+                <p>No facility usage records yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <h3>Administration</h3>
+    <div class="nav">
+        <a href="{% url 'manage_users' %}">Account Management</a>
+        <a href="{% url 'manage_facilities' %}">Manage Facilities</a>
+        <a href="{% url 'manage_categories' %}">Manage Facility Categories</a>
+        <a href="{% url 'manage_amenities' %}">Manage Amenities</a>
+        <a href="{% url 'manage_reservations' %}">Manage Reservations</a>
+        <a href="{% url 'reservation_calendar' %}">Reservation Calendar</a>
+        <a href="{% url 'event_monitoring' %}">Event Monitoring</a>
+        <a href="{% url 'manage_closures' %}">Manage Closures</a>
+        <a href="{% url 'reservation_reports' %}">Reports and CSV Export</a>
+        <a href="{% url 'view_audit_logs' %}">Audit Logs</a>
+        <a href="{% url 'system_settings' %}">System Settings</a>
+    </div>
+</body>
+</html>

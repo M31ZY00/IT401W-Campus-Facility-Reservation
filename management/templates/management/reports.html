@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Reports</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1150px; margin: 28px auto; padding: 0 18px; }
+        .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+        label { display: block; margin-bottom: 5px; }
+        .stats { display: flex; flex-wrap: wrap; gap: 24px; margin: 20px 0; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+        th, td { border: 1px solid #d6dce5; padding: 8px; text-align: left; }
+        th { background: #edf1f7; }
+        .error { color: #b00020; }
+        .table-wrap { overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Reservation Reports</h1>
+    <a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
+    <hr>
+
+    {% for message in messages %}<p class="error">{{ message }}</p>{% endfor %}
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <form method="get" class="filters" action="{% url 'reservation_reports' %}">
+        <div>
+            <label for="start_date">Start date</label>
+            <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
+        </div>
+        <div>
+            <label for="end_date">End date</label>
+            <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" required>
+        </div>
+        <div>
+            <label for="status">Status</label>
+            <select name="status" id="status">
+                <option value="">All statuses</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="facility">Facility</label>
+            <select name="facility" id="facility">
+                <option value="">All facilities</option>
+                {% for facility in facilities %}
+                    <option value="{{ facility.pk }}" {% if facility_filter == facility.pk|stringformat:'s' %}selected{% endif %}>{{ facility.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Filter</button>
+        <button type="submit" formaction="{% url 'export_reservation_report' %}" {% if error %}disabled{% endif %}>Export CSV</button>
+    </form>
+
+    <div class="stats">
+        <div><strong>Reservations:</strong> {{ total_reservations }}</div>
+        <div><strong>Approved:</strong> {{ approved_count }}</div>
+        <div><strong>Completed:</strong> {{ completed_count }}</div>
+        <div><strong>Booked Hours:</strong> {{ booked_hours }}</div>
+    </div>
+    <p>Booked hours include approved, checked-in, completed and no-show reservations. All times are Asia/Manila.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>ID</th><th>Username</th><th>Facility</th><th>Event</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for reservation in page_obj %}
+                    <tr>
+                        <td>{{ reservation.pk }}</td>
+                        <td>{{ reservation.user.username }}</td>
+                        <td>{{ reservation.facility.name }}</td>
+                        <td>{{ reservation.event_title }}</td>
+                        <td>{{ reservation.start_time|date:'Y-m-d H:i' }}</td>
+                        <td>{{ reservation.end_time|date:'Y-m-d H:i' }}</td>
+                        <td>{{ reservation.get_status_display }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7">No reservations match the selected filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
+    {% if page_obj.has_previous %}
+        <a href="?start_date={{ start_date|date:'Y-m-d' }}&amp;end_date={{ end_date|date:'Y-m-d' }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    {% if page_obj.has_next %}
+        <a href="?start_date={{ start_date|date:'Y-m-d' }}&amp;end_date={{ end_date|date:'Y-m-d' }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</body>
+</html>

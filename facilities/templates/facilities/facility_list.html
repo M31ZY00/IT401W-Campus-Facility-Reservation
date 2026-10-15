@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Available Facilities</title>
+</head>
+
+<body>
+
+    <h1>Available Campus Facilities</h1>
+
+    <p>Browse and search facilities available for reservation.</p>
+
+    <hr>
+
+    <h2>Search and Filter</h2>
+
+    <form method="GET">
+
+        <label for="search">Search Facilities:</label>
+
+        <input
+            type="text"
+            id="search"
+            name="search"
+            value="{{ search_query }}"
+            placeholder="Enter facility name or location"
+        >
+
+        <br><br>
+
+        <label for="category">Filter by Category:</label>
+
+    <select id="category" name="category">
+
+    <option value="">All Categories</option>
+
+    {% for category in categories %}
+
+        {% if selected_category == category.id|stringformat:"s" %}
+
+            <option value="{{ category.id }}" selected>
+                {{ category.name }}
+            </option>
+
+        {% else %}
+
+            <option value="{{ category.id }}">
+                {{ category.name }}
+            </option>
+
+        {% endif %}
+
+    {% endfor %}
+
+</select>
+
+        <br><br>
+
+        <button type="submit">Search</button>
+
+        <a href="{% url 'facility_list' %}">
+            Clear Filters
+        </a>
+
+    </form>
+
+    <hr>
+
+    <h2>Facilities</h2>
+
+    {% for facility in facilities %}
+
+        <div>
+
+            <h3>{{ facility.name }}</h3>
+
+            <p>
+                <strong>Category:</strong>
+                {{ facility.category.name|default:"Uncategorized" }}
+            </p>
+
+            <p>
+                <strong>Location:</strong>
+                {{ facility.location }}
+            </p>
+
+            <p>
+                <strong>Capacity:</strong>
+                {{ facility.capacity }} students
+            </p>
+
+            <p>{{ facility.description }}</p>
+
+            <a href="{% url 'facility_detail' facility.id %}">
+                View Details
+            </a>
+
+            <hr>
+
+        </div>
+
+    {% empty %}
+
+        <p>No facilities match your search or selected category.</p>
+
+    {% endfor %}
+
+    <br>
+
+    <a href="{% url 'home' %}">Back to Home</a>
+
+</body>
+</html>

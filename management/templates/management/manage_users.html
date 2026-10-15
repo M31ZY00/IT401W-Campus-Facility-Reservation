@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management</title>
+</head>
+<body>
+
+    <h1>Account Management</h1>
+
+    {% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+    <a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    <h2>BASIC USER Accounts</h2>
+
+    <form method="GET">
+        <input
+            type="text"
+            name="search"
+            placeholder="Search username, name, or email"
+            value="{{ search_query }}"
+        >
+
+        <button type="submit">Search</button>
+
+        <a href="{% url 'manage_users' %}">Clear</a>
+    </form>
+
+    <br>
+
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Account Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+
+                    <td>
+                        {{ user.first_name }}
+                        {{ user.last_name }}
+                    </td>
+
+                    <td>{{ user.email }}</td>
+
+                    <td>
+                        {% if user.is_active %}
+                            Active
+                        {% else %}
+                            Deactivated
+                        {% endif %}
+                    </td>
+
+                    <td>
+    <form
+        method="POST"
+        action="{% url 'toggle_user_status' user.id %}"
+        onsubmit="return confirm('Are you sure you want to change this account status?');"
+    >
+        {% csrf_token %}
+
+        {% if user.is_active %}
+            <button type="submit">Deactivate</button>
+        {% else %}
+            <button type="submit">Activate</button>
+        {% endif %}
+    </form>
+                        <br>
+
+<a href="{% url 'user_reservation_history' user.id %}">
+    View History
+</a>
+</td>
+
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No BASIC USER accounts found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

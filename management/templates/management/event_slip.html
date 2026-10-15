@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Slip</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 750px;
+            margin: 40px auto;
+            line-height: 1.8;
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        .details {
+            border: 1px solid #333;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .actions {
+            margin-bottom: 25px;
+        }
+
+        @media print {
+            .actions {
+                display: none;
+            }
+
+            body {
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="actions">
+
+    <button onclick="window.print()">
+        Print Slip
+    </button>
+
+    <a href="{% url 'event_detail' reservation.id %}">
+        Back
+    </a>
+
+</div>
+
+<h1>Campus Facility Reservation</h1>
+
+<h2>Event Monitoring Slip</h2>
+
+<div class="details">
+
+    <p>
+        <strong>Reservation ID:</strong>
+        {{ reservation.id }}
+    </p>
+
+    <p>
+        <strong>Event:</strong>
+        {{ reservation.event_title|default:reservation.purpose }}
+    </p>
+
+    <p>
+        <strong>Facility:</strong>
+        {{ reservation.facility.name }}
+    </p>
+
+    <p>
+        <strong>Reserved By:</strong>
+        {{ reservation.user.get_full_name|default:reservation.user.username }}
+    </p>
+
+    <p>
+        <strong>Purpose:</strong>
+        {{ reservation.purpose }}
+    </p>
+
+    <p>
+        <strong>Participants:</strong>
+        {{ reservation.participant_count }}
+    </p>
+
+    <p>
+        <strong>Scheduled Start:</strong>
+        {{ reservation.start_time|date:"F d, Y h:i A" }}
+    </p>
+
+    <p>
+        <strong>Scheduled End:</strong>
+        {{ reservation.end_time|date:"F d, Y h:i A" }}
+    </p>
+
+    <p>
+        <strong>Status:</strong>
+        {{ reservation.get_status_display }}
+    </p>
+
+    {% if event_record %}
+
+        <hr>
+
+        <p>
+            <strong>Actual Start:</strong>
+            {{ event_record.actual_start|date:"F d, Y h:i A"|default:"Not recorded" }}
+        </p>
+
+        <p>
+            <strong>Actual End:</strong>
+            {{ event_record.actual_end|date:"F d, Y h:i A"|default:"Not recorded" }}
+        </p>
+
+        <p>
+            <strong>Checked In By:</strong>
+
+            {% if event_record.checked_in_by %}
+                {{ event_record.checked_in_by.username }}
+            {% else %}
+                Not recorded
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Completed By:</strong>
+
+            {% if event_record.completed_by %}
+                {{ event_record.completed_by.username }}
+            {% else %}
+                Not recorded
+            {% endif %}
+        </p>
+
+    {% endif %}
+
+</div>
+
+<br><br>
+
+<p>_______________________________</p>
+<p>Authorized ADMIN Signature</p>
+
+</body>
+</html>

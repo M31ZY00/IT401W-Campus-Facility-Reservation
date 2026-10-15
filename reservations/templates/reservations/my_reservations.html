@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reservations</title>
+</head>
+
+<body>
+
+    <h1>My Reservations</h1>
+
+    <p>Welcome, {{ user.username }}!</p>
+
+    <p>Here you can track the status and details of your facility reservations.</p>
+
+    <hr>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {% if reservations %}
+
+        <table border="1" cellpadding="10">
+            <thead>
+                <tr>
+                    <th>Reservation ID</th>
+                    <th>Event Title</th>
+                    <th>Facility</th>
+                    <th>Location</th>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Participants</th>
+                    <th>Purpose</th>
+                    <th>Status</th>
+                    <th>Admin Remarks</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for reservation in reservations %}
+                    <tr>
+                        <td>
+                            #{{ reservation.id }}
+                        </td>
+
+                        <td>
+                            {{ reservation.event_title|default:"Untitled Event" }}
+                        </td>
+
+                        <td>
+                            {{ reservation.facility.name }}
+                        </td>
+
+                        <td>
+                            {{ reservation.facility.location }}
+                        </td>
+
+                        <td>
+                            {{ reservation.start_time|date:"M d, Y" }}
+                        </td>
+
+                        <td>
+                            {{ reservation.start_time|date:"h:i A" }}
+                        </td>
+
+                        <td>
+                            {{ reservation.end_time|date:"h:i A" }}
+                        </td>
+
+                        <td>
+                            {{ reservation.participant_count }}
+                        </td>
+
+                        <td>
+                            {{ reservation.purpose }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ reservation.get_status_display }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {% if reservation.decision_reason %}
+                                {{ reservation.decision_reason }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if reservation.status == 'pending' or reservation.status == 'approved' %}
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'cancel_reservation' reservation.id %}"
+                                    onsubmit="return confirm('Are you sure you want to cancel this reservation?');"
+                                >
+                                    {% csrf_token %}
+
+                                    <button type="submit">
+                                        Cancel Reservation
+                                    </button>
+                                </form>
+
+                            {% else %}
+
+                                No action available
+
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+
+        <p>You haven't made any reservations yet.</p>
+
+        <a href="{% url 'facility_list' %}">
+            Browse Facilities
+        </a>
+
+    {% endif %}
+
+    <br><br>
+
+    <a href="{% url 'home' %}">Back to Home</a>
+
+</body>
+</html>
