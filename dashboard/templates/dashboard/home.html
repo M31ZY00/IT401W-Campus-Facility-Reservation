@@ -1,69 +1,91 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campus Facility Reservation System</title>
-</head>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+</head>
 <body>
 
-    <h1>Campus Facility Reservation System</h1>
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            School Name
+        </div>
 
-    <p>Welcome to the Campus Facility Reservation System!</p>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+                <span>{{ user.username }}</span>
+            </div>
 
-    <p>Browse available campus facilities and manage your reservations.</p>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-    <hr>
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="eyebrow">
+                <i class="fa-solid fa-building-columns"></i>
+                Reservation System
+            </div>
+            <h1>Welcome back, <span>{{ user.username }}</span>!</h1>
+            <p>
+                Browse available campus facilities, submit bookings,
+                and manage your active reservations seamlessly.
+            </p>
+        </div>
+    </section>
 
-    {% if user.is_authenticated %}
+    <main class="content">
+        <p class="section-label">What would you like to do today?</p>
 
-        <p>Welcome, {{ user.username }}!</p>
+        <nav class="menu" aria-label="Main">
 
-        <a href="{% url 'facility_list' %}">
-            Browse Facilities
-        </a>
-
-        <br><br>
-
-        <a href="{% url 'my_reservations' %}">
-            My Reservations
-        </a>
-
-        {% if user.is_staff or user.is_superuser %}
-            <br><br>
-
-            <a href="/manage/">
-                Manage Facilities &amp; Reservations
+            <a href="{% url 'facility_list' %}" class="action-card primary">
+                <div class="action-icon"><i class="fa-solid fa-building"></i></div>
+                <h3>Browse Facilities</h3>
+                <p>See what's available on campus and book a space for your event or activity.</p>
+                <span class="action-go">Explore <i class="fa-solid fa-arrow-right"></i></span>
             </a>
-        {% endif %}
 
-        <br><br>
+            <a href="{% url 'my_reservations' %}" class="action-card">
+                <div class="action-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                <h3>My Reservations</h3>
+                <p>Check the status of your bookings and manage your upcoming reservations.</p>
+                <span class="action-go">View bookings <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
 
-        <form method="POST" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-        </form>
+            {% if user.is_staff or user.is_superuser %}
+                <a href="/manage/" class="action-card staff">
+                    <div class="action-icon"><i class="fa-solid fa-user-gear"></i></div>
+                    <h3>Manage Facilities &amp; Reservations</h3>
+                    <p>Review requests, update facility details, and keep the schedule in order.</p>
+                    <span class="action-go">Open dashboard <i class="fa-solid fa-arrow-right"></i></span>
+                </a>
+            {% endif %}
 
-    {% else %}
+        </nav>
+    </main>
 
-        <a href="{% url 'facility_list' %}">
-            Browse Facilities
-        </a>
-
-        <br><br>
-
-        <a href="{% url 'login' %}">
-            Log In
-        </a>
-
-        <br><br>
-
-        <a href="{% url 'register' %}">
-            Create Account
-        </a>
-
-    {% endif %}
+    <footer class="footer">
+        &copy; {% now "Y" %} School Name &middot; Campus Facility Reservation System
+    </footer>
 
 </body>
 </html>

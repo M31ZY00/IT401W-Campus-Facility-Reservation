@@ -1,116 +1,320 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Facilities</title>
 
-    <title>Available Facilities</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/facilities.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+
+
 </head>
-
 <body>
 
-    <h1>Available Campus Facilities</h1>
-
-    <p>Browse and search facilities available for reservation.</p>
-
-    <hr>
-
-    <h2>Search and Filter</h2>
-
-    <form method="GET">
-
-        <label for="search">Search Facilities:</label>
-
-        <input
-            type="text"
-            id="search"
-            name="search"
-            value="{{ search_query }}"
-            placeholder="Enter facility name or location"
-        >
-
-        <br><br>
-
-        <label for="category">Filter by Category:</label>
-
-    <select id="category" name="category">
-
-    <option value="">All Categories</option>
-
-    {% for category in categories %}
-
-        {% if selected_category == category.id|stringformat:"s" %}
-
-            <option value="{{ category.id }}" selected>
-                {{ category.name }}
-            </option>
-
-        {% else %}
-
-            <option value="{{ category.id }}">
-                {{ category.name }}
-            </option>
-
-        {% endif %}
-
-    {% endfor %}
-
-</select>
-
-        <br><br>
-
-        <button type="submit">Search</button>
-
-        <a href="{% url 'facility_list' %}">
-            Clear Filters
+    <header class="topbar">
+        <a href="{% url 'home' %}" class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            School Name
         </a>
 
-    </form>
+        <div class="topbar-right">
+            {% if user.is_authenticated %}
 
-    <hr>
+                <div class="user-chip">
+                    <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+                    <span>{{ user.username }}</span>
+                </div>
 
-    <h2>Facilities</h2>
+                <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Log out</span>
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="topbar-link">
+                    <i class="fa-solid fa-right-to-bracket"></i><span>Log in</span>
+                </a>
+            {% endif %}
+        </div>
+    </header>
 
-    {% for facility in facilities %}
+    <div class="slim-head">
+        <div class="slim-head-inner">
+            <div>
+                <h1>Campus <span>Facilities</span></h1>
+                <p>Pick a facility on the left to see its details and reserve it.</p>
+            </div>
+        </div>
+    </div>
 
-        <div>
+    <main class="content wide">
 
-            <h3>{{ facility.name }}</h3>
+     <!-- Back Button -->
+        <a href="{% url 'home' %}" class="tk-back">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Home
+        </a>
 
-            <p>
-                <strong>Category:</strong>
-                {{ facility.category.name|default:"Uncategorized" }}
-            </p>
 
-            <p>
-                <strong>Location:</strong>
-                {{ facility.location }}
-            </p>
+        <div class="split">
 
-            <p>
-                <strong>Capacity:</strong>
-                {{ facility.capacity }} students
-            </p>
+            <!-- LEFT: search + list -->
+            <aside class="list-pane">
+                <form method="GET" class="list-filter">
+                    <div class="field">
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search"
+                               value="{{ search_query }}"
+                               placeholder="Name or location">
+                    </div>
 
-            <p>{{ facility.description }}</p>
+                    <div class="field">
+                        <label for="category">Category</label>
+                        <select id="category" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}"
+                                    {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-            <a href="{% url 'facility_detail' facility.id %}">
-                View Details
-            </a>
+                    <div class="row">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-magnifying-glass"></i> Search
+                        </button>
+                        <a href="{% url 'facility_list' %}" class="btn btn-ghost">Clear</a>
+                    </div>
+                </form>
 
-            <hr>
+                <div class="list-scroll">
+                    {% for facility in facilities %}
+                        <button type="button" class="fac-item" data-id="{{ facility.id }}">
+                            <span class="ico"><i class="fa-solid fa-building"></i></span>
+                            <span>
+                                <strong>{{ facility.name }}</strong>
+                                <small>{{ facility.category.name|default:"Uncategorized" }} &middot; {{ facility.capacity }} students</small>
+                            </span>
+                        </button>
+                    {% empty %}
+                        <p class="list-empty">No facilities match your search or selected category.</p>
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <!-- RIGHT: details, then reserve form below -->
+            <section class="detail-pane">
+                {% for facility in facilities %}
+                    <article class="fac-wrap" data-id="{{ facility.id }}" hidden>
+
+                        <!-- Details -->
+                        <div class="fac-detail">
+                            <div class="fac-detail-body">
+                                <span class="badge">{{ facility.category.name|default:"Uncategorized" }}</span>
+                                <h2>{{ facility.name }}</h2>
+
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
+                                        <div>
+                                            <small>Location</small>
+                                            <strong>{{ facility.location }}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <div class="icon"><i class="fa-solid fa-users"></i></div>
+                                        <div>
+                                            <small>Capacity</small>
+                                            <strong>{{ facility.capacity }} students</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h3>Description</h3>
+                                <p class="detail-desc">{{ facility.description }}</p>
+                            </div>
+
+                            <div class="reserve-bar">
+                                <div>
+                                    <span class="status">Available for reservation requests</span>
+                                    <p>Want to use this facility?</p>
+                                </div>
+
+                                {% if user.is_authenticated %}
+                                    <button type="button"
+                                            class="btn btn-gold js-reserve"
+                                            data-url="{% url 'create_reservation' facility.id %}">
+                                        <i class="fa-solid fa-calendar-plus"></i> Reserve Facility
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="btn btn-gold">
+                                        <i class="fa-solid fa-right-to-bracket"></i> Login to Reserve
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Reserve form (opens below details) -->
+                        {% if user.is_authenticated %}
+                            <div class="res-panel" hidden>
+                                <div class="res-head">
+                                    <h2>Reserve {{ facility.name }}</h2>
+                                    <button type="button" class="res-close" aria-label="Close">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                                <div class="res-body form-card"></div>
+                            </div>
+                        {% endif %}
+
+                    </article>
+                {% empty %}
+                    <div class="empty">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <p>No facilities to show.</p>
+                        <a href="{% url 'facility_list' %}" class="btn btn-primary">Clear Filters</a>
+                    </div>
+                {% endfor %}
+            </section>
 
         </div>
 
-    {% empty %}
+    </main>
 
-        <p>No facilities match your search or selected category.</p>
+    <footer class="footer">
+        &copy; {% now "Y" %} School Name &middot; Campus Facility Reservation System
+    </footer>
 
-    {% endfor %}
+    <script>
+    (function () {
 
-    <br>
+        /* ---------- Select a facility ---------- */
+        var items = document.querySelectorAll('.fac-item');
+        var wraps = document.querySelectorAll('.fac-wrap');
 
-    <a href="{% url 'home' %}">Back to Home</a>
+        function select(id, scroll) {
+            items.forEach(function (i) { i.classList.toggle('active', i.dataset.id === id); });
+            wraps.forEach(function (w) { w.hidden = w.dataset.id !== id; });
+            history.replaceState(null, '', '#' + id);
+
+            if (scroll && window.innerWidth <= 900) {
+                var w = document.querySelector('.fac-wrap[data-id="' + id + '"]');
+                if (w) w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        items.forEach(function (i) {
+            i.addEventListener('click', function () { select(i.dataset.id, true); });
+        });
+
+        if (items.length) {
+            var wanted = location.hash.slice(1);
+            var exists = Array.prototype.some.call(items, function (i) { return i.dataset.id === wanted; });
+            select(exists ? wanted : items[0].dataset.id, false);
+        }
+
+        /* ---------- Inline reserve form ---------- */
+        var MY_RES_URL = "{% url 'my_reservations' %}";
+
+        function loadForm(url, body, panel) {
+            body.innerHTML = '<p class="modal-loading">Loading…</p>';
+
+            fetch(url, { credentials: 'same-origin' })
+                .then(function (res) {
+                    if (res.redirected) { window.location.href = res.url; return null; }
+                    return res.text();
+                })
+                .then(function (text) { if (text) render(text, url, body, panel); });
+        }
+
+        function render(html, url, body, panel) {
+            var doc   = new DOMParser().parseFromString(html, 'text/html');
+            var form  = doc.querySelector('.form-card form');
+            var guide = doc.querySelector('.guide-list');
+
+            if (!form) {
+                body.innerHTML = '<p class="modal-loading">Could not load the form. Please try again.</p>';
+                return;
+            }
+
+            body.innerHTML = '';
+
+            if (guide) {
+                var box = document.createElement('div');
+                box.className = 'res-guide';
+                box.appendChild(document.importNode(guide, true));
+                body.appendChild(box);
+            }
+
+            var cancel = form.querySelector('.form-actions a');
+            if (cancel) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-ghost';
+                btn.textContent = 'Cancel';
+                btn.addEventListener('click', function () { panel.hidden = true; });
+                cancel.replaceWith(btn);
+            }
+
+            var live = document.importNode(form, true);
+
+            live.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                fetch(url, {
+                    method: 'POST',
+                    body: new FormData(live),
+                    credentials: 'same-origin',
+                    redirect: 'manual'
+                }).then(function (res) {
+                    if (res.type === 'opaqueredirect') {      /* saved */
+                        window.location.href = MY_RES_URL;
+                        return null;
+                    }
+                    return res.text();
+                }).then(function (text) {
+                    if (text) render(text, url, body, panel); /* show validation errors */
+                });
+            });
+
+            body.appendChild(live);
+        }
+
+        document.querySelectorAll('.js-reserve').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var wrap  = btn.closest('.fac-wrap');
+                var panel = wrap.querySelector('.res-panel');
+                var body  = panel.querySelector('.res-body');
+
+                if (!panel.hidden) { panel.hidden = true; return; }
+
+                panel.hidden = false;
+                if (!body.dataset.loaded) {
+                    body.dataset.loaded = '1';
+                    loadForm(btn.dataset.url, body, panel);
+                }
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        });
+
+        document.querySelectorAll('.res-close').forEach(function (b) {
+            b.addEventListener('click', function () { b.closest('.res-panel').hidden = true; });
+        });
+
+    })();
+    </script>
 
 </body>
 </html>

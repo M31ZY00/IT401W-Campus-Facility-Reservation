@@ -1,0 +1,93 @@
+/* =====================================================
+   CANCEL CONFIRM MODAL
+   (standalone: uses hardcoded colors, no :root variables needed)
+   ===================================================== */
+
+#cancelModal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 18, 36, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+#cancelModal.open { display: flex; }
+
+#cancelModal .cm-box {
+    width: 100%;
+    max-width: 420px;
+    padding: 34px 30px 28px;
+    text-align: center;
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 26px 56px rgba(20, 33, 61, 0.35);
+    animation: cmPop 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cmPop {
+    from { opacity: 0; transform: translateY(18px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+}
+
+#cancelModal .cm-icon {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    font-size: 1.6rem;
+    color: #d64545;
+    background: #fdecec;
+    border-radius: 50%;
+    box-shadow: 0 0 0 8px rgba(214, 69, 69, 0.08);
+}
+
+#cancelModal h2 {
+    margin: 0 0 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    color: #14213d;
+}
+
+#cancelModal p {
+    margin: 0 0 26px;
+    font-size: 0.93rem;
+    line-height: 1.6;
+    color: #5b6578;
+}
+
+#cancelModal p strong { color: #14213d; }
+
+#cancelModal .cm-actions { display: flex; gap: 12px; }
+#cancelModal .cm-actions form { flex: 1; margin: 0; }
+
+#cancelModal .cm-btn {
+    width: 100%;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border: 0;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+#cancelModal .cm-keep { flex: 1; color: #14213d; background: #f1f4f9; }
+#cancelModal .cm-keep:hover { background: #e1e7f1; }
+
+#cancelModal .cm-yes {
+    color: #fff;
+    background: linear-gradient(135deg, #d64545, #b83232);
+    box-shadow: 0 8px 18px rgba(214, 69, 69, 0.3);
+}
+
+#cancelModal .cm-yes:hover { box-shadow: 0 12px 26px rgba(214, 69, 69, 0.45); }

@@ -2,8 +2,15 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect
+from django.urls import reverse
 
 TEMPLATE = 'authentication/authentication.html'
+HOME_TEMPLATE = 'authentication/authentication.html'   # change if you put home.html elsewhere
+
+
+def home(request):
+    """Landing page shown after login (and to visitors who aren't signed in)."""
+    return render(request, HOME_TEMPLATE)
 
 
 def register(request):
@@ -36,28 +43,20 @@ def register(request):
     })
 
 
+
 class HomeLoginView(LoginView):
-    """
-    One page for sign in and registration, shared by both roles.
-    Django's default AuthenticationForm already rejects deactivated
-    accounts (is_active=False), so no custom form is needed.
-    """
-    template_name = TEMPLATE
-    redirect_authenticated_user = True   # signed-in users skip this page
+    template_name = 'authentication/authentication.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        next_url = self.get_redirect_url()
+        if next_url:
+            return next_url
+
+        return reverse('home')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['register_form'] = UserCreationForm()
         context['active_tab'] = 'login'
         return context
-
-    def get_success_url(self):
-        # Honor a safe ?next= value if present (Django validates the host).
-        next_url = self.get_redirect_url()
-        if next_url:
-            return next_url
-
-        user = self.request.user
-        if user.is_staff or user.is_superuser:
-            return '/manage/'
-        return '/portal/'

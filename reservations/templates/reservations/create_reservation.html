@@ -1,73 +1,116 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Reserve {{ facility.name }}</title>
-</head>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/../../../static/css/home.css' %}">
+</head>
 <body>
 
-<h1>Reserve {{ facility.name }}</h1>
+    <header class="topbar">
+        <a href="{% url 'home' %}" class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            School Name
+        </a>
 
-<p>
-    <strong>Location:</strong>
-    {{ facility.location }}
-</p>
+        <div class="topbar-right">
+            <a href="{% url 'home' %}" class="topbar-link">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
 
-<p>
-    <strong>Capacity:</strong>
-    {{ facility.capacity }} students
-</p>
+            <div class="user-chip">
+                <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+                <span>{{ user.username }}</span>
+            </div>
 
-<hr>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-<h2>Reservation Details</h2>
+    <section class="hero page-hero">
+        <div class="hero-inner">
+            <div class="eyebrow">
+                <i class="fa-solid fa-calendar-plus"></i>
+                New Reservation
+            </div>
+            <h1>Reserve <span>{{ facility.name }}</span></h1>
+            <p>Fill in the details below and submit your request for approval.</p>
+        </div>
+    </section>
 
-<h3>Reservation Guidelines</h3>
+    <main class="content page-content">
 
-<ul>
-    <li>
-        Reservations can be made up to
-        {{ system_setting.advance_booking_days }}
-        calendar days in advance.
-    </li>
+        <div class="reserve-layout">
 
-    <li>
-        Maximum reservation duration:
-        {{ system_setting.max_booking_hours }} hours.
-    </li>
+            <section class="form-card">
+                <h2>Reservation Details</h2>
 
-    <li>
-        Reservations must be within the facility's operating hours.
-    </li>
+                <form method="POST">
+                    {% csrf_token %}
 
-    <li>
-        All reservation requests require administrator approval.
-    </li>
-</ul>
+                    {{ form.as_p }}
 
-<hr>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-paper-plane"></i> Submit Reservation Request
+                        </button>
+                        <a href="{% url 'facility_detail' facility.id %}" class="btn btn-ghost">Cancel</a>
+                    </div>
+                </form>
+            </section>
 
-<form method="POST">
+            <aside class="guide-card">
+                <div class="facility-mini">
+                    <span><i class="fa-solid fa-location-dot"></i> {{ facility.location }}</span>
+                    <span><i class="fa-solid fa-users"></i> {{ facility.capacity }} students</span>
+                </div>
 
-    {% csrf_token %}
+                <h2>Reservation Guidelines</h2>
 
-    {{ form.as_p }}
+                <ul class="guide-list">
+                    <li>
+                        <i class="fa-solid fa-circle-check"></i>
+                        Reservations can be made up to {{ system_setting.advance_booking_days }} calendar days in advance.
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-circle-check"></i>
+                        Maximum reservation duration: {{ system_setting.max_booking_hours }} hours.
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-circle-check"></i>
+                        Reservations must be within the facility's operating hours.
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-circle-check"></i>
+                        All reservation requests require administrator approval.
+                    </li>
+                </ul>
+            </aside>
 
-    <button type="submit">
-        Submit Reservation Request
-    </button>
+        </div>
 
-</form>
+        <a href="{% url 'facility_detail' facility.id %}" class="back-link">
+            <i class="fa-solid fa-arrow-left"></i> Back to Facility Details
+        </a>
 
-<br>
+    </main>
 
-<a href="{% url 'facility_detail' facility.id %}">
-    Back to Facility Details
-</a>
+    <footer class="footer">
+        &copy; {% now "Y" %} School Name &middot; Campus Facility Reservation System
+    </footer>
 
 </body>
 </html>

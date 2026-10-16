@@ -1,0 +1,286 @@
+/* =====================================================
+   RESERVATION TICKETS (self-contained)
+   (requires dashboard.css for :root variables and keyframes)
+   ===================================================== */
+
+.tk-head {
+    padding: 22px clamp(16px, 3vw, 40px);
+    color: var(--white);
+    background: linear-gradient(135deg, var(--navy), var(--navy-soft));
+}
+
+.tk-head-inner {
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.tk-head h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.6vw, 1.8rem);
+}
+
+.tk-head h1 span { color: var(--gold); }
+.tk-head p { margin: 4px 0 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.75); }
+
+.tk-page {
+    flex: 1;
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 24px clamp(16px, 3vw, 40px) 40px;
+}
+
+.tk-alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 14px 18px;
+    font-size: 0.93rem;
+    font-weight: 600;
+    color: #14532d;
+    background: #e7f8ee;
+    border: 1px solid #a7e3bf;
+    border-radius: 14px;
+}
+
+.tk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+    gap: 22px;
+}
+
+/* ---------- Ticket ---------- */
+.ticket {
+    --tk-tint: var(--white);
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 170px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-left: 6px solid var(--tk-accent);
+    border-radius: 18px;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+    animation: rise 0.6s var(--ease) both;
+}
+
+.ticket:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Main side */
+.tk-main {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 22px 24px;
+}
+
+.tk-facility {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+
+.tk-facility i { color: var(--gold); }
+
+.tk-main h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    line-height: 1.25;
+    color: var(--navy);
+    overflow-wrap: anywhere;
+}
+
+.tk-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 18px;
+}
+
+.tk-meta div { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+
+.tk-meta i {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    font-size: 0.78rem;
+    color: var(--navy);
+    background: var(--grey);
+    border-radius: 8px;
+}
+
+.tk-meta small {
+    display: block;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+
+.tk-meta strong {
+    display: block;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    color: var(--ink);
+}
+
+.tk-purpose {
+    margin: 0;
+    padding-top: 12px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    border-top: 1px dashed var(--line);
+    overflow-wrap: anywhere;
+}
+
+.tk-remarks {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--tk-tint);
+    border-radius: 10px;
+}
+
+.tk-remarks i { flex: none; margin-top: 3px; color: var(--tk-accent); }
+.tk-remarks b { font-weight: 800; }
+
+/* Stub side */
+.tk-stub {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 22px 16px;
+    text-align: center;
+    background: var(--tk-tint);
+    border-left: 2px dashed var(--line);
+    border-radius: 0 18px 18px 0;
+}
+
+/* perforation notches */
+.tk-stub::before,
+.tk-stub::after {
+    content: "";
+    position: absolute;
+    left: -13px;
+    width: 24px;
+    height: 24px;
+    background: var(--grey);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+}
+
+.tk-stub::before { top: -13px;    clip-path: inset(50% 0 0 0); }
+.tk-stub::after  { bottom: -13px; clip-path: inset(0 0 50% 0); }
+
+.tk-stub small {
+    display: block;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+
+.tk-stub .tk-no {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.tk-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tk-accent);
+    background: var(--white);
+    border: 1.5px solid var(--tk-accent);
+    border-radius: 999px;
+}
+
+.tk-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    background: currentColor;
+    border-radius: 50%;
+}
+
+.tk-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #a12626;
+    background: var(--white);
+    border: 1px solid #f4b6b6;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.tk-cancel:hover { color: var(--white); background: #d64545; border-color: #d64545; }
+
+.tk-stub form { margin: 0; }
+.tk-noaction { font-size: 0.74rem; color: var(--ink-soft); }
+
+/* Empty + back link */
+.tk-empty {
+    padding: 56px 24px;
+    text-align: center;
+    background: var(--white);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+}
+
+.tk-empty i { margin-bottom: 14px; font-size: 2.2rem; color: var(--gold); }
+.tk-empty p { margin: 0 0 20px; color: var(--ink-soft); }
+
+.tk-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 26px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--navy);
+    text-decoration: none;
+}
+
+@media (max-width: 540px) {
+    .tk-grid { grid-template-columns: 1fr; }
+    .ticket { grid-template-columns: 1fr;  border-top: 6px solid var(--tk-accent); }
+    .tk-stub { flex-direction: row; flex-wrap: wrap; border-left: 0; border-top: 2px dashed var(--line); border-radius: 0 0 18px 18px; }
+    .tk-stub::before, .tk-stub::after { display: none; }
+    .tk-meta { grid-template-columns: 1fr; }
+}

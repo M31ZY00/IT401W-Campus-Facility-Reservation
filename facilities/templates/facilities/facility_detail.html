@@ -1,64 +1,121 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>{{ facility.name }}</title>
-</head>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/../../../static/css/home.css' %}">
+
+</head>
 <body>
 
-    <h1>{{ facility.name }}</h1>
+    <header class="topbar">
+        <a href="{% url 'home' %}" class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            School Name
+        </a>
 
-    <p>
-        <strong>Location:</strong>
-        {{ facility.location }}
-    </p>
+        <div class="topbar-right">
+            <a href="{% url 'home' %}" class="topbar-link">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
 
-    <p>
-        <strong>Capacity:</strong>
-        {{ facility.capacity }} students
-    </p>
+            {% if user.is_authenticated %}
+                <div class="user-chip">
+                    <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+                    <span>{{ user.username }}</span>
+                </div>
 
-    <p>
-        <strong>Description:</strong>
-        {{ facility.description }}
-    </p>
+                <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Log out</span>
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="topbar-link">
+                    <i class="fa-solid fa-right-to-bracket"></i><span>Log in</span>
+                </a>
+            {% endif %}
+        </div>
+    </header>
 
-    <a href="{% url 'facility_detail' facility.id %}">
-    View Details
-    </a>
+    <section class="hero page-hero">
+        <div class="hero-inner">
+            <div class="eyebrow">
+                <i class="fa-solid fa-building"></i>
+                {{ facility.category.name|default:"Facility" }}
+            </div>
+            <h1>{{ facility.name }}</h1>
+            <p>{{ facility.location }}</p>
+        </div>
+    </section>
 
-    <p>
-        <strong>Status:</strong>
-        Available for reservation requests
-    </p>
+    <main class="content page-content">
 
-    <hr>
+        <div class="detail-layout">
 
-    <p>Want to use this facility?</p>
+            <section class="detail-card">
+                <h2>Facility Details</h2>
 
-{% if user.is_authenticated %}
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
+                        <div>
+                            <small>Location</small>
+                            <strong>{{ facility.location }}</strong>
+                        </div>
+                    </div>
 
-    <a href="{% url 'create_reservation' facility.id %}">
-        <button type="button">
-            Reserve Facility
-        </button>
-    </a>
+                    <div class="info-item">
+                        <div class="icon"><i class="fa-solid fa-users"></i></div>
+                        <div>
+                            <small>Capacity</small>
+                            <strong>{{ facility.capacity }} students</strong>
+                        </div>
+                    </div>
+                </div>
 
-{% else %}
+                <h2>Description</h2>
+                <p class="detail-desc">{{ facility.description }}</p>
+            </section>
 
-    <p>Please log in to reserve this facility.</p>
+            <aside class="reserve-card">
+                <span class="status">Available for reservation requests</span>
 
-    <a href="{% url 'login' %}">
-        Login to Reserve
-    </a>
+                <h2>Want to use this facility?</h2>
 
-{% endif %}
-    <br><br>
+                {% if user.is_authenticated %}
+                    <p>Submit a reservation request and track its status from your reservations page.</p>
+                    <a href="{% url 'create_reservation' facility.id %}" class="btn btn-gold btn-block">
+                        <i class="fa-solid fa-calendar-plus"></i> Reserve Facility
+                    </a>
+                {% else %}
+                    <p>Please log in to reserve this facility.</p>
+                    <a href="{% url 'login' %}" class="btn btn-gold btn-block">
+                        <i class="fa-solid fa-right-to-bracket"></i> Login to Reserve
+                    </a>
+                {% endif %}
+            </aside>
 
-    <a href="{% url 'facility_list' %}">Back to Facilities</a>
+        </div>
+
+        <a href="{% url 'facility_list' %}" class="back-link">
+            <i class="fa-solid fa-arrow-left"></i> Back to Facilities
+        </a>
+
+    </main>
+
+    <footer class="footer">
+        &copy; {% now "Y" %} School Name &middot; Campus Facility Reservation System
+    </footer>
 
 </body>
 </html>

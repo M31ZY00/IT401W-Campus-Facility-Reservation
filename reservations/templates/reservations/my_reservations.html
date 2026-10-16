@@ -1,139 +1,298 @@
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Reservations</title>
-</head>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+     <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+     <link rel="stylesheet" href="{% static 'css/cancel-modal.css' %}">
+</head>
 <body>
 
-    <h1>My Reservations</h1>
-
-    <p>Welcome, {{ user.username }}!</p>
-
-    <p>Here you can track the status and details of your facility reservations.</p>
-
-    <hr>
-
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-
-    {% if reservations %}
-
-        <table border="1" cellpadding="10">
-            <thead>
-                <tr>
-                    <th>Reservation ID</th>
-                    <th>Event Title</th>
-                    <th>Facility</th>
-                    <th>Location</th>
-                    <th>Date</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Participants</th>
-                    <th>Purpose</th>
-                    <th>Status</th>
-                    <th>Admin Remarks</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for reservation in reservations %}
-                    <tr>
-                        <td>
-                            #{{ reservation.id }}
-                        </td>
-
-                        <td>
-                            {{ reservation.event_title|default:"Untitled Event" }}
-                        </td>
-
-                        <td>
-                            {{ reservation.facility.name }}
-                        </td>
-
-                        <td>
-                            {{ reservation.facility.location }}
-                        </td>
-
-                        <td>
-                            {{ reservation.start_time|date:"M d, Y" }}
-                        </td>
-
-                        <td>
-                            {{ reservation.start_time|date:"h:i A" }}
-                        </td>
-
-                        <td>
-                            {{ reservation.end_time|date:"h:i A" }}
-                        </td>
-
-                        <td>
-                            {{ reservation.participant_count }}
-                        </td>
-
-                        <td>
-                            {{ reservation.purpose }}
-                        </td>
-
-                        <td>
-                            <strong>
-                                {{ reservation.get_status_display }}
-                            </strong>
-                        </td>
-
-                        <td>
-                            {% if reservation.decision_reason %}
-                                {{ reservation.decision_reason }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if reservation.status == 'pending' or reservation.status == 'approved' %}
-
-                                <form
-                                    method="POST"
-                                    action="{% url 'cancel_reservation' reservation.id %}"
-                                    onsubmit="return confirm('Are you sure you want to cancel this reservation?');"
-                                >
-                                    {% csrf_token %}
-
-                                    <button type="submit">
-                                        Cancel Reservation
-                                    </button>
-                                </form>
-
-                            {% else %}
-
-                                No action available
-
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-    {% else %}
-
-        <p>You haven't made any reservations yet.</p>
-
-        <a href="{% url 'facility_list' %}">
-            Browse Facilities
+    <!-- Header -->
+    <header class="topbar">
+        <a href="{% url 'home' %}" class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            School Name
         </a>
 
-    {% endif %}
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+                <span>{{ user.username }}</span>
+            </div>
 
-    <br><br>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-    <a href="{% url 'home' %}">Back to Home</a>
+    <!-- Page Heading -->
+    <div class="tk-head">
+        <div class="tk-head-inner">
+            <h1>My <span>Reservations</span></h1>
+            <p>Welcome, {{ user.username }}! Track the status of your facility reservations here.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="tk-page">
+
+     <!-- Back Button -->
+        <a href="{% url 'home' %}" class="tk-back">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Home
+        </a>
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <p class="tk-alert" role="status">
+                    <i class="fa-solid fa-circle-check"></i>
+                    {{ message }}
+                </p>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Reservations -->
+        {% if reservations %}
+            <div class="tk-grid">
+
+                {% for reservation in reservations %}
+                    <article class="ticket tk-{{ reservation.status }}">
+
+                        <div class="tk-main">
+
+                            <span class="tk-facility">
+                                <i class="fa-solid fa-building"></i>
+                                {{ reservation.facility.name }}
+                            </span>
+
+                            <h3>{{ reservation.event_title|default:"Untitled Event" }}</h3>
+
+                            <div class="tk-meta">
+
+                                <div>
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                    <span>
+                                        <small>Date</small>
+                                        <strong>{{ reservation.start_time|date:"M d, Y" }}</strong>
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <i class="fa-solid fa-clock"></i>
+                                    <span>
+                                        <small>Time</small>
+                                        <strong>
+                                            {{ reservation.start_time|date:"h:i A" }}
+                                            &ndash;
+                                            {{ reservation.end_time|date:"h:i A" }}
+                                        </strong>
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    <span>
+                                        <small>Location</small>
+                                        <strong>{{ reservation.facility.location }}</strong>
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <i class="fa-solid fa-users"></i>
+                                    <span>
+                                        <small>Participants</small>
+                                        <strong>{{ reservation.participant_count }}</strong>
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            {% if reservation.purpose %}
+                                <p class="tk-purpose">{{ reservation.purpose }}</p>
+                            {% endif %}
+
+                            {% if reservation.decision_reason %}
+                                <div class="tk-remarks">
+                                    <i class="fa-solid fa-message"></i>
+                                    <span>
+                                        <b>Admin remarks:</b>
+                                        {{ reservation.decision_reason }}
+                                    </span>
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+                        <!-- Ticket Sidebar -->
+                        <div class="tk-stub">
+                            <div>
+                                <small>Ticket</small>
+                                <span class="tk-no">#{{ reservation.id }}</span>
+                            </div>
+
+                            <span class="tk-status">
+                                {{ reservation.get_status_display }}
+                            </span>
+
+                            {% if reservation.status == 'pending' or reservation.status == 'approved' %}
+                                <button
+                                    type="button"
+                                    class="tk-cancel js-cancel"
+                                    data-action="{% url 'cancel_reservation' reservation.id %}"
+                                    data-title="{{ reservation.event_title|default:'Untitled Event' }}"
+                                    data-id="{{ reservation.id }}">
+                                    <i class="fa-solid fa-xmark"></i>
+                                    Cancel
+                                </button>
+                            {% else %}
+                                <span class="tk-noaction">No action available</span>
+                            {% endif %}
+                        </div>
+
+                    </article>
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <!-- Empty State -->
+            <div class="tk-empty">
+                <i class="fa-solid fa-ticket"></i>
+                <p>You haven't made any reservations yet.</p>
+                <a href="{% url 'facility_list' %}" class="btn btn-primary">
+                    Browse Facilities
+                </a>
+            </div>
+
+        {% endif %}
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        &copy; {% now "Y" %} School Name &middot; Campus Facility Reservation System
+    </footer>
+
+    <!-- Cancel Confirmation Modal -->
+    <div
+        id="cancelModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cmTitle"
+        aria-hidden="true">
+
+        <div class="cm-box">
+
+            <div class="cm-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+
+            <h2 id="cmTitle">Cancel this reservation?</h2>
+
+            <p>
+                You are about to cancel ticket
+                <strong id="cmId"></strong>
+                (<strong id="cmName"></strong>).
+                This can't be undone.
+            </p>
+
+            <div class="cm-actions">
+                <form method="POST" id="cmForm" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="cm-btn cm-yes">
+                        <i class="fa-solid fa-xmark"></i>
+                        Yes, cancel
+                    </button>
+                </form>
+
+                 <button
+                    type="button"
+                    class="cm-btn cm-keep"
+                    id="cmKeep">
+                    Keep it
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal JavaScript -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("cancelModal");
+        const modalForm = document.getElementById("cmForm");
+        const modalId = document.getElementById("cmId");
+        const modalName = document.getElementById("cmName");
+        const keepButton = document.getElementById("cmKeep");
+        const cancelButtons = document.querySelectorAll(".js-cancel");
+
+        function openModal(button) {
+            const action = button.dataset.action;
+            const title = button.dataset.title || "Untitled Event";
+            const id = button.dataset.id;
+
+            if (!action) {
+                console.error("Cancellation URL is missing.");
+                return;
+            }
+
+            modalForm.action = action;
+            modalId.textContent = "#" + id;
+            modalName.textContent = title;
+
+            modal.classList.add("open");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+
+            keepButton.focus();
+        }
+
+        function closeModal() {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+        }
+
+        cancelButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                openModal(button);
+            });
+        });
+
+        keepButton.addEventListener("click", closeModal);
+
+        modal.addEventListener("click", function (event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (
+                event.key === "Escape" &&
+                modal.classList.contains("open")
+            ) {
+                closeModal();
+            }
+        });
+    });
+    </script>
 
 </body>
 </html>
