@@ -26,6 +26,108 @@ from reservations.models import (
 
 MANILA = ZoneInfo("Asia/Manila")
 
+CATEGORY_DATA = [
+    (
+        "IT401W Demo Classrooms",
+        "Lecture Rooms",
+        "Rooms for lectures, seminars, and class activities.",
+    ),
+    (
+        "IT401W Demo Laboratories",
+        "Laboratories",
+        "Specialized rooms for hands-on academic activities.",
+    ),
+    (
+        "IT401W Demo Event Venues",
+        "Event and Meeting Spaces",
+        "Venues for meetings, conferences, and campus events.",
+    ),
+]
+
+AMENITY_DATA = [
+    ("IT401W Demo Wi-Fi", "Wi-Fi Access"),
+    ("IT401W Demo Projector", "LCD Projector"),
+    ("IT401W Demo Air Conditioning", "Air Conditioning"),
+    ("IT401W Demo Sound System", "Sound System"),
+    ("IT401W Demo Whiteboard", "Whiteboard"),
+    ("IT401W Demo Microphones", "Wireless Microphones"),
+    ("IT401W Demo Computers", "Desktop Computers"),
+    ("IT401W Demo Accessible Entrance", "Accessible Entrance"),
+]
+
+FACILITY_DATA = [
+    (
+        "DEMO-FAC-01", "LR-A101", "Lecture Room A101",
+        "Academic Building A, 1st Floor", 40, 0,
+    ),
+    (
+        "DEMO-FAC-02", "LR-A102", "Lecture Room A102",
+        "Academic Building A, 1st Floor", 45, 0,
+    ),
+    (
+        "DEMO-FAC-03", "LAB-B201", "Computer Laboratory B201",
+        "Technology Building B, 2nd Floor", 35, 1,
+    ),
+    (
+        "DEMO-FAC-04", "LAB-B202", "Science Laboratory B202",
+        "Science Building B, 2nd Floor", 30, 1,
+    ),
+    (
+        "DEMO-FAC-05", "EVT-SC01", "University Multipurpose Hall",
+        "Student Center, Ground Floor", 150, 2,
+    ),
+    (
+        "DEMO-FAC-06", "MTG-C301", "Conference Room C301",
+        "Administration Building C, 3rd Floor", 60, 2,
+    ),
+]
+
+USER_DATA = [
+    ("Miguel", "Santos", "miguel.santos"),
+    ("Andrea", "Reyes", "andrea.reyes"),
+    ("Joshua", "Cruz", "joshua.cruz"),
+    ("Sofia", "Garcia", "sofia.garcia"),
+    ("Daniel", "Mendoza", "daniel.mendoza"),
+    ("Isabella", "Torres", "isabella.torres"),
+    ("Nathan", "Flores", "nathan.flores"),
+    ("Camille", "Ramos", "camille.ramos"),
+]
+
+EVENT_TITLES = [
+    "College Orientation Program",
+    "Student Research Symposium",
+    "Faculty Curriculum Workshop",
+    "Campus Safety Seminar",
+    "Student Leadership Training",
+    "Digital Literacy Workshop",
+    "Research Proposal Consultation",
+    "Academic Advising Session",
+    "Information Technology Colloquium",
+    "Web Development Seminar",
+    "Computer Laboratory Training",
+    "Cybersecurity Awareness Forum",
+    "Science Laboratory Orientation",
+    "University Organization Assembly",
+    "Department Planning Meeting",
+    "Student Council Consultation",
+    "Thesis Writing Workshop",
+    "Faculty Coordination Meeting",
+    "Career Preparation Seminar",
+    "Programming Skills Workshop",
+    "Student Organization Planning",
+    "Laboratory Equipment Briefing",
+    "Peer Mentoring Session",
+    "Community Outreach Planning",
+]
+
+CLOSURE_REASONS = [
+    "Air-conditioning inspection",
+    "Electrical system maintenance",
+    "Computer workstation servicing",
+    "Laboratory safety inspection",
+    "Audio equipment maintenance",
+]
+
 
 def local_datetime(day, hour, minute=0):
     return timezone.make_aware(
@@ -35,7 +137,7 @@ def local_datetime(day, hour, minute=0):
 
 
 class Command(BaseCommand):
-    help = "Create repeatable fictional demonstration data."
+    help = "Create or refresh fictional campus reservation sample records."
 
     def add_history(self, reservation, actor, old, new, when, reason):
         record = ReservationChange.objects.create(
@@ -49,7 +151,6 @@ class Command(BaseCommand):
             new_end_time=reservation.end_time,
             reason=reason,
         )
-
         ReservationChange.objects.filter(
             pk=record.pk
         ).update(changed_at=when)
@@ -62,78 +163,122 @@ class Command(BaseCommand):
             object_id=obj.pk,
             description=description,
         )
-
         AuditLog.objects.filter(
             pk=record.pk
         ).update(timestamp=when)
+
+    def rename_or_create(self, model, old_lookup, new_lookup, fields):
+        """
+        Rename existing seeded records without changing their primary keys.
+        This preserves their existing relationships.
+        """
+        old = model.objects.filter(**old_lookup).first()
+        new = model.objects.filter(**new_lookup).first()
+
+        if old is not None and new is not None and old.pk != new.pk:
+
+            if model is Amenity:
+                # Transfer facilities to the existing realistic amenity.
+                for facility in Facility.objects.filter(amenities=old):
+                    facility.amenities.add(new)
+
+                # Remove only the old sample amenity.
+                old.delete()
+                obj = new
+
+            elif model is FacilityCategory:
+                # Keep facilities connected to the existing category.
+                Facility.objects.filter(category=old).update(
+                    category=new
+                )
+
+                old.delete()
+                obj = new
+
+            else:
+                raise CommandError(
+                    f"Both old and new records exist in "
+                    f"{model.__name__}: {old_lookup} / {new_lookup}."
+                )
+
+        else:
+            obj = old or new
+        created = obj is None
+
+        if created:
+            obj = model.objects.create(**new_lookup, **fields)
+        else:
+            for key, value in {**new_lookup, **fields}.items():
+                setattr(obj, key, value)
+
+            obj.save(
+                update_fields=list({**new_lookup, **fields})
+            )
+
+        return obj, created
 
     @transaction.atomic
     def handle(self, *args, **options):
         User = get_user_model()
 
-        category_names = [
-            "IT401W Demo Classrooms",
-            "IT401W Demo Laboratories",
-            "IT401W Demo Event Venues",
-        ]
-
+        # CATEGORIES
         categories = []
 
-        for name in category_names:
-            category, _ = FacilityCategory.objects.get_or_create(
-                name=name,
-                defaults={
-                    "description": "Fictional demonstration category.",
+        for old_name, new_name, description in CATEGORY_DATA:
+            category, _ = self.rename_or_create(
+                FacilityCategory,
+                {"name": old_name},
+                {"name": new_name},
+                {
+                    "description": description,
                     "is_active": True,
                 },
             )
             categories.append(category)
 
-        amenity_names = [
-            "IT401W Demo Wi-Fi",
-            "IT401W Demo Projector",
-            "IT401W Demo Air Conditioning",
-            "IT401W Demo Sound System",
-            "IT401W Demo Whiteboard",
-            "IT401W Demo Microphones",
-            "IT401W Demo Computers",
-            "IT401W Demo Accessible Entrance",
-        ]
-
+        # AMENITIES
         amenities = []
 
-        for name in amenity_names:
-            amenity, _ = Amenity.objects.get_or_create(
-                name=name,
-                defaults={
-                    "description": "Fictional demonstration amenity.",
+        for old_name, new_name in AMENITY_DATA:
+            amenity, _ = self.rename_or_create(
+                Amenity,
+                {"name": old_name},
+                {"name": new_name},
+                {
+                    "description": (
+                        f"Available facility equipment: {new_name}."
+                    ),
                     "is_active": True,
                 },
             )
             amenities.append(amenity)
 
-        facility_details = [
-            ("DEMO-FAC-01", "Demo Lecture Room 101", "Building A", 40, 0),
-            ("DEMO-FAC-02", "Demo Lecture Room 102", "Building A", 45, 0),
-            ("DEMO-FAC-03", "Demo Computer Laboratory", "Building B", 35, 1),
-            ("DEMO-FAC-04", "Demo Science Laboratory", "Building B", 30, 1),
-            ("DEMO-FAC-05", "Demo Multipurpose Hall", "Student Center", 150, 2),
-            ("DEMO-FAC-06", "Demo Conference Room", "Building C", 60, 2),
-        ]
-
+        # FACILITIES
         facilities = []
 
-        for index, details in enumerate(facility_details):
-            code, name, location, capacity, category_index = details
+        for index, details in enumerate(FACILITY_DATA):
+            (
+                old_code,
+                code,
+                name,
+                location,
+                capacity,
+                category_index,
+            ) = details
 
-            facility, created = Facility.objects.get_or_create(
-                code=code,
-                defaults={
-                    "category": categories[category_index],
+            facility, created = self.rename_or_create(
+                Facility,
+                {"code": old_code},
+                {"code": code},
+                {
                     "name": name,
                     "location": location,
+                    "category": categories[category_index],
                     "capacity": capacity,
-                    "description": "Fictional facility for testing.",
+                    "description": (
+                        "Campus facility available for approved "
+                        f"academic activities: {name}."
+                    ),
                     "opening_time": time(8, 0),
                     "closing_time": time(17, 0),
                     "is_active": True,
@@ -142,85 +287,209 @@ class Command(BaseCommand):
 
             if created:
                 facility.amenities.set([
-                    amenities[index % 8],
-                    amenities[(index + 1) % 8],
-                    amenities[(index + 2) % 8],
+                    amenities[(index + shift) % len(amenities)]
+                    for shift in range(3)
                 ])
 
             facilities.append(facility)
 
-        usernames = ["demo_admin"] + [
-            f"demo_user_{number:02d}"
-            for number in range(1, 9)
-        ]
-
-        missing_accounts = [
-            username
-            for username in usernames
-            if not User.objects.filter(username=username).exists()
-        ]
-
+        # ACCOUNT PASSWORDS
         password = None
 
-        if missing_accounts:
-            password = getpass(
-                "Choose a password for new fictional demo authentication: "
-            )
+        def password_for_new_account():
+            nonlocal password
 
-            if len(password) < 12:
-                raise CommandError(
-                    "Use a demo password with at least 12 characters."
+            if password is None:
+                password = getpass(
+                    "Choose a password for newly created "
+                    "sample accounts (12+ characters): "
                 )
 
-        admin, _ = User.objects.get_or_create(
-            username="demo_admin",
-            defaults={
-                "first_name": "Demo",
-                "last_name": "Administrator",
-                "is_staff": True,
-                "is_superuser": False,
-                "is_active": True,
-            },
+                if len(password) < 12:
+                    raise CommandError(
+                        "Use a password with at least 12 characters."
+                    )
+
+            return password
+
+        # RENAME EXISTING ACCOUNTS OR CREATE MISSING ACCOUNTS
+        def account(
+            old_usernames,
+            username,
+            first_name,
+            last_name,
+            is_admin,
+        ):
+            existing_new = User.objects.filter(
+                username=username
+            ).first()
+
+            existing_old = list(
+                User.objects.filter(username__in=old_usernames)
+            )
+
+            if len(existing_old) > 1:
+                raise CommandError(
+                    f"Multiple previous accounts found for "
+                    f"{username}; resolve manually."
+                )
+
+            old = existing_old[0] if existing_old else None
+
+            if old and existing_new and old.pk != existing_new.pk:
+                raise CommandError(
+                    f"Both previous and new usernames exist "
+                    f"for {username}; resolve manually."
+                )
+
+            user = old or existing_new
+
+            if user is None:
+                user = User(
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    is_staff=is_admin,
+                    is_superuser=False,
+                    is_active=True,
+                )
+                user.set_password(password_for_new_account())
+                user.save()
+
+            else:
+                if is_admin and (
+                    not user.is_staff or not user.is_active
+                ):
+                    raise CommandError(
+                        f"Existing {username} is not an active admin."
+                    )
+
+                if not is_admin and (
+                    user.is_staff or user.is_superuser
+                ):
+                    raise CommandError(
+                        f"Existing {username} has admin privileges."
+                    )
+
+                user.username = username
+                user.first_name = first_name
+                user.last_name = last_name
+
+                user.save(
+                    update_fields=[
+                        "username",
+                        "first_name",
+                        "last_name",
+                    ]
+                )
+
+            return user
+
+        # ADMIN ACCOUNTS
+        admin = account(
+            ["demo_admin"],
+            "admin_adrian",
+            "Admin Adrian",
+            "Reyes",
+            True,
         )
 
-        if not admin.is_staff or not admin.is_active:
-            raise CommandError(
-                "demo_admin already exists but is not an active admin."
-            )
+        account(
+            ["admin_mischa"],
+            "admin_sofia",
+            "Admin Sofia",
+            "Mendoza",
+            True,
+        )
 
-        if "demo_admin" in missing_accounts:
-            admin.set_password(password)
-            admin.save(update_fields=["password"])
-
+        # BASIC USER ACCOUNTS
         users = []
 
-        for number in range(1, 9):
-            username = f"demo_user_{number:02d}"
+        for number, details in enumerate(USER_DATA, start=1):
+            first, last, username = details
 
-            user, _ = User.objects.get_or_create(
-                username=username,
-                defaults={
-                    "first_name": f"Demo {number}",
-                    "last_name": "Student",
-                    "is_staff": False,
-                    "is_superuser": False,
-                    "is_active": True,
-                },
+            user = account(
+                [f"demo_user_{number:02d}"],
+                username,
+                first,
+                last,
+                False,
+            )
+            users.append(user)
+
+        # RENAME EXISTING RESERVATION EVENTS
+        # Keep their IDs, users, statuses, and history unchanged.
+        for number, title in enumerate(EVENT_TITLES, start=1):
+            old_title = f"IT401W Demo Event {number:02d}"
+
+            old_records = Reservation.objects.filter(
+                event_title=old_title
+            )
+            new_records = Reservation.objects.filter(
+                event_title=title
             )
 
-            if user.is_staff or user.is_superuser:
+            if (
+                old_records.count() > 1
+                or new_records.count() > 1
+            ):
                 raise CommandError(
-                    f"{username} already exists with admin privileges."
+                    f"Multiple reservations share the sample "
+                    f"event title: {title}."
                 )
 
-            if username in missing_accounts:
-                user.set_password(password)
-                user.save(update_fields=["password"])
+            if old_records.exists() and new_records.exists():
+                raise CommandError(
+                    f"Both old and new event titles exist for {title}."
+                )
 
-            users.append(user)
+            if old_records.exists():
+                old_records.update(event_title=title)
+
+            Reservation.objects.filter(
+                event_title=title,
+                purpose="Fictional completed or missed campus event.",
+            ).update(
+                purpose=f"Academic activity: {title}."
+            )
+
+            Reservation.objects.filter(
+                event_title=title,
+                purpose="Fictional campus activity for testing.",
+            ).update(
+                purpose=f"Academic activity: {title}."
+            )
+
+            Reservation.objects.filter(
+                event_title=title,
+                decision_reason="Approved for historical demonstration.",
+            ).update(
+                decision_reason="Approved by the campus facilities office."
+            )
+
+            Reservation.objects.filter(
+                event_title=title,
+                decision_reason=(
+                    "Fictional request rejected for demonstration."
+                ),
+            ).update(
+                decision_reason=(
+                    "Request did not meet facility scheduling requirements."
+                )
+            )
+
+            Reservation.objects.filter(
+                event_title=title,
+                decision_reason=(
+                    "Fictional request approved for demonstration."
+                ),
+            ).update(
+                decision_reason="Approved by the campus facilities office."
+            )
 
         today = timezone.localdate(timezone=MANILA)
 
+        # HISTORICAL RESERVATIONS
         historical_statuses = [
             "completed",
             "completed",
@@ -233,18 +502,19 @@ class Command(BaseCommand):
         ]
 
         for index, final_status in enumerate(historical_statuses):
-            event_number = index + 1
-            event_title = f"IT401W Demo Event {event_number:02d}"
+            title = EVENT_TITLES[index]
             user = users[index]
             facility = facilities[index % 6]
-            event_day = today - timedelta(days=15 + index)
 
-            start = local_datetime(event_day, 9)
-            end = local_datetime(event_day, 10)
+            start = local_datetime(
+                today - timedelta(days=15 + index),
+                9,
+            )
+            end = start + timedelta(hours=1)
 
             if Reservation.objects.filter(
                 user=user,
-                event_title=event_title,
+                event_title=title,
             ).exists():
                 continue
 
@@ -254,15 +524,17 @@ class Command(BaseCommand):
             reservation = Reservation.objects.create(
                 user=user,
                 facility=facility,
-                event_title=event_title,
-                purpose="Fictional completed or missed campus event.",
+                event_title=title,
+                purpose=f"Academic activity: {title}.",
                 participant_count=15,
                 start_time=start,
                 end_time=end,
                 status=final_status,
                 decision_by=admin,
                 decision_at=approved_at,
-                decision_reason="Approved for historical demonstration.",
+                decision_reason=(
+                    "Approved by the campus facilities office."
+                ),
             )
 
             Reservation.objects.filter(
@@ -270,41 +542,66 @@ class Command(BaseCommand):
             ).update(created_at=created_at)
 
             self.add_history(
-                reservation, user, "", "pending",
-                created_at, "Initial request.",
+                reservation,
+                user,
+                "",
+                "pending",
+                created_at,
+                "Initial request.",
             )
 
             self.add_history(
-                reservation, admin, "pending", "approved",
-                approved_at, "Request approved.",
+                reservation,
+                admin,
+                "pending",
+                "approved",
+                approved_at,
+                "Request approved.",
             )
 
             self.add_audit(
-                admin, "APPROVE", "Reservation",
-                reservation, "Approved fictional request.",
+                admin,
+                "APPROVE",
+                "Reservation",
+                reservation,
+                "Reservation approved.",
                 approved_at,
             )
 
             if final_status == "completed":
                 self.add_history(
-                    reservation, admin, "approved", "checked_in",
-                    start, "Attendee checked in.",
+                    reservation,
+                    admin,
+                    "approved",
+                    "checked_in",
+                    start,
+                    "Attendee checked in.",
                 )
 
                 self.add_history(
-                    reservation, admin, "checked_in", "completed",
-                    end, "Event completed.",
+                    reservation,
+                    admin,
+                    "checked_in",
+                    "completed",
+                    end,
+                    "Event completed.",
                 )
 
                 self.add_audit(
-                    admin, "CHECK_IN", "Reservation",
-                    reservation, "Event check-in recorded.",
+                    admin,
+                    "CHECK_IN",
+                    "Reservation",
+                    reservation,
+                    "Event check-in recorded.",
                     start,
                 )
 
                 self.add_audit(
-                    admin, "COMPLETE", "Reservation",
-                    reservation, "Event completion recorded.",
+                    admin,
+                    "COMPLETE",
+                    "Reservation",
+                    reservation,
+                    "Event completion recorded.",
                     end,
                 )
 
@@ -320,8 +617,8 @@ class Command(BaseCommand):
                     EventIncident.objects.create(
                         event_record=event_record,
                         description=(
-                            "Fictional minor equipment issue "
-                            "resolved during the event."
+                            "Minor equipment issue resolved "
+                            "during the event."
                         ),
                         reported_by=admin,
                     )
@@ -330,13 +627,20 @@ class Command(BaseCommand):
                 no_show_time = end + timedelta(minutes=15)
 
                 self.add_history(
-                    reservation, admin, "approved", "no_show",
-                    no_show_time, "Organizer did not check in.",
+                    reservation,
+                    admin,
+                    "approved",
+                    "no_show",
+                    no_show_time,
+                    "Organizer did not check in.",
                 )
 
                 self.add_audit(
-                    admin, "NO_SHOW", "Reservation",
-                    reservation, "No-show recorded.",
+                    admin,
+                    "NO_SHOW",
+                    "Reservation",
+                    reservation,
+                    "No-show recorded.",
                     no_show_time,
                 )
 
@@ -346,6 +650,7 @@ class Command(BaseCommand):
                     no_show_marked_by=admin,
                 )
 
+        # FUTURE RESERVATIONS
         future_details = [
             (0, 9, "approved"),
             (0, 10, "approved"),
@@ -370,8 +675,7 @@ class Command(BaseCommand):
         for index, details in enumerate(future_details):
             facility_index, start_hour, final_status = details
 
-            event_number = index + 9
-            event_title = f"IT401W Demo Event {event_number:02d}"
+            title = EVENT_TITLES[index + 8]
             user = users[index % 8]
             facility = facilities[facility_index]
 
@@ -380,15 +684,15 @@ class Command(BaseCommand):
 
             if Reservation.objects.filter(
                 user=user,
-                event_title=event_title,
+                event_title=title,
             ).exists():
                 continue
 
             reservation = Reservation(
                 user=user,
                 facility=facility,
-                event_title=event_title,
-                purpose="Fictional campus activity for testing.",
+                event_title=title,
+                purpose=f"Academic activity: {title}.",
                 participant_count=15,
                 start_time=start,
                 end_time=end,
@@ -399,8 +703,12 @@ class Command(BaseCommand):
             reservation.save()
 
             self.add_history(
-                reservation, user, "", "pending",
-                reservation.created_at, "Initial request.",
+                reservation,
+                user,
+                "",
+                "pending",
+                reservation.created_at,
+                "Initial request.",
             )
 
             if final_status == "pending":
@@ -414,19 +722,24 @@ class Command(BaseCommand):
 
                 if final_status == "rejected":
                     reservation.decision_reason = (
-                        "Fictional request rejected for demonstration."
+                        "Request did not meet facility "
+                        "scheduling requirements."
                     )
                 else:
                     reservation.decision_reason = (
-                        "Fictional request approved for demonstration."
+                        "Approved by the campus facilities office."
                     )
 
             reservation.full_clean()
             reservation.save()
 
             self.add_history(
-                reservation, admin, "pending", final_status,
-                timezone.now(), "Demonstration status transition.",
+                reservation,
+                admin,
+                "pending",
+                final_status,
+                timezone.now(),
+                "Reservation status updated.",
             )
 
             action = {
@@ -436,20 +749,39 @@ class Command(BaseCommand):
             }[final_status]
 
             self.add_audit(
-                admin, action, "Reservation",
+                admin,
+                action,
+                "Reservation",
                 reservation,
-                f"Fictional reservation marked {final_status}.",
+                f"Reservation marked {final_status}.",
                 timezone.now(),
             )
 
-        for index in range(5):
+        # FACILITY MAINTENANCE CLOSURES
+        for index, reason in enumerate(CLOSURE_REASONS):
             facility = facilities[index]
-            reason = f"IT401W demo maintenance {index + 1}"
+            old_reason = f"IT401W demo maintenance {index + 1}"
 
-            if FacilityClosure.objects.filter(
+            old_closures = FacilityClosure.objects.filter(
+                facility=facility,
+                reason=old_reason,
+            )
+            new_closures = FacilityClosure.objects.filter(
                 facility=facility,
                 reason=reason,
-            ).exists():
+            )
+
+            if old_closures.exists() and new_closures.exists():
+                raise CommandError(
+                    f"Both old and new maintenance records "
+                    f"exist for {facility.name}."
+                )
+
+            if old_closures.exists():
+                old_closures.update(reason=reason)
+                continue
+
+            if new_closures.exists():
                 continue
 
             closure_day = today + timedelta(days=45 + index)
@@ -466,13 +798,54 @@ class Command(BaseCommand):
             closure.save()
 
             self.add_audit(
-                admin, "CREATE", "FacilityClosure",
-                closure, "Fictional maintenance closure created.",
+                admin,
+                "CREATE",
+                "FacilityClosure",
+                closure,
+                "Maintenance closure scheduled.",
                 timezone.now(),
             )
 
+        # UPDATE LEGACY AUDIT AND HISTORY DESCRIPTIONS
+        AuditLog.objects.filter(
+            description="Approved fictional request."
+        ).update(
+            description="Reservation approved."
+        )
+
+        AuditLog.objects.filter(
+            description="Fictional maintenance closure created."
+        ).update(
+            description="Maintenance closure scheduled."
+        )
+
+        for status in ["approved", "rejected", "cancelled"]:
+            AuditLog.objects.filter(
+                description=f"Fictional reservation marked {status}."
+            ).update(
+                description=f"Reservation marked {status}."
+            )
+
+        ReservationChange.objects.filter(
+            reason="Demonstration status transition."
+        ).update(
+            reason="Reservation status updated."
+        )
+
+        EventIncident.objects.filter(
+            description=(
+                "Fictional minor equipment issue "
+                "resolved during the event."
+            )
+        ).update(
+            description=(
+                "Minor equipment issue resolved during the event."
+            )
+        )
+
+        # CHECK OVERLAPPING RESERVATIONS
         first_approved = Reservation.objects.get(
-            event_title="IT401W Demo Event 09",
+            event_title=EVENT_TITLES[8],
             user=users[0],
         )
 
@@ -481,7 +854,7 @@ class Command(BaseCommand):
                 user=users[1],
                 facility=first_approved.facility,
                 event_title="Unsaved Conflict Test",
-                purpose="Demonstrate overlapping approval rejection.",
+                purpose="Verify overlapping reservation rejection.",
                 participant_count=10,
                 start_time=first_approved.start_time,
                 end_time=first_approved.end_time,
@@ -490,8 +863,11 @@ class Command(BaseCommand):
 
             try:
                 conflict.full_clean()
+
             except ValidationError as error:
-                messages = error.message_dict.get("start_time", [])
+                messages = error.message_dict.get(
+                    "start_time", []
+                )
 
                 if not any(
                     "already has an approved" in message
@@ -500,30 +876,32 @@ class Command(BaseCommand):
                     raise CommandError(
                         "Conflict test failed for an unexpected reason."
                     )
+
             else:
                 raise CommandError(
-                    "Conflict test failed: overlapping approval was allowed."
+                    "Conflict test failed: "
+                    "overlapping approval was allowed."
                 )
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    "Conflict test passed: overlapping approval rejected."
+                    "Conflict test passed: "
+                    "overlapping approval rejected."
                 )
             )
 
         self.stdout.write("")
         self.stdout.write(
-            self.style.SUCCESS("Demo database prepared successfully.")
+            self.style.SUCCESS(
+                "Sample database updated successfully."
+            )
         )
         self.stdout.write(
-            "Demo ADMIN: demo_admin"
+            "ADMIN: admin_adrian / admin_sofia"
         )
         self.stdout.write(
-            "Demo BASIC USERS: demo_user_01 through demo_user_08"
+            "BASIC USERS: 8 fictional name-based accounts"
         )
         self.stdout.write(
-            "Passwords are the ones chosen when each account was created."
-        )
-        self.stdout.write(
-            "Existing database records were preserved."
+            "Existing passwords and linked records were preserved."
         )

@@ -13,7 +13,7 @@ from .models import AuditLog, SystemSetting
 
 
 def administrator_required(view_func):
-    @login_required(login_url='admin_login')
+    @login_required(login_url="/accounts/admin-login/")
     def wrapper(request, *args, **kwargs):
         if not request.user.is_active or not request.user.is_staff:
             raise PermissionDenied
