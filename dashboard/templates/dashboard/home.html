@@ -30,6 +30,14 @@
             My Reservations
         </a>
 
+        {% if user.is_staff or user.is_superuser %}
+            <br><br>
+
+            <a href="/manage/">
+                Manage Facilities &amp; Reservations
+            </a>
+        {% endif %}
+
         <br><br>
 
         <form method="POST" action="{% url 'logout' %}">
@@ -39,8 +47,6 @@
 
     {% else %}
 
-        <h3>Student Access</h3>
-
         <a href="{% url 'facility_list' %}">
             Browse Facilities
         </a>
@@ -48,21 +54,13 @@
         <br><br>
 
         <a href="{% url 'login' %}">
-            Student Login
+            Log In
         </a>
 
         <br><br>
 
         <a href="{% url 'register' %}">
-            Student Registration
-        </a>
-
-        <hr>
-
-        <h3>Administrator Access</h3>
-
-        <a href="{% url 'admin_login' %}">
-            Administrator Login
+            Create Account
         </a>
 
     {% endif %}

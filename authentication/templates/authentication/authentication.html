@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Facility Reservation System</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="{% static 'css/authentiation.css' %}">
+</head>
+<body>
+
+    <main class="card">
+        <!-- Left: brand panel -->
+        <section class="brand">
+            <div class="badge">
+                <i class="fa-solid fa-graduation-cap"></i> School Name
+            </div>
+
+            <div class="brand-text">
+                <h1>Campus Facility</h1>
+                <p class="subtitle">Reservation System</p>
+                <p class="description">
+                    Browse available campus facilities, submit bookings, and manage your active reservations seamlessly.
+                </p>
+            </div>
+        </section>
+
+        <!-- Right: sign in / create account -->
+        <section class="actions">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="form-success" role="status">
+                        <i class="fa-solid fa-circle-check"></i> {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+
+            {% if active_tab == 'register' %}
+
+                <!-- Create account: always creates a basic user -->
+                <form method="POST" action="{% url 'register' %}" class="login-form" id="register-form" novalidate>
+                    {% csrf_token %}
+
+                    {% for error in register_form.non_field_errors %}
+                        <p class="form-error" role="alert">{{ error }}</p>
+                    {% endfor %}
+
+                    <div class="field">
+                        <label for="{{ register_form.username.id_for_label }}">Username</label>
+                        {{ register_form.username }}
+                        {% for error in register_form.username.errors %}
+                            <p class="form-error" role="alert">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field">
+                        <label for="{{ register_form.password1.id_for_label }}">Password</label>
+                        <div class="password-wrap">
+                            {{ register_form.password1 }}
+                            <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        {% for error in register_form.password1.errors %}
+                            <p class="form-error" role="alert">{{ error }}</p>
+                        {% endfor %}
+
+                        <div class="pw-popup" id="pw-popup">
+                            <div class="pw-popup-inner">
+                                <ul class="pw-rules" id="pw-rules" aria-live="polite">
+                                    <li data-rule="length"><i class="fa-regular fa-circle"></i> At least 8 characters</li>
+                                    <li data-rule="upper"><i class="fa-regular fa-circle"></i> One uppercase letter</li>
+                                    <li data-rule="number"><i class="fa-regular fa-circle"></i> One number</li>
+                                    <li data-rule="special"><i class="fa-regular fa-circle"></i> One special character (!@#$%^&amp;*)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="{{ register_form.password2.id_for_label }}">Confirm password</label>
+                        <div class="password-wrap">
+                            {{ register_form.password2 }}
+                            <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        <p class="match-msg" id="match-msg" aria-live="polite"></p>
+                        {% for error in register_form.password2.errors %}
+                            <p class="form-error" role="alert">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="register-submit" disabled>
+                        Create Account
+                    </button>
+                </form>
+
+                <p class="register-line">
+                    Already have an account? <a href="{% url 'login' %}">Sign in</a>
+                </p>
+
+            {% else %}
+
+                <!-- Sign in: one form for both roles; the server redirects by role -->
+                <form method="POST" action="{% url 'login' %}" class="login-form" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <p class="form-error" role="alert">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            {{ form.non_field_errors.0 }}
+                        </p>
+                    {% endif %}
+
+                    <div class="field">
+                        <label for="{{ form.username.id_for_label }}">Username</label>
+                        {{ form.username }}
+                        {% for error in form.username.errors %}
+                            <p class="form-error" role="alert">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field">
+                        <label for="{{ form.password.id_for_label }}">Password</label>
+                        <div class="password-wrap">
+                            {{ form.password }}
+                            <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        {% for error in form.password.errors %}
+                            <p class="form-error" role="alert">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Log In
+                    </button>
+                </form>
+
+                <p class="register-line">
+                    Don't have an account? <a href="{% url 'register' %}">Create account</a>
+                </p>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+    <script>
+    (function () {
+        // ---- Show/hide password toggles (login + register) ----
+        document.querySelectorAll('.toggle-password').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = btn.parentElement.querySelector('input');
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+                btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                btn.querySelector('i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+            });
+        });
+
+        {% if active_tab == 'register' %}
+        // ---- Live requirements + confirm match (register only) ----
+        var username = document.getElementById('{{ register_form.username.id_for_label }}');
+        var pw1 = document.getElementById('{{ register_form.password1.id_for_label }}');
+        var pw2 = document.getElementById('{{ register_form.password2.id_for_label }}');
+        var submit = document.getElementById('register-submit');
+        var matchMsg = document.getElementById('match-msg');
+        var rules = document.querySelectorAll('#pw-rules li');
+
+        var checks = {
+            length:     function (p) { return p.length >= 8; },
+            upper:      function (p) { return /[A-Z]/.test(p); },
+            lower:      function (p) { return /[a-z]/.test(p); },
+            number:     function (p) { return /\d/.test(p); },
+            special:    function (p) { return /[^A-Za-z0-9]/.test(p); },
+            notnumeric: function (p) { return p.length > 0 && !/^\d+$/.test(p); },
+            username:   function (p, u) { return p.length > 0 && (!u || p.toLowerCase().indexOf(u.toLowerCase()) === -1); }
+        };
+
+        function validate() {
+            var p = pw1.value, u = username.value.trim(), allOk = true;
+
+            rules.forEach(function (li) {
+                var ok = checks[li.dataset.rule](p, u);
+                li.classList.toggle('valid', ok);
+                li.querySelector('i').className = ok ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
+                if (!ok) allOk = false;
+            });
+
+            var matches = pw2.value.length > 0 && p === pw2.value;
+            if (pw2.value.length === 0) {
+                matchMsg.textContent = '';
+                matchMsg.className = 'match-msg';
+            } else if (matches) {
+                matchMsg.innerHTML = '<i class="fa-solid fa-circle-check"></i> Passwords match';
+                matchMsg.className = 'match-msg ok';
+            } else {
+                matchMsg.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Passwords do not match';
+                matchMsg.className = 'match-msg bad';
+            }
+
+            submit.disabled = !(allOk && matches && u.length > 0);
+            return allOk;
+        }
+
+        // Slide the requirements panel down while typing in the password field
+        var popup = document.getElementById('pw-popup');
+
+        pw1.addEventListener('focus', function () { popup.classList.add('open'); });
+        pw1.addEventListener('input', function () { popup.classList.add('open'); });
+        pw1.addEventListener('blur', function () {
+            // Collapse once the password meets every rule; stay open if something is missing
+            if (validate()) popup.classList.remove('open');
+        });
+
+        [username, pw1, pw2].forEach(function (el) {
+            el.addEventListener('input', validate);
+        });
+        validate();
+
+        // If the server re-rendered with a password error, show the rules
+        if (pw1.value && !validate()) popup.classList.add('open');
+        {% endif %}
+    })();
+    </script>
+
+</body>
+</html>

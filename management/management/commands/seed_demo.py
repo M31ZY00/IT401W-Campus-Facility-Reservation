@@ -164,7 +164,7 @@ class Command(BaseCommand):
 
         if missing_accounts:
             password = getpass(
-                "Choose a password for new fictional demo accounts: "
+                "Choose a password for new fictional demo authentication: "
             )
 
             if len(password) < 12:

@@ -1,0 +1,397 @@
+/* ===== Tokens (palette) ===== */
+:root {
+    --black:  #000000;
+    --navy:   #14213D;
+    --orange: #FCA311;
+    --grey:   #E5E5E5;
+    --white:  #FFFFFF;
+
+    --line:   #E5E5E5;   /* borders on white */
+    --ink:    var(--black);
+    --ink-soft: #3A4357; /* secondary text on white */
+
+    --font-display: 'Cinzel', serif;
+    --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    background: var(--white);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+/* ===== Card: two flat panels ===== */
+.card {
+    width: 100%;
+    max-width: 920px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    background: var(--white);
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 12px 0 rgba(20, 33, 61, 0.15);
+}
+
+/* ===== Brand panel (solid navy) ===== */
+.brand {
+    background: var(--navy);
+    color: var(--white);
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.badge {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--orange);
+    color: var(--navy);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 7px 14px;
+    border-radius: 999px;
+}
+
+.brand-text { position: relative; z-index: 1; }
+
+h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+}
+
+.subtitle {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin-top: 6px;
+    color: var(--orange);
+}
+
+.description {
+    margin-top: 22px;
+    max-width: 36ch;
+    line-height: 1.7;
+    font-size: 0.98rem;
+    color: var(--grey);
+}
+
+/* Large faded icon as the one quiet graphic accent */
+.brand-mark {
+    position: absolute;
+    right: -28px;
+    bottom: -34px;
+    font-size: 11rem;
+    color: var(--orange);
+    opacity: 0.16;
+    pointer-events: none;
+}
+
+/* ===== Actions panel (white) ===== */
+.actions {
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 22px;
+}
+
+/* ===== Forms ===== */
+.login-form { display: flex; flex-direction: column; gap: 24px; }
+
+/* One group per input: label, field, and its errors */
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.login-form label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px 14px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--ink);
+    background: var(--white);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+}
+
+.login-form input:focus {
+    outline: none;
+    border-color: var(--navy);
+}
+
+.login-form .btn { margin-top: 4px; }
+
+.field-help {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    line-height: 1.45;
+}
+
+.field-help ul { margin: 4px 0 0 18px; }
+
+/* ===== Messages ===== */
+.form-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.form-success {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--navy);
+    border-radius: 12px;
+    padding: 11px 14px;
+}
+
+.form-success i { color: var(--orange); }
+
+/* ===== Buttons ===== */
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 13px 20px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: 2px solid var(--orange);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-primary {
+  background: var(--orange);
+  color: var(--navy);
+}
+
+.btn-outline {
+  background: var(--white);
+  color: var(--navy);
+  border-color: var(--navy);
+}
+
+.btn-primary:hover,
+.btn-outline:hover {
+  filter: brightness(1.10);
+}
+
+.btn-outline:hover { background: var(--grey); }
+
+.btn:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 3px;
+}
+
+/* ===== Switch line (bottom of the form) ===== */
+.register-line {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    text-align: center;
+    text-decoration: none;
+}
+
+.register-line a {
+    color: var(--navy);
+    font-weight: 700;
+    text-underline-offset: 3px;
+    text-decoration: none;
+}
+
+.register-line a:hover { text-decoration-thickness: 2px; }
+
+.register-line a:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ===== Confirm-password modal ===== */
+.modal {
+    margin: auto;
+    width: calc(100% - 32px);
+    max-width: 420px;
+    padding: 28px;
+    color: var(--ink);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 10px 0 rgba(20, 33, 61, 0.15);
+}
+
+.modal::backdrop { background: rgba(0, 0, 0, 0.65); }
+
+.modal h2 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--navy);
+    margin-bottom: 6px;
+}
+
+.modal-text {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+/* ---- Add to the bottom of css/authentiation.css ---- */
+
+/* Password field with eye toggle */
+.password-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrap input {
+    width: 100%;
+    padding-right: 44px; /* room for the eye button */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.toggle-password:hover { color: #111827; }
+.toggle-password:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
+
+/* Floating popup: overlays the fields below instead of pushing them down */
+.field { position: relative; }
+.field:focus-within { z-index: 20; }   /* keeps the popup above later fields */
+
+.pw-popup {
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 0;
+    right: 0;
+    z-index: 50;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.pw-popup.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s;
+}
+
+.pw-popup-inner {
+    position: relative;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+/* little arrow pointing up at the input */
+.pw-popup-inner::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 24px;
+    width: 10px;
+    height: 10px;
+    background: #ffffff;
+    border-left: 1px solid #e5e7eb;
+    border-top: 1px solid #e5e7eb;
+    transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pw-popup, .pw-popup.open { transition: none; }
+}
+
+/* Requirements checklist */
+.pw-rules {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+    font-size: 0.82rem;
+    color: #6b7280;
+}
+
+.pw-rules li { display: flex; align-items: center; gap: 8px; }
+.pw-rules li i { width: 14px; text-align: center; }
+.pw-rules li.valid { color: #15803d; }
+
+/* Confirm password match message */
+.match-msg {
+    margin: 6px 0 0;
+    font-size: 0.82rem;
+    min-height: 1.1em;
+}
+.match-msg.ok  { color: #15803d; }
+.match-msg.bad { color: #b91c1c; }
+
+/* Disabled submit */
+.btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 760px) {
+    .card { grid-template-columns: 1fr; }
+    .brand { padding: 32px 26px 40px; gap: 28px; }
+    .brand-mark { font-size: 8rem; }
+    .actions { padding: 30px 26px 34px; }
+}
