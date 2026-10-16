@@ -263,8 +263,11 @@
     font-weight: 600;
 }
 
+/* Centered and properly spaced footer */
 .settings-footer {
     margin-top: 4rem;
+    text-align: center;
+    padding: 24px 20px;
 }
 
 @media (max-width: 1024px) {
