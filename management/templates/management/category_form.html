@@ -1,53 +1,102 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>
         {% if is_edit %}
-            Edit Amenity
+            Edit Category | Campus Facility Reservation
         {% else %}
-            Add Amenity
+            Add Category | Campus Facility Reservation
         {% endif %}
     </title>
-</head>
 
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/category-form.css' %}">
+</head>
 <body>
 
-    <h1>
-        {% if is_edit %}
-            Edit Amenity: {{ amenity.name }}
-        {% else %}
-            Add New Amenity
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
+
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
+
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <main class="form-container">
+
+        <!-- Header & Back Navigation -->
+        <div class="form-header-wrapper">
+            <h1>
+                {% if is_edit %}
+                    Edit Category: {{ category.name }}
+                {% else %}
+                    Add New Category
+                {% endif %}
+            </h1>
+
+            <a href="{% url 'manage_categories' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Category Management
+            </a>
+        </div>
+
+        <!-- Alert Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-message">
+                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
-    </h1>
 
-    <a href="{% url 'manage_amenities' %}">
-        Back to Amenity Management
-    </a>
+        <!-- Form Card Container -->
+        <div class="form-card">
+            <form method="POST" class="category-form">
+                {% csrf_token %}
 
-    <hr>
+                {{ form.as_p }}
 
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endif %}
+                <div class="form-actions">
+                    <a href="{% url 'manage_categories' %}" class="btn-cancel">Cancel</a>
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        {% if is_edit %}
+                            Update Category
+                        {% else %}
+                            Save Category
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
 
-    <form method="POST">
-        {% csrf_token %}
-
-        {{ form.as_p }}
-
-        <button type="submit">
-            {% if is_edit %}
-                Update Amenity
-            {% else %}
-                Save Amenity
-            {% endif %}
-        </button>
-    </form>
+    </main>
 
 </body>
 </html>

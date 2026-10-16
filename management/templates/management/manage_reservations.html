@@ -1,299 +1,273 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Management</title>
+    <title>Reservation Management | Campus Facility Reservation</title>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/manage-reservations.css' %}">
 </head>
 <body>
 
-<h1>Reservation Management</h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-<a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-{% if messages %}
-    {% for message in messages %}
-        <p>{{ message }}</p>
-    {% endfor %}
-{% endif %}
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-<form method="GET">
+    <main class="reservations-container">
 
-    <input
-        type="text"
-        name="search"
-        value="{{ search_query }}"
-        placeholder="Search reservations"
-    >
+        <!-- Header & Back Navigation -->
+        <div class="reservations-header-wrapper">
+            <h1>Reservation Management</h1>
+            <a href="{% url 'admin_dashboard' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
 
-    <select name="status">
+        <!-- Alert Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-message">
+                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-        <option value="">All Statuses</option>
+        <!-- Search & Filter Card -->
+        <div class="search-card">
+            <form method="GET" class="search-form">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                        type="text"
+                        name="search"
+                        class="search-input"
+                        value="{{ search_query }}"
+                        placeholder="Search reservations..."
+                    >
+                </div>
 
-        {% for value, label in status_choices %}
+                <select name="status" class="status-select">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                        <option
+                            value="{{ value }}"
+                            {% if status_filter == value %}selected{% endif %}
+                        >
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
 
-            <option
-                value="{{ value }}"
-                {% if status_filter == value %}selected{% endif %}
-            >
-                {{ label }}
-            </option>
+                <button type="submit" class="btn-search">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
 
-        {% endfor %}
-
-    </select>
-
-    <button type="submit">Search</button>
-
-    <a href="{% url 'manage_reservations' %}">
-        Clear
-    </a>
-
-</form>
-
-<br>
-
-<table border="1" cellpadding="10">
-
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Facility</th>
-            <th>Event</th>
-            <th>Participants</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        {% for reservation in page_obj %}
-
-        <tr>
-
-            <td>{{ reservation.id }}</td>
-
-            <td>{{ reservation.user.username }}</td>
-
-            <td>{{ reservation.facility.name }}</td>
-
-            <td>
-                {% if reservation.event_title %}
-                    {{ reservation.event_title }}
-                {% else %}
-                    {{ reservation.purpose }}
+                {% if search_query or status_filter %}
+                    <a href="{% url 'manage_reservations' %}" class="btn-clear">
+                        <i class="fa-solid fa-xmark"></i> Clear Filters
+                    </a>
                 {% endif %}
-            </td>
+            </form>
+        </div>
 
-            <td>{{ reservation.participant_count }}</td>
+        <!-- Table Card Wrapper -->
+        <div class="table-card">
+            <div class="table-header-bar">
+                <h2>All Reservations</h2>
+            </div>
 
-            <td>
-                {{ reservation.start_time|date:"M d, Y h:i A" }}
-            </td>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Facility</th>
+                            <th>Event / Purpose</th>
+                            <th>Participants</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-            <td>
-                {{ reservation.end_time|date:"M d, Y h:i A" }}
-            </td>
+                    <tbody>
+                        {% for reservation in page_obj %}
+                        <tr>
+                            <td><strong>#{{ reservation.id }}</strong></td>
+                            <td>{{ reservation.user.username }}</td>
+                            <td>{{ reservation.facility.name }}</td>
+                            <td>
+                                {% if reservation.event_title %}
+                                    {{ reservation.event_title }}
+                                {% else %}
+                                    {{ reservation.purpose }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <i class="fa-solid fa-users" style="color: var(--ink-soft); font-size: 0.75rem; margin-right: 4px;"></i>
+                                {{ reservation.participant_count }}
+                            </td>
+                            <td>{{ reservation.start_time|date:"M d, Y h:i A" }}</td>
+                            <td>{{ reservation.end_time|date:"M d, Y h:i A" }}</td>
+                            <td>
+                                <span class="badge-status {{ reservation.status }}">
+                                    <span class="status-dot"></span> {{ reservation.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="actions-cell-wrapper">
+                                    <!-- History Link -->
+                                    <a href="{% url 'reservation_history' reservation.id %}" class="btn-action-history">
+                                        <i class="fa-solid fa-clock-rotate-left"></i> History
+                                    </a>
 
-            <td>
-                {{ reservation.get_status_display }}
-            </td>
+                                    {% if reservation.status == 'pending' %}
+                                        <!-- Hidden Form for Rejection Handling via HTML5 form attribute -->
+                                        <form id="reject-form-{{ reservation.id }}" method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="display: none;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="REJECT">
+                                        </form>
 
-            <td>
+                                        <!-- Side-by-Side Approve & Reject Buttons Row -->
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="APPROVE">
+                                                <button type="submit" class="btn-act approve">
+                                                    <i class="fa-solid fa-check"></i> Approve
+                                                </button>
+                                            </form>
 
-                <a href="{% url 'reservation_history' reservation.id %}">
-                    View History
-                </a>
+                                            <button type="submit" form="reject-form-{{ reservation.id }}" class="btn-act reject">
+                                                <i class="fa-solid fa-xmark"></i> Reject
+                                            </button>
+                                        </div>
 
-                <br><br>
+                                        <!-- Rejection Reason Input Field Below -->
+                                        <div style="margin-top: 6px;">
+                                            <input type="text" name="reason" form="reject-form-{{ reservation.id }}" placeholder="Rejection reason..." required class="action-input-reason" style="width: 100%;">
+                                        </div>
 
-                {% if reservation.status == 'pending' %}
+                                    {% elif reservation.status == 'approved' %}
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                            <a href="{% url 'reschedule_reservation' reservation.id %}" class="btn-action-history" style="background: rgba(26,115,232,0.08); color: #1a73e8; border-color: rgba(26,115,232,0.2);">
+                                                <i class="fa-solid fa-calendar-days"></i> Reschedule
+                                            </a>
 
-                    <form
-                        method="POST"
-                        action="{% url 'update_reservation_status' reservation.id %}"
-                    >
-                        {% csrf_token %}
+                                            <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="CHECK_IN">
+                                                <button type="submit" class="btn-act check-in">
+                                                    <i class="fa-solid fa-right-to-bracket"></i> Check In
+                                                </button>
+                                            </form>
 
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="APPROVE"
-                        >
+                                            <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="NO_SHOW">
+                                                <button type="submit" class="btn-act no-show">
+                                                    <i class="fa-solid fa-user-slash"></i> No Show
+                                                </button>
+                                            </form>
+                                        </div>
 
-                        <button type="submit">
-                            Approve
-                        </button>
+                                        <!-- Cancellation Form with Hidden Binding -->
+                                        <form id="cancel-form-{{ reservation.id }}" method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="display: none;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="CANCEL">
+                                        </form>
 
-                    </form>
+                                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                                            <input type="text" name="reason" form="cancel-form-{{ reservation.id }}" placeholder="Cancellation reason..." required class="action-input-reason" style="flex-grow: 1;">
+                                            <button type="submit" form="cancel-form-{{ reservation.id }}" class="btn-act cancel">
+                                                <i class="fa-solid fa-ban"></i> Cancel
+                                            </button>
+                                        </div>
 
-                    <br>
+                                    {% elif reservation.status == 'checked_in' %}
+                                        <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="COMPLETE">
+                                            <button type="submit" class="btn-act complete">
+                                                <i class="fa-solid fa-flag-checkered"></i> Complete
+                                            </button>
+                                        </form>
 
-                    <form
-                        method="POST"
-                        action="{% url 'update_reservation_status' reservation.id %}"
-                    >
-                        {% csrf_token %}
+                                    {% else %}
+                                        <span style="font-size: 0.78rem; color: var(--ink-soft); font-style: italic;">No actions available</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="empty-cell">
+                                <i class="fa-solid fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                No reservations found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="REJECT"
-                        >
+            <!-- Pagination Footer -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination-container">
+                <div>
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}" class="page-link-btn">
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </a>
+                    {% endif %}
+                </div>
 
-                        <input
-                            type="text"
-                            name="reason"
-                            placeholder="Rejection reason"
-                            required
-                        >
+                <span>Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</span>
 
-                        <button type="submit">
-                            Reject
-                        </button>
+                <div>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}" class="page-link-btn">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
 
-                    </form>
-
-                {% elif reservation.status == 'approved' %}
-            <a href="{% url 'reschedule_reservation' reservation.id %}">Reschedule</a>
-            <br><br>
-
-                    <form
-                        method="POST"
-                        action="{% url 'update_reservation_status' reservation.id %}"
-                    >
-                        {% csrf_token %}
-
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="CHECK_IN"
-                        >
-
-                        <button type="submit">
-                            Check In
-                        </button>
-
-                    </form>
-
-                    <br>
-
-                    <form
-                        method="POST"
-                        action="{% url 'update_reservation_status' reservation.id %}"
-                    >
-                        {% csrf_token %}
-
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="NO_SHOW"
-                        >
-
-                        <button type="submit">
-                            No Show
-                        </button>
-
-                    </form>
-
-                    <br>
-
-                    <form
-                        method="POST"
-                        action="{% url 'update_reservation_status' reservation.id %}"
-                    >
-                        {% csrf_token %}
-
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="CANCEL"
-                        >
-
-                        <input
-                            type="text"
-                            name="reason"
-                            placeholder="Cancellation reason"
-                            required
-                        >
-
-                        <button type="submit">
-                            Cancel
-                        </button>
-
-                    </form>
-
-                {% elif reservation.status == 'checked_in' %}
-
-                    <form
-                        method="POST"
-                        action="{% url 'update_reservation_status' reservation.id %}"
-                    >
-                        {% csrf_token %}
-
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="COMPLETE"
-                        >
-
-                        <button type="submit">
-                            Complete
-                        </button>
-
-                    </form>
-
-                {% else %}
-
-                    No actions available
-
-                {% endif %}
-
-            </td>
-
-        </tr>
-
-        {% empty %}
-
-        <tr>
-            <td colspan="9">
-                No reservations found.
-            </td>
-        </tr>
-
-        {% endfor %}
-
-    </tbody>
-
-</table>
-
-<br>
-
-<div>
-
-    {% if page_obj.has_previous %}
-
-        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
-            Previous
-        </a>
-
-    {% endif %}
-
-    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-
-    {% if page_obj.has_next %}
-
-        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
-            Next
-        </a>
-
-    {% endif %}
-
-</div>
+    </main>
 
 </body>
 </html>

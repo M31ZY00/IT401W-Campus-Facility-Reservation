@@ -1,48 +1,101 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ page_title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} | Campus Facility Reservation</title>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/closure-form.css' %}">
 </head>
 <body>
 
-<h1>{{ page_title }}</h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-<a href="{% url 'manage_closures' %}">
-    Back to Facility Closures
-</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-<hr>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-{% for message in messages %}
-    <p>{{ message }}</p>
-{% endfor %}
+    <main class="closure-form-container">
 
-<form method="POST">
-    {% csrf_token %}
+        <!-- Header & Back Navigation -->
+        <div class="form-header-wrapper">
+            <h1>{{ page_title }}</h1>
+            <a href="{% url 'manage_closures' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Facility Closures
+            </a>
+        </div>
 
-    {{ form.non_field_errors }}
+        <!-- Alert Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-message">
+                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-    {% for field in form %}
-        <p>
-            <label for="{{ field.id_for_label }}">
-                {{ field.label }}
-            </label>
+        <!-- Form Card Container -->
+        <div class="form-card">
+            <form method="POST" class="styled-form">
+                {% csrf_token %}
 
-            <br>
+                {% if form.non_field_errors %}
+                    <div style="background: rgba(197,34,31,0.08); border: 1px solid rgba(197,34,31,0.3); padding: 12px; border-radius: 8px; color: #c5221f; font-size: 0.88rem;">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
 
-            {{ field }}
+                {% for field in form %}
+                    <div class="form-field-wrapper">
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
 
-            <br>
+                        {{ field }}
 
-            {{ field.errors }}
-        </p>
-    {% endfor %}
+                        {% if field.errors %}
+                            {{ field.errors }}
+                        {% endif %}
+                    </div>
+                {% endfor %}
 
-    <button type="submit">
-        Save Closure
-    </button>
-</form>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Closure
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </main>
 
 </body>
 </html>

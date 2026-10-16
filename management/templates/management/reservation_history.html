@@ -1,145 +1,177 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation History</title>
+    <title>Reservation History | Campus Facility Reservation</title>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/reservation-history.css' %}">
 </head>
 <body>
 
-<h1>Reservation History</h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-<a href="{% url 'manage_reservations' %}">
-    Back to Reservations
-</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-<h2>Reservation Information</h2>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-<p>
-    <strong>Reservation ID:</strong>
-    {{ reservation.id }}
-</p>
+    <main class="history-container">
 
-<p>
-    <strong>User:</strong>
-    {{ reservation.user.username }}
-</p>
+        <!-- Header & Back Navigation -->
+        <div class="history-header-wrapper">
+            <h1>Reservation History Log</h1>
+            <a href="{% url 'manage_reservations' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Reservations
+            </a>
+        </div>
 
-<p>
-    <strong>Facility:</strong>
-    {{ reservation.facility.name }}
-</p>
+        <!-- Information Cards Grid -->
+        <div class="history-grid">
 
-<p>
-    <strong>Event:</strong>
-    {{ reservation.event_title|default:reservation.purpose }}
-</p>
+            <!-- Reservation Info Card -->
+            <div class="info-card">
+                <h2>Reservation Information</h2>
+                <div class="detail-list">
+                    <div class="detail-item">
+                        <span class="detail-label">Reservation ID</span>
+                        <span class="detail-value"><strong>#{{ reservation.id }}</strong></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">User</span>
+                        <span class="detail-value">{{ reservation.user.username }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Facility</span>
+                        <span class="detail-value">{{ reservation.facility.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Event / Purpose</span>
+                        <span class="detail-value">{{ reservation.event_title|default:reservation.purpose }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Participants</span>
+                        <span class="detail-value">
+                            <i class="fa-solid fa-users" style="color: var(--ink-soft); font-size: 0.75rem; margin-right: 4px;"></i>
+                            {{ reservation.participant_count }}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Start Time</span>
+                        <span class="detail-value">{{ reservation.start_time|date:"M d, Y h:i A" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">End Time</span>
+                        <span class="detail-value">{{ reservation.end_time|date:"M d, Y h:i A" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Current Status</span>
+                        <span class="detail-value"><strong>{{ reservation.get_status_display }}</strong></span>
+                    </div>
+                </div>
+            </div>
 
-<p>
-    <strong>Purpose:</strong>
-    {{ reservation.purpose }}
-</p>
+            <!-- Admin Decision Card -->
+            <div class="info-card">
+                <h2>Admin Decision Record</h2>
+                <div class="detail-list">
+                    <div class="detail-item">
+                        <span class="detail-label">Decided By</span>
+                        <span class="detail-value">
+                            {% if reservation.decision_by %}
+                                {{ reservation.decision_by.username }}
+                            {% else %}
+                                <span style="color: var(--ink-soft); font-style: italic;">Not yet decided</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Decision Date</span>
+                        <span class="detail-value">
+                            {% if reservation.decision_at %}
+                                {{ reservation.decision_at|date:"M d, Y h:i A" }}
+                            {% else %}
+                                <span style="color: var(--ink-soft); font-style: italic;">Not yet decided</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <span class="detail-label">Decision Reason</span>
+                        <span class="detail-value" style="text-align: left; color: var(--ink-soft);">
+                            {{ reservation.decision_reason|default:"No reason provided" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
 
-<p>
-    <strong>Participants:</strong>
-    {{ reservation.participant_count }}
-</p>
+        </div>
 
-<p>
-    <strong>Start:</strong>
-    {{ reservation.start_time|date:"M d, Y h:i A" }}
-</p>
+        <!-- Status Change History Table Card -->
+        <div class="table-card">
+            <div class="table-header-bar">
+                <h2>Status Change Timeline</h2>
+            </div>
 
-<p>
-    <strong>End:</strong>
-    {{ reservation.end_time|date:"M d, Y h:i A" }}
-</p>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Admin User</th>
+                            <th>Previous Status</th>
+                            <th>New Status</th>
+                            <th>Reason / Notes</th>
+                        </tr>
+                    </thead>
 
-<p>
-    <strong>Current Status:</strong>
-    {{ reservation.get_status_display }}
-</p>
+                    <tbody>
+                        {% for change in changes %}
+                        <tr>
+                            <td>{{ change.changed_at|date:"M d, Y h:i A" }}</td>
+                            <td><strong>{{ change.changed_by.username }}</strong></td>
+                            <td>{{ change.previous_status }}</td>
+                            <td>{{ change.new_status }}</td>
+                            <td>{{ change.reason|default:"No reason provided" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">
+                                <i class="fa-solid fa-clock-rotate-left" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                No status changes recorded yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-<h2>ADMIN Decision</h2>
-
-<p>
-    <strong>Decided By:</strong>
-
-    {% if reservation.decision_by %}
-        {{ reservation.decision_by.username }}
-    {% else %}
-        Not yet decided
-    {% endif %}
-</p>
-
-<p>
-    <strong>Decision Date:</strong>
-
-    {% if reservation.decision_at %}
-        {{ reservation.decision_at|date:"M d, Y h:i A" }}
-    {% else %}
-        Not yet decided
-    {% endif %}
-</p>
-
-<p>
-    <strong>Decision Reason:</strong>
-    {{ reservation.decision_reason|default:"No reason provided" }}
-</p>
-
-<h2>Status Change History</h2>
-
-<table border="1" cellpadding="10">
-
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>ADMIN</th>
-            <th>Previous Status</th>
-            <th>New Status</th>
-            <th>Reason</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        {% for change in changes %}
-
-        <tr>
-            <td>
-                {{ change.changed_at|date:"M d, Y h:i A" }}
-            </td>
-
-            <td>
-                {{ change.changed_by.username }}
-            </td>
-
-            <td>
-                {{ change.previous_status }}
-            </td>
-
-            <td>
-                {{ change.new_status }}
-            </td>
-
-            <td>
-                {{ change.reason|default:"No reason provided" }}
-            </td>
-        </tr>
-
-        {% empty %}
-
-        <tr>
-            <td colspan="5">
-                No status changes recorded yet.
-            </td>
-        </tr>
-
-        {% endfor %}
-
-    </tbody>
-
-</table>
+    </main>
 
 </body>
 </html>

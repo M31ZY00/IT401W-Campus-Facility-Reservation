@@ -1,131 +1,162 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reschedule Reservation</title>
-</head>
+    <title>Reschedule Reservation | Campus Facility Reservation</title>
 
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/reschedule-reservation.css' %}">
+</head>
 <body>
 
-<h1>Reschedule Reservation</h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-<a href="{% url 'reservation_calendar' %}">
-    Back to Calendar
-</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-<hr>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-{% if messages %}
+    <main class="reschedule-container">
 
-    {% for message in messages %}
+        <!-- Header & Back Navigation -->
+        <div class="reschedule-header-wrapper">
+            <h1>Reschedule Reservation</h1>
+            <a href="{% url 'manage_reservations' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Reservations
+            </a>
+        </div>
 
-        <p>{{ message }}</p>
+        <!-- Alert Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-message">
+                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-    {% endfor %}
+        <!-- Grid Layout for Details & Form -->
+        <div class="reschedule-grid">
 
-{% endif %}
+            <!-- Current Reservation Information Card -->
+            <div class="reschedule-card">
+                <h2>Reservation Details</h2>
+                <div class="detail-list">
+                    <div class="detail-item">
+                        <span class="detail-label">Reservation ID</span>
+                        <span class="detail-value"><strong>#{{ reservation.id }}</strong></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Facility</span>
+                        <span class="detail-value">{{ reservation.facility.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">User</span>
+                        <span class="detail-value">{{ reservation.user.username }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Event / Purpose</span>
+                        <span class="detail-value">{{ reservation.event_title|default:reservation.purpose }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value"><strong>{{ reservation.get_status_display }}</strong></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Current Start</span>
+                        <span class="detail-value">{{ reservation.start_time|date:"F d, Y h:i A" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Current End</span>
+                        <span class="detail-value">{{ reservation.end_time|date:"F d, Y h:i A" }}</span>
+                    </div>
+                </div>
+            </div>
 
-<h2>Reservation Details</h2>
+            <!-- New Schedule Card / Form -->
+            <div class="reschedule-card">
+                <h2>New Schedule</h2>
 
-<p>
-    <strong>Reservation ID:</strong>
-    {{ reservation.id }}
-</p>
+                {% if reservation.status == 'approved' %}
+                    <form method="POST" class="reschedule-form">
+                        {% csrf_token %}
 
-<p>
-    <strong>Facility:</strong>
-    {{ reservation.facility.name }}
-</p>
+                        <div class="form-group">
+                            <label for="start_time">New Start Time:</label>
+                            <input
+                                type="datetime-local"
+                                id="start_time"
+                                name="start_time"
+                                value="{{ start_value }}"
+                                required
+                            >
+                        </div>
 
-<p>
-    <strong>User:</strong>
-    {{ reservation.user.username }}
-</p>
+                        <div class="form-group">
+                            <label for="end_time">New End Time:</label>
+                            <input
+                                type="datetime-local"
+                                id="end_time"
+                                name="end_time"
+                                value="{{ end_value }}"
+                                required
+                            >
+                        </div>
 
-<p>
-    <strong>Event:</strong>
-    {{ reservation.event_title|default:reservation.purpose }}
-</p>
+                        <div class="form-group">
+                            <label for="reason">Reason for Rescheduling:</label>
+                            <textarea
+                                id="reason"
+                                name="reason"
+                                placeholder="Provide reason for adjustment..."
+                                required
+                            ></textarea>
+                        </div>
 
-<p>
-    <strong>Status:</strong>
-    {{ reservation.get_status_display }}
-</p>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit">
+                                <i class="fa-solid fa-calendar-check"></i> Save New Schedule
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="not-allowed-box">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.8rem; margin-bottom: 10px; display: block; color: var(--gold);"></i>
+                        <p style="margin: 0; font-weight: 600;">Only approved reservations can be rescheduled.</p>
+                    </div>
+                {% endif %}
+            </div>
 
-<p>
-    <strong>Current Start:</strong>
-    {{ reservation.start_time|date:"F d, Y h:i A" }}
-</p>
+        </div>
 
-<p>
-    <strong>Current End:</strong>
-    {{ reservation.end_time|date:"F d, Y h:i A" }}
-</p>
-
-<hr>
-
-<h2>New Schedule</h2>
-
-{% if reservation.status == 'approved' %}
-
-<form method="POST">
-
-    {% csrf_token %}
-
-    <p>
-        <label>New Start Time:</label>
-
-        <br>
-
-        <input
-            type="datetime-local"
-            name="start_time"
-            value="{{ start_value }}"
-            required
-        >
-    </p>
-
-    <p>
-        <label>New End Time:</label>
-
-        <br>
-
-        <input
-            type="datetime-local"
-            name="end_time"
-            value="{{ end_value }}"
-            required
-        >
-    </p>
-
-    <p>
-        <label>Reason for Rescheduling:</label>
-
-        <br>
-
-        <textarea
-            name="reason"
-            rows="4"
-            cols="50"
-            required
-        ></textarea>
-    </p>
-
-    <button type="submit">
-        Save New Schedule
-    </button>
-
-</form>
-
-{% else %}
-
-<p>
-    Only approved reservations can be rescheduled.
-</p>
-
-{% endif %}
+    </main>
 
 </body>
 </html>

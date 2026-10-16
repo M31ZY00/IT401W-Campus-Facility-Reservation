@@ -1,0 +1,234 @@
+/* ==========================================================================
+   Add / Edit Amenity Form (amenity-form.css)
+   ========================================================================== */
+
+/* Page Container */
+.form-container {
+    max-width: 850px;
+    width: 92%;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* Header & Back Navigation */
+.form-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.form-header-wrapper h1 {
+    font-family: var(--font-display, 'Cinzel', serif);
+    color: var(--navy, #14213d);
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    margin: 0;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--navy, #14213d);
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 10px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    transition: all 0.25s ease;
+}
+
+.back-link:hover {
+    background: var(--navy, #14213d);
+    color: var(--white, #ffffff);
+    border-color: var(--navy, #14213d);
+    transform: translateY(-2px);
+}
+
+/* Messages Banner */
+.messages-container {
+    margin-bottom: 1.5rem;
+}
+
+.alert-message {
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: #e8f4fd;
+    border: 1px solid #b6e0fe;
+    color: #0c5460;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Form Card Container */
+.form-card {
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.form-card::before {
+    content: "";
+    position: absolute;
+    left: 24px;
+    top: 0;
+    width: 40px;
+    height: 3px;
+    background: var(--gold, #fda30f);
+}
+
+/* Styling Django's {{ form.as_p }} paragraph blocks */
+.amenity-form p {
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Form Labels */
+.amenity-form label {
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.825rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--navy, #14213d);
+}
+
+/* Form Controls (Inputs, Textareas, Selects) */
+.amenity-form input[type="text"],
+.amenity-form input[type="number"],
+.amenity-form select,
+.amenity-form textarea {
+    width: 100%;
+    padding: 11px 14px;
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.9rem;
+    color: var(--ink, #1b2437);
+    background: var(--grey, #f1f4f9);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.amenity-form input:focus,
+.amenity-form select:focus,
+.amenity-form textarea:focus {
+    border-color: var(--navy, #14213d);
+    background: var(--white, #ffffff);
+    box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.08);
+}
+
+.amenity-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Checkbox inputs (e.g., is_active) */
+.amenity-form input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--navy, #14213d);
+    cursor: pointer;
+}
+
+.amenity-form p:has(input[type="checkbox"]) {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-top: 0.5rem;
+}
+
+/* Help text and validation errors */
+.amenity-form .helptext {
+    font-size: 0.8rem;
+    color: var(--ink-soft, #5b6578);
+    margin-top: 2px;
+}
+
+.amenity-form .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0 0;
+    color: #c5221f;
+    font-size: 0.825rem;
+    font-weight: 600;
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line, #e1e7f1);
+}
+
+.btn-submit {
+    padding: 11px 24px;
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--navy-deep, #13213e);
+    background: var(--gold, #fda30f);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(253, 163, 15, 0.35);
+}
+
+.btn-cancel {
+    padding: 11px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink-soft, #5b6578);
+    text-decoration: none;
+    border-radius: 10px;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.btn-cancel:hover {
+    color: var(--navy, #14213d);
+    background: var(--grey, #f1f4f9);
+}
+
+@media (max-width: 600px) {
+    .form-header-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-card {
+        padding: 1.25rem;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .btn-submit, .btn-cancel {
+        text-align: center;
+        justify-content: center;
+        width: 100%;
+    }
+}
