@@ -1,0 +1,330 @@
+.calendar-container {
+    max-width: 1400px;
+    width: 92%;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.calendar-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.calendar-header-wrapper h1 {
+    font-family: var(--font-display, 'Cinzel', serif);
+    color: var(--navy, #14213d);
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    margin: 0;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--navy, #14213d);
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 10px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    transition: all 0.25s ease;
+}
+
+.back-link:hover {
+    background: var(--navy, #14213d);
+    color: var(--white, #ffffff);
+    border-color: var(--navy, #14213d);
+    transform: translateY(-2px);
+}
+
+.calendar-controls-card {
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.view-toggles {
+    display: inline-flex;
+    background: var(--grey, #f1f4f9);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--line, #e1e7f1);
+}
+
+.view-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-soft, #5b6578);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.view-btn.active {
+    background: var(--navy, #14213d);
+    color: var(--white, #ffffff);
+    box-shadow: 0 2px 6px rgba(20, 33, 61, 0.15);
+}
+
+.date-picker-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-picker-form label {
+    font-size: 0.825rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--navy, #14213d);
+}
+
+.date-input {
+    padding: 8px 12px;
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.88rem;
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 8px;
+    background: var(--grey, #f1f4f9);
+    color: var(--ink, #1b2437);
+    outline: none;
+}
+
+.date-input:focus {
+    border-color: var(--navy, #14213d);
+    background: var(--white, #ffffff);
+}
+
+.btn-go {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--navy-deep, #13213e);
+    background: var(--gold, #fda30f);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-go:hover {
+    transform: translateY(-1px);
+}
+
+.calendar-range-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+}
+
+.nav-arrow-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--navy, #14213d);
+    background: var(--grey, #f1f4f9);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.nav-arrow-btn:hover {
+    background: var(--navy, #14213d);
+    color: var(--white, #ffffff);
+    border-color: var(--navy, #14213d);
+}
+
+.calendar-range-nav h2 {
+    font-family: var(--font-display, 'Cinzel', serif);
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+    color: var(--navy, #14213d);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.day-card {
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.day-header-bar {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--line, #e1e7f1);
+    background: #fafbfc;
+}
+
+.day-header-bar h3 {
+    font-family: var(--font-display, 'Cinzel', serif);
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--navy, #14213d);
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.data-table th {
+    background: #fafbfc;
+    padding: 12px 18px;
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft, #5b6578);
+    border-bottom: 2px solid var(--line, #e1e7f1);
+}
+
+.data-table td {
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    color: var(--ink, #1b2437);
+    border-bottom: 1px solid var(--line, #e1e7f1);
+    vertical-align: middle;
+}
+
+.data-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+    background-color: rgba(241, 244, 249, 0.6);
+}
+
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.badge-status.pending { background: rgba(253, 163, 15, 0.1); color: #b7791f; border: 1px solid rgba(253, 163, 15, 0.3); }
+.badge-status.approved { background: rgba(19, 115, 51, 0.08); color: #137333; border: 1px solid rgba(19, 115, 51, 0.2); }
+.badge-status.checked_in { background: rgba(26, 115, 232, 0.08); color: #1a73e8; border: 1px solid rgba(26, 115, 232, 0.2); }
+.badge-status.completed { background: rgba(95, 99, 104, 0.08); color: #5f6368; border: 1px solid rgba(95, 99, 104, 0.2); }
+.badge-status.rejected, .badge-status.cancelled { background: rgba(197, 34, 31, 0.08); color: #c5221f; border: 1px solid rgba(197, 34, 31, 0.2); }
+
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.badge-status.pending .status-dot { background: #b7791f; }
+.badge-status.approved .status-dot { background: #137333; }
+.badge-status.checked_in .status-dot { background: #1a73e8; }
+.badge-status.completed .status-dot { background: #5f6368; }
+.badge-status.rejected .status-dot, .badge-status.cancelled .status-dot { background: #c5221f; }
+
+.actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-action-view {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--navy, #14213d);
+    background: var(--grey, #f1f4f9);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.btn-action-view:hover {
+    background: var(--navy, #14213d);
+    color: var(--white, #ffffff);
+}
+
+.btn-action-reschedule {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1a73e8;
+    background: rgba(26, 115, 232, 0.08);
+    border: 1px solid rgba(26, 115, 232, 0.2);
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.btn-action-reschedule:hover {
+    background: #1a73e8;
+    color: #ffffff;
+}
+
+.empty-schedule {
+    padding: 2.5rem;
+    text-align: center;
+    color: var(--ink-soft, #5b6578);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .calendar-header-wrapper, .calendar-controls-card, .calendar-range-nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .date-picker-form {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .date-input {
+        flex-grow: 1;
+    }
+}

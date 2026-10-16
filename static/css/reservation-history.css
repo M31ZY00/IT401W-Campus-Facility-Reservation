@@ -1,0 +1,195 @@
+.history-container {
+    max-width: 1200px;
+    width: 92%;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.history-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.history-header-wrapper h1 {
+    font-family: var(--font-display, 'Cinzel', serif);
+    color: var(--navy, #14213d);
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    margin: 0;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--navy, #14213d);
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 10px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    transition: all 0.25s ease;
+}
+
+.back-link:hover {
+    background: var(--navy, #14213d);
+    color: var(--white, #ffffff);
+    border-color: var(--navy, #14213d);
+    transform: translateY(-2px);
+}
+
+.history-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+    .history-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.info-card {
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    overflow: hidden;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.info-card::before {
+    content: "";
+    position: absolute;
+    left: 24px;
+    top: 0;
+    width: 40px;
+    height: 3px;
+    background: var(--gold, #fda30f);
+}
+
+.info-card h2 {
+    font-family: var(--font-display, 'Cinzel', serif);
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    color: var(--navy, #14213d);
+    text-transform: uppercase;
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line, #e1e7f1);
+}
+
+.detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    font-size: 0.88rem;
+    border-bottom: 1px dashed var(--line, #e1e7f1);
+    padding-bottom: 10px;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.detail-label {
+    font-weight: 700;
+    color: var(--ink-soft, #5b6578);
+    min-width: 130px;
+}
+
+.detail-value {
+    color: var(--ink, #1b2437);
+    text-align: right;
+    font-weight: 500;
+}
+
+.table-card {
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+    overflow: hidden;
+    width: 100%;
+}
+
+.table-header-bar {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--line, #e1e7f1);
+    background: #fafbfc;
+}
+
+.table-header-bar h2 {
+    font-family: var(--font-display, 'Cinzel', serif);
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    color: var(--navy, #14213d);
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.data-table th {
+    background: #fafbfc;
+    padding: 12px 20px;
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft, #5b6578);
+    border-bottom: 2px solid var(--line, #e1e7f1);
+}
+
+.data-table td {
+    padding: 14px 20px;
+    font-size: 0.88rem;
+    color: var(--ink, #1b2437);
+    border-bottom: 1px solid var(--line, #e1e7f1);
+    vertical-align: middle;
+}
+
+.data-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+    background-color: rgba(241, 244, 249, 0.6);
+}
+
+.empty-cell {
+    text-align: center;
+    padding: 40px !important;
+    color: var(--ink-soft, #5b6578);
+    font-size: 0.95rem;
+}

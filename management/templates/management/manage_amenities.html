@@ -1,112 +1,174 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amenity Management</title>
-</head>
+    <title>Amenity Management | Campus Facility Reservation</title>
 
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/manage-amenities.css' %}">
+</head>
 <body>
 
-    <h1>Amenity Management</h1>
-    {% if messages %}
-    {% for message in messages %}
-        <p>{{ message }}</p>
-    {% endfor %}
-{% endif %}
-    <br>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-<a href="{% url 'add_amenity' %}">
-    + Add New Amenity
-</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-<br><br>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-    <a href="{% url 'admin_dashboard' %}">
-        Back to ADMIN Dashboard
-    </a>
+    <main class="amenities-container">
 
-    <hr>
+        <!-- Header & Action Links Wrapper -->
+        <div class="amenities-header-wrapper">
+            <h1>Amenity Management</h1>
+            <div class="header-actions">
+                <a href="{% url 'add_amenity' %}" class="btn-add-amenity">
+                    <i class="fa-solid fa-plus"></i> Add New Amenity
+                </a>
+                <a href="{% url 'admin_dashboard' %}" class="back-link">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
 
-    <h2>All Amenities</h2>
-
-    <form method="GET">
-        <input
-            type="text"
-            name="search"
-            placeholder="Search amenities..."
-            value="{{ search_query }}"
-        >
-
-        <button type="submit">Search</button>
-
-        <a href="{% url 'manage_amenities' %}">
-            Clear
-        </a>
-    </form>
-
-    <br>
-
-    <table border="1" cellpadding="10">
-        <thead>
-            <tr>
-                <th>Amenity Name</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for amenity in amenities %}
-                <tr>
-                    <td>{{ amenity.name }}</td>
-
-                    <td>
-                        {{ amenity.description|default:"No description" }}
-                    </td>
-                    <td>
-    {% if amenity.is_active %}
-        Active
-    {% else %}
-        Archived
-    {% endif %}
-</td>
-<td>
-    <a href="{% url 'edit_amenity' amenity.id %}">
-        Edit
-    </a>
-
-    <br><br>
-
-    <form
-        method="POST"
-        action="{% url 'toggle_amenity_status' amenity.id %}"
-        onsubmit="return confirm('Are you sure you want to change this amenity status?');"
-    >
-        {% csrf_token %}
-
-        {% if amenity.is_active %}
-            <button type="submit">
-                Archive
-            </button>
-        {% else %}
-            <button type="submit">
-                Reactivate
-            </button>
+        <!-- Alert Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-message">
+                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
-    </form>
-</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="4">
-                        No amenities found.
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+        <!-- Search Card -->
+        <div class="search-card">
+            <form method="GET" class="search-form">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                        type="text"
+                        name="search"
+                        class="search-input"
+                        placeholder="Search amenities..."
+                        value="{{ search_query }}"
+                    >
+                </div>
+
+                <button type="submit" class="btn-search">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+
+                {% if search_query %}
+                    <a href="{% url 'manage_amenities' %}" class="btn-clear">
+                        <i class="fa-solid fa-xmark"></i> Clear Search
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Table Card Wrapper -->
+        <div class="table-card">
+            <div class="table-header-bar">
+                <h2>All Amenities</h2>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Amenity Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for amenity in amenities %}
+                            <tr>
+                                <td><strong>{{ amenity.name }}</strong></td>
+
+                                <td>{{ amenity.description|default:"&mdash;" }}</td>
+
+                                <td>
+                                    {% if amenity.is_active %}
+                                        <span class="badge-status active">
+                                            <span class="status-dot"></span> Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-status deactivated">
+                                            <span class="status-dot"></span> Archived
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <div class="actions-cell">
+                                        <a href="{% url 'edit_amenity' amenity.id %}" class="btn-action-edit">
+                                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="{% url 'toggle_amenity_status' amenity.id %}"
+                                            onsubmit="return confirm('Are you sure you want to change this amenity status?');"
+                                            style="margin: 0;"
+                                        >
+                                            {% csrf_token %}
+                                            {% if amenity.is_active %}
+                                                <button type="submit" class="btn-action-toggle archive">
+                                                    <i class="fa-solid fa-box-archive"></i> Archive
+                                                </button>
+                                            {% else %}
+                                                <button type="submit" class="btn-action-toggle reactivate">
+                                                    <i class="fa-solid fa-rotate-left"></i> Reactivate
+                                                </button>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="empty-cell">
+                                    <i class="fa-solid fa-puzzle-piece" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                    No amenities found.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
 
 </body>
 </html>

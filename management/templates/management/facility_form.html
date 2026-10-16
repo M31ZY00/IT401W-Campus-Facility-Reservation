@@ -1,47 +1,124 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>
         {% if is_edit %}
-            Edit Facility
+            Edit Facility | Campus Facility Reservation
         {% else %}
-            Add Facility
+            Add Facility | Campus Facility Reservation
         {% endif %}
     </title>
-</head>
 
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/facility-form.css' %}">
+</head>
 <body>
 
-    <h1>
-        {% if is_edit %}
-            Edit Facility: {{ facility.name }}
-        {% else %}
-            Add New Facility
-        {% endif %}
-    </h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-    <a href="{% url 'manage_facilities' %}">
-        Back to Facility Management
-    </a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-    <hr>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-    <form method="POST">
-        {% csrf_token %}
+    <main class="form-container">
 
-        {{ form.as_p }}
+        <!-- Header & Back Navigation -->
+        <div class="form-header-wrapper">
+            <h1>
+                {% if is_edit %}
+                    Edit Facility
+                {% else %}
+                    Add New Facility
+                {% endif %}
+            </h1>
 
-        <button type="submit">
-            {% if is_edit %}
-                Update Facility
-            {% else %}
-                Save Facility
-            {% endif %}
-        </button>
-    </form>
+            <a href="{% url 'manage_facilities' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Facilities
+            </a>
+        </div>
+
+        <!-- Form Card Container -->
+        <div class="form-card">
+            <form method="POST" class="facility-form" novalidate="false">
+                {% csrf_token %}
+
+                {{ form.as_p }}
+
+                <div class="form-actions">
+                    <a href="{% url 'manage_facilities' %}" class="btn-cancel">Cancel</a>
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        {% if is_edit %}
+                            Update Facility
+                        {% else %}
+                            Save Facility
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const isEdit = {% if is_edit %}true{% else %}false{% endif %};
+            const codeInput = document.querySelector('input[name="code"]');
+
+            if (!isEdit && codeInput) {
+                const nextCode = "{{ next_code|default:'' }}";
+                if (nextCode) {
+                    codeInput.value = nextCode;
+                }
+            }
+
+            const formInputs = document.querySelectorAll('.facility-form input, .facility-form select, .facility-form textarea');
+            formInputs.forEach(input => {
+                if (input.type !== 'checkbox' && input.type !== 'hidden') {
+                    input.required = true;
+                }
+
+                // Field-specific restrictions
+                if (input.name === 'capacity') {
+                    input.min = 1;
+                    input.placeholder = "e.g. 50";
+                }
+                if (input.name === 'name') {
+                    input.placeholder = "e.g. Demo Lecture Room 107";
+                }
+                if (input.name === 'location') {
+                    input.placeholder = "e.g. Building A, 2nd Floor";
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>

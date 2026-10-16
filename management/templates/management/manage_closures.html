@@ -1,126 +1,207 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manage Facility Closures</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Facility Closures | Campus Facility Reservation</title>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/manage-closures.css' %}">
 </head>
 <body>
 
-<h1>Manage Facility Closures</h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-<a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
-<br><br>
-<a href="{% url 'add_closure' %}">Add New Closure</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-<hr>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-{% for message in messages %}
-    <p>{{ message }}</p>
-{% endfor %}
+    <main class="closures-container">
 
-<form method="GET">
-    <input
-        type="text"
-        name="search"
-        placeholder="Search facility or reason"
-        value="{{ search_query }}"
-    >
+        <!-- Header & Action Links Wrapper -->
+        <div class="closures-header-wrapper">
+            <h1>Manage Facility Closures</h1>
+            <div class="header-actions">
+                <a href="{% url 'add_closure' %}" class="btn-add-closure">
+                    <i class="fa-solid fa-plus"></i> Add New Closure
+                </a>
+                <a href="{% url 'admin_dashboard' %}" class="back-link">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
 
-<select name="status">
-    <option value="active" {% if status_filter == 'active' %}selected="selected"{% endif %}>Active</option>
-    <option value="archived" {% if status_filter == 'archived' %}selected="selected"{% endif %}>Archived</option>
-    <option value="all" {% if status_filter == 'all' %}selected="selected"{% endif %}>All</option>
-</select>
+        <!-- Alert Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-message">
+                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-    <button type="submit">Search</button>
-</form>
-
-<hr>
-
-<table border="1" cellpadding="10">
-    <thead>
-        <tr>
-            <th>Facility</th>
-            <th>Start Date & Time</th>
-            <th>End Date & Time</th>
-            <th>Reason</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        {% for closure in page_obj %}
-        <tr>
-            <td>{{ closure.facility.name }}</td>
-
-            <td>
-                {{ closure.start_time|date:"M d, Y h:i A" }}
-            </td>
-
-            <td>
-                {{ closure.end_time|date:"M d, Y h:i A" }}
-            </td>
-
-            <td>{{ closure.reason }}</td>
-
-            <td>
-                {% if closure.is_active %}
-                    Active
-                {% else %}
-                    Archived
-                {% endif %}
-            </td>
-
-            <td>
-                {% if closure.is_active %}
-
-                    <a href="{% url 'edit_closure' closure.id %}">
-                        Edit
-                    </a>
-
-                    <form
-                        method="POST"
-                        action="{% url 'archive_closure' closure.id %}"
+        <!-- Search Card -->
+        <div class="search-card">
+            <form method="GET" class="search-form">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                        type="text"
+                        name="search"
+                        class="search-input"
+                        placeholder="Search facility or reason..."
+                        value="{{ search_query }}"
                     >
-                        {% csrf_token %}
+                </div>
 
-                        <button type="submit">
-                            Archive
-                        </button>
-                    </form>
+                <select name="status" class="status-select">
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="archived" {% if status_filter == 'archived' %}selected{% endif %}>Archived</option>
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                </select>
 
-                {% else %}
-                    Archived
+                <button type="submit" class="btn-search">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+
+                {% if search_query or status_filter and status_filter != 'active' %}
+                    <a href="{% url 'manage_closures' %}" class="btn-clear">
+                        <i class="fa-solid fa-xmark"></i> Clear Search
+                    </a>
                 {% endif %}
-            </td>
-        </tr>
+            </form>
+        </div>
 
-        {% empty %}
-        <tr>
-            <td colspan="6">
-                No facility closures found.
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        <!-- Table Card Wrapper -->
+        <div class="table-card">
+            <div class="table-header-bar">
+                <h2>All Closures</h2>
+            </div>
 
-<br>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Facility</th>
+                            <th>Start Date & Time</th>
+                            <th>End Date & Time</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-{% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
-        Previous
-    </a>
-{% endif %}
+                    <tbody>
+                        {% for closure in page_obj %}
+                        <tr>
+                            <td><strong>{{ closure.facility.name }}</strong></td>
 
-Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            <td>{{ closure.start_time|date:"M d, Y h:i A" }}</td>
 
-{% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}">
-        Next
-    </a>
-{% endif %}
+                            <td>{{ closure.end_time|date:"M d, Y h:i A" }}</td>
+
+                            <td>{{ closure.reason }}</td>
+
+                            <td>
+                                {% if closure.is_active %}
+                                    <span class="badge-status active">
+                                        <span class="status-dot"></span> Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge-status deactivated">
+                                        <span class="status-dot"></span> Archived
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="actions-cell">
+                                    {% if closure.is_active %}
+                                        <a href="{% url 'edit_closure' closure.id %}" class="btn-action-edit">
+                                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="{% url 'archive_closure' closure.id %}"
+                                            style="margin: 0;"
+                                            onsubmit="return confirm('Are you sure you want to archive this closure?');"
+                                        >
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-action-archive">
+                                                <i class="fa-solid fa-box-archive"></i> Archive
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span style="font-size: 0.78rem; color: var(--ink-soft); font-style: italic;">No actions available</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-cell">
+                                <i class="fa-solid fa-ban" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                No facility closures found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Footer -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination-container">
+                <div>
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}" class="page-link-btn">
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </a>
+                    {% endif %}
+                </div>
+
+                <span>Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</span>
+
+                <div>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}" class="page-link-btn">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </main>
 
 </body>
 </html>

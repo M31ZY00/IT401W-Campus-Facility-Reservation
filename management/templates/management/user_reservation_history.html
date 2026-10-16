@@ -1,63 +1,111 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Reservation History</title>
+    <title>User Reservation History | Campus Facility Reservation</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/user-history.css' %}">
 </head>
 <body>
 
-    <h1>BASIC USER Reservation History</h1>
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-    <a href="{% url 'manage_users' %}">Back to Account Management</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-    <hr>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-    <h2>{{ selected_user.username }}</h2>
+    <main class="history-container">
 
-    <p>
-        <strong>Account Status:</strong>
+        <div class="history-header-wrapper">
+            <h1>BASIC USER Reservation History</h1>
+            <a href="{% url 'manage_users' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Account Management
+            </a>
+        </div>
 
-        {% if selected_user.is_active %}
-            Active
-        {% else %}
-            Deactivated
-        {% endif %}
-    </p>
+        <div class="user-profile-card">
+            <div class="user-profile-info">
+                <h2><i class="fa-solid fa-user-circle" style="color: var(--gold);"></i> {{ selected_user.username }}</h2>
+                <p>{{ selected_user.first_name }} {{ selected_user.last_name }} &bull; {{ selected_user.email|default:"No email provided" }}</p>
+            </div>
+            <div>
+                <strong>Account Status:</strong>
+                {% if selected_user.is_active %}
+                    <span class="badge-status active" style="margin-left: 6px;">Active</span>
+                {% else %}
+                    <span class="badge-status deactivated" style="margin-left: 6px;">Deactivated</span>
+                {% endif %}
+            </div>
+        </div>
 
-    <h3>Reservations</h3>
+        <div class="table-card">
+            <div class="table-header-bar">
+                <h3>Reservation Records</h3>
+            </div>
 
-    <table border="1" cellpadding="10">
-        <thead>
-            <tr>
-                <th>Facility</th>
-                <th>Purpose</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Status</th>
-                <th>Date Requested</th>
-            </tr>
-        </thead>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Facility</th>
+                            <th>Purpose</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Status</th>
+                            <th>Date Requested</th>
+                        </tr>
+                    </thead>
 
-        <tbody>
-            {% for reservation in reservations %}
-                <tr>
-                    <td>{{ reservation.facility.name }}</td>
-                    <td>{{ reservation.purpose }}</td>
-                    <td>{{ reservation.start_time|date:"M d, Y h:i A" }}</td>
-                    <td>{{ reservation.end_time|date:"M d, Y h:i A" }}</td>
-                    <td>{{ reservation.get_status_display }}</td>
-                    <td>{{ reservation.created_at|date:"M d, Y h:i A" }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="6">
-                        This user has no reservation history.
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <tbody>
+                        {% for reservation in reservations %}
+                            <tr>
+                                <td><strong>{{ reservation.facility.name }}</strong></td>
+                                <td>{{ reservation.purpose }}</td>
+                                <td>{{ reservation.start_time|date:"M d, Y h:i A" }}</td>
+                                <td>{{ reservation.end_time|date:"M d, Y h:i A" }}</td>
+                                <td>
+                                    <span class="badge-reservation">{{ reservation.get_status_display }}</span>
+                                </td>
+                                <td>{{ reservation.created_at|date:"M d, Y h:i A" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="empty-cell">
+                                    <i class="fa-solid fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                    This user has no reservation history.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
 
 </body>
 </html>

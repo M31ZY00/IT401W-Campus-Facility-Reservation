@@ -1,160 +1,176 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Calendar</title>
-</head>
+    <title>Reservation Calendar | Campus Facility Reservation</title>
 
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/reservation-calendar.css' %}">
+</head>
 <body>
 
-<h1>Reservation Calendar</h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-<a href="{% url 'admin_dashboard' %}">
-    Back to Dashboard
-</a>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-<br><br>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-<a href="{% url 'reservation_calendar' %}?view=day&date={{ selected_date|date:'Y-m-d' }}">
-    Daily View
-</a>
+    <main class="calendar-container">
 
-|
+        <!-- Header & Back Navigation -->
+        <div class="calendar-header-wrapper">
+            <h1>Reservation Calendar</h1>
+            <a href="{% url 'admin_dashboard' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
 
-<a href="{% url 'reservation_calendar' %}?view=week&date={{ selected_date|date:'Y-m-d' }}">
-    Weekly View
-</a>
+        <!-- Controls Toolbar Card -->
+        <div class="calendar-controls-card">
+            <!-- View Switcher -->
+            <div class="view-toggles">
+                <a href="{% url 'reservation_calendar' %}?view=day&date={{ selected_date|date:'Y-m-d' }}" class="view-btn {% if selected_view == 'day' %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-day"></i> Daily View
+                </a>
+                <a href="{% url 'reservation_calendar' %}?view=week&date={{ selected_date|date:'Y-m-d' }}" class="view-btn {% if selected_view == 'week' %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-week"></i> Weekly View
+                </a>
+            </div>
 
-<hr>
+            <!-- Date Picker Form -->
+            <form method="GET" class="date-picker-form">
+                <input type="hidden" name="view" value="{{ selected_view }}">
+                <label for="date-select">Select Date:</label>
+                <input
+                    type="date"
+                    id="date-select"
+                    name="date"
+                    class="date-input"
+                    value="{{ selected_date|date:'Y-m-d' }}"
+                >
+                <button type="submit" class="btn-go">
+                    <i class="fa-solid fa-filter"></i> Go
+                </button>
+            </form>
+        </div>
 
-<form method="GET">
+        <!-- Date Range Navigation Header -->
+        <div class="calendar-range-nav">
+            <a href="?view={{ selected_view }}&date={{ previous_date|date:'Y-m-d' }}" class="nav-arrow-btn">
+                <i class="fa-solid fa-chevron-left"></i> Previous
+            </a>
 
-    <input
-        type="hidden"
-        name="view"
-        value="{{ selected_view }}"
-    >
+            <h2>
+                {{ start_date|date:"F d, Y" }}
+                {% if selected_view == 'week' %}
+                    &mdash; {{ end_date|date:"F d, Y" }}
+                {% endif %}
+            </h2>
 
-    <label>Select Date:</label>
+            <a href="?view={{ selected_view }}&date={{ next_date|date:'Y-m-d' }}" class="nav-arrow-btn">
+                Next <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
 
-    <input
-        type="date"
-        name="date"
-        value="{{ selected_date|date:'Y-m-d' }}"
-    >
+        <!-- Calendar Days Iteration -->
+        {% for day in calendar_days %}
+            <div class="day-card">
+                <div class="day-header-bar">
+                    <h3>
+                        <i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--gold);"></i>
+                        {{ day.date|date:"l, F d, Y" }}
+                    </h3>
+                </div>
 
-    <button type="submit">
-        View Calendar
-    </button>
+                {% if day.reservations %}
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time Slot</th>
+                                    <th>Facility</th>
+                                    <th>Event / Purpose</th>
+                                    <th>Reserved By</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
 
-</form>
+                            <tbody>
+                                {% for reservation in day.reservations %}
+                                    <tr>
+                                        <td>
+                                            <strong>
+                                                {{ reservation.start_time|date:"h:i A" }} &mdash; {{ reservation.end_time|date:"h:i A" }}
+                                            </strong>
+                                        </td>
 
-<br>
+                                        <td>{{ reservation.facility.name }}</td>
 
-<a href="?view={{ selected_view }}&date={{ previous_date|date:'Y-m-d' }}">
-    Previous
-</a>
+                                        <td>{{ reservation.event_title|default:reservation.purpose }}</td>
 
-|
+                                        <td>{{ reservation.user.username }}</td>
 
-<a href="?view={{ selected_view }}&date={{ next_date|date:'Y-m-d' }}">
-    Next
-</a>
+                                        <td>
+                                            <span class="badge-status {{ reservation.status }}">
+                                                <span class="status-dot"></span> {{ reservation.get_status_display }}
+                                            </span>
+                                        </td>
 
-<h2>
-    {{ start_date|date:"F d, Y" }}
+                                        <td>
+                                            <div class="actions-cell">
+                                                <a href="{% url 'reservation_history' reservation.id %}" class="btn-action-view">
+                                                    <i class="fa-solid fa-eye"></i> Details
+                                                </a>
 
-    {% if selected_view == 'week' %}
-        - {{ end_date|date:"F d, Y" }}
-    {% endif %}
-</h2>
+                                                {% if reservation.status == 'approved' %}
+                                                    <a href="{% url 'reschedule_reservation' reservation.id %}" class="btn-action-reschedule">
+                                                        <i class="fa-solid fa-calendar-days"></i> Reschedule
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-schedule">
+                        <i class="fa-regular fa-calendar-check" style="font-size: 1.25rem; margin-bottom: 6px; display: block;"></i>
+                        No scheduled reservations for this day.
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
 
-{% for day in calendar_days %}
-
-    <hr>
-
-    <h3>
-        {{ day.date|date:"l, F d, Y" }}
-    </h3>
-
-    {% if day.reservations %}
-
-        <table border="1" cellpadding="10">
-
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Facility</th>
-                    <th>Event</th>
-                    <th>Reserved By</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for reservation in day.reservations %}
-
-                    <tr>
-
-                        <td>
-                            {{ reservation.start_time|date:"h:i A" }}
-                            -
-                            {{ reservation.end_time|date:"h:i A" }}
-                        </td>
-
-                        <td>
-                            {{ reservation.facility.name }}
-                        </td>
-
-                        <td>
-                            {{ reservation.event_title|default:reservation.purpose }}
-                        </td>
-
-                        <td>
-                            {{ reservation.user.username }}
-                        </td>
-
-                        <td>
-                            {{ reservation.get_status_display }}
-                        </td>
-
-                        <td>
-
-                            <a href="{% url 'reservation_history' reservation.id %}">
-                                View Details
-                            </a>
-
-                            {% if reservation.status == 'approved' %}
-
-                                <br>
-
-                                <a href="{% url 'reschedule_reservation' reservation.id %}">
-                                    Reschedule
-                                </a>
-
-                            {% endif %}
-
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    {% else %}
-
-        <p>No scheduled reservations.</p>
-
-    {% endif %}
-
-{% endfor %}
+    </main>
 
 </body>
 </html>

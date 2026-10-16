@@ -1,78 +1,145 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADMIN Dashboard | Campus Facility Reservation</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 1050px; margin: 28px auto; padding: 0 18px; color: #172033; }
-        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-        .card { border: 1px solid #dce3ee; border-radius: 8px; padding: 16px; }
-        .card strong { display: block; font-size: 29px; margin-top: 10px; }
-        .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 24px; }
-        .chart { border: 1px solid #dce3ee; border-radius: 8px; padding: 16px; }
-        .bar-row { margin-bottom: 14px; }
-        .bar-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
-        .bar-track { background: #e8edf4; height: 15px; border-radius: 4px; overflow: hidden; }
-        .bar-fill { background: #2865c7; height: 100%; }
-        .nav a { display: inline-block; margin: 0 16px 12px 0; }
-    </style>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 </head>
 <body>
-    <h1>Campus Facility Reservation System</h1>
-    <h2>ADMIN Dashboard</h2>
-    <p>Welcome, {{ request.user.username }}!</p>
-    <hr>
 
-    <h3>Live Statistics</h3>
-    <div class="cards">
-        <div class="card">Active Basic Users<strong>{{ cards.basic_users }}</strong></div>
-        <div class="card">Active Facilities<strong>{{ cards.active_facilities }}</strong></div>
-        <div class="card">Pending Reservations<strong>{{ cards.pending_reservations }}</strong></div>
-        <div class="card">Upcoming Approved Events<strong>{{ cards.upcoming_events }}</strong></div>
-    </div>
-
-    <p><strong>Total booked hours:</strong> {{ booked_hours }} &nbsp; | &nbsp; <strong>Completed events:</strong> {{ completed_events }}</p>
-
-    <h3>Analytics</h3>
-    <div class="charts">
-        <div class="chart">
-            <h4>Monthly Reservations (Last 6 Months)</h4>
-            <p>Excludes rejected and cancelled reservations. Grouped by scheduled month.</p>
-            {% for row in monthly_rows %}
-                <div class="bar-row">
-                    <div class="bar-label"><span>{{ row.label }}</span><strong>{{ row.count }}</strong></div>
-                    <div class="bar-track"><div class="bar-fill" style="width: {{ row.width }}%;"></div></div>
-                </div>
-            {% endfor %}
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
         </div>
-        <div class="chart">
-            <h4>Facility Usage (Top 8)</h4>
-            <p>Approved, checked-in, completed and no-show reservations.</p>
-            {% for row in facility_rows %}
-                <div class="bar-row">
-                    <div class="bar-label"><span>{{ row.label }}</span><strong>{{ row.count }}</strong></div>
-                    <div class="bar-track"><div class="bar-fill" style="width: {{ row.width }}%;"></div></div>
-                </div>
-            {% empty %}
-                <p>No facility usage records yet.</p>
-            {% endfor %}
-        </div>
-    </div>
 
-    <h3>Administration</h3>
-    <div class="nav">
-        <a href="{% url 'manage_users' %}">Account Management</a>
-        <a href="{% url 'manage_facilities' %}">Manage Facilities</a>
-        <a href="{% url 'manage_categories' %}">Manage Facility Categories</a>
-        <a href="{% url 'manage_amenities' %}">Manage Amenities</a>
-        <a href="{% url 'manage_reservations' %}">Manage Reservations</a>
-        <a href="{% url 'reservation_calendar' %}">Reservation Calendar</a>
-        <a href="{% url 'event_monitoring' %}">Event Monitoring</a>
-        <a href="{% url 'manage_closures' %}">Manage Closures</a>
-        <a href="{% url 'reservation_reports' %}">Reports and CSV Export</a>
-        <a href="{% url 'view_audit_logs' %}">Audit Logs</a>
-        <a href="{% url 'system_settings' %}">System Settings</a>
-    </div>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
+
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <main class="admin-dashboard-container">
+
+        <div class="dashboard-header">
+            <h1>ADMIN Dashboard</h1>
+            <p class="welcome-text">Welcome back, <strong>{{ request.user.username }}</strong>!</p>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--line); margin: 1rem 0 1.5rem;">
+
+        <!-- Live Statistics Grid -->
+        <h3 class="section-title"><i class="fa-solid fa-chart-line"></i> Live Statistics</h3>
+        <div class="cards">
+            <div class="card">
+                <span>Active Basic Users</span>
+                <strong>{{ cards.basic_users }}</strong>
+            </div>
+            <div class="card">
+                <span>Active Facilities</span>
+                <strong>{{ cards.active_facilities }}</strong>
+            </div>
+            <div class="card">
+                <span>Pending Reservations</span>
+                <strong style="color: var(--gold);">{{ cards.pending_reservations }}</strong>
+            </div>
+            <div class="card">
+                <span>Upcoming Approved Events</span>
+                <strong>{{ cards.upcoming_events }}</strong>
+            </div>
+        </div>
+
+        <div class="meta-summary">
+            <strong>Total booked hours:</strong> {{ booked_hours }} &nbsp; | &nbsp; <strong>Completed events:</strong> {{ completed_events }}
+        </div>
+
+        <!-- Analytics Grid -->
+        <h3 class="section-title"><i class="fa-solid fa-chart-column"></i> Analytics</h3>
+        <div class="charts">
+
+            <!-- Monthly Reservations Column Bar Chart -->
+            <div class="chart">
+                <h4>Monthly Reservations (Last 6 Months)</h4>
+                <p class="chart-desc">Excludes rejected and cancelled reservations. Grouped by scheduled month.</p>
+
+                {% if monthly_rows %}
+                    <div class="bar-chart-container">
+                        {% for row in monthly_rows %}
+                            <div class="bar-column-wrapper">
+                                <span class="bar-value">{{ row.count }}</span>
+                                <div class="bar-column" style="height: {{ row.width }}%;" title="{{ row.label }}: {{ row.count }}"></div>
+                                <span class="bar-label-bottom" title="{{ row.label }}">{{ row.label }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="chart-desc">No reservation activity in the last 6 months.</p>
+                {% endif %}
+            </div>
+
+            <!-- Facility Usage Bar Chart -->
+            <div class="chart">
+                <h4>Facility Usage (Top 8)</h4>
+                <p class="chart-desc">Approved, checked-in, completed and no-show reservations.</p>
+
+                {% if facility_rows %}
+                    <div class="facility-chart-list">
+                        {% for row in facility_rows %}
+                            <div class="facility-bar-row">
+                                <div class="facility-bar-meta">
+                                    <span>{{ row.label }}</span>
+                                    <strong>{{ row.count }}</strong>
+                                </div>
+                                <div class="facility-bar-track">
+                                    <div class="facility-bar-fill" style="width: {{ row.width }}%;"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="chart-desc">No facility usage records yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Administration Links Grid -->
+        <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Administration</h3>
+        <div class="nav-grid">
+            <a href="{% url 'manage_users' %}" class="nav-card"><i class="fa-solid fa-users"></i> Account Management</a>
+            <a href="{% url 'manage_facilities' %}" class="nav-card"><i class="fa-solid fa-building"></i> Manage Facilities</a>
+            <a href="{% url 'manage_categories' %}" class="nav-card"><i class="fa-solid fa-layer-group"></i> Manage Categories</a>
+            <a href="{% url 'manage_amenities' %}" class="nav-card"><i class="fa-solid fa-list-check"></i> Manage Amenities</a>
+            <a href="{% url 'manage_reservations' %}" class="nav-card"><i class="fa-solid fa-calendar-days"></i> Manage Reservations</a>
+            <a href="{% url 'reservation_calendar' %}" class="nav-card"><i class="fa-solid fa-calendar"></i> Reservation Calendar</a>
+            <a href="{% url 'event_monitoring' %}" class="nav-card"><i class="fa-solid fa-desktop"></i> Event Monitoring</a>
+            <a href="{% url 'manage_closures' %}" class="nav-card"><i class="fa-solid fa-ban"></i> Manage Closures</a>
+            <a href="{% url 'reservation_reports' %}" class="nav-card"><i class="fa-solid fa-file-export"></i> Reports & CSV Export</a>
+            <a href="{% url 'view_audit_logs' %}" class="nav-card"><i class="fa-solid fa-clipboard-list"></i> Audit Logs</a>
+            <a href="{% url 'system_settings' %}" class="nav-card"><i class="fa-solid fa-gear"></i> System Settings</a>
+        </div>
+
+    </main>
+
 </body>
 </html>

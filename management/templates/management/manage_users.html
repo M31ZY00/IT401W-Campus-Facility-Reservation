@@ -1,101 +1,177 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Management</title>
+    <title>Account Management | Campus Facility Reservation</title>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/manage-users.css' %}">
 </head>
 <body>
 
-    <h1>Account Management</h1>
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Campus Facility Reservation System
+        </div>
 
-    {% if messages %}
-    {% for message in messages %}
-        <p>{{ message }}</p>
-    {% endfor %}
-{% endif %}
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
 
-    <a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
 
-    <hr>
+    <main class="accounts-container">
 
-    <h2>BASIC USER Accounts</h2>
+        <!-- Top Header & Navigation -->
+        <div class="accounts-header-wrapper">
+            <h1>Account Management</h1>
+            <a href="{% url 'admin_dashboard' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
 
-    <form method="GET">
-        <input
-            type="text"
-            name="search"
-            placeholder="Search username, name, or email"
-            value="{{ search_query }}"
-        >
-
-        <button type="submit">Search</button>
-
-        <a href="{% url 'manage_users' %}">Clear</a>
-    </form>
-
-    <br>
-
-    <table border="1" cellpadding="10">
-        <thead>
-            <tr>
-                <th>Username</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Account Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for user in users %}
-                <tr>
-                    <td>{{ user.username }}</td>
-
-                    <td>
-                        {{ user.first_name }}
-                        {{ user.last_name }}
-                    </td>
-
-                    <td>{{ user.email }}</td>
-
-                    <td>
-                        {% if user.is_active %}
-                            Active
-                        {% else %}
-                            Deactivated
-                        {% endif %}
-                    </td>
-
-                    <td>
-    <form
-        method="POST"
-        action="{% url 'toggle_user_status' user.id %}"
-        onsubmit="return confirm('Are you sure you want to change this account status?');"
-    >
-        {% csrf_token %}
-
-        {% if user.is_active %}
-            <button type="submit">Deactivate</button>
-        {% else %}
-            <button type="submit">Activate</button>
+        <!-- Django Alert Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-message">
+                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
-    </form>
-                        <br>
 
-<a href="{% url 'user_reservation_history' user.id %}">
-    View History
-</a>
-</td>
+        <!-- Search Bar Card -->
+        <div class="search-card">
+            <form method="GET" class="search-form">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                        type="text"
+                        name="search"
+                        class="search-input"
+                        placeholder="Search username, name, or email..."
+                        value="{{ search_query }}"
+                    >
+                </div>
 
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="5">No BASIC USER accounts found.</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                <button type="submit" class="btn-search">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+
+                {% if search_query %}
+                    <a href="{% url 'manage_users' %}" class="btn-clear">
+                        <i class="fa-solid fa-xmark"></i> Clear Search
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Users Table Card -->
+        <div class="table-card">
+            <div class="table-header-bar">
+                <h2>BASIC USER Accounts</h2>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Account Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for user in users %}
+                            <tr>
+                                <td><strong>{{ user.username }}</strong></td>
+
+                                <td>
+                                    {{ user.first_name }} {{ user.last_name }}
+                                    {% if not user.first_name and not user.last_name %}
+                                        <span style="color: var(--ink-soft);">&mdash;</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ user.email|default:"&mdash;" }}</td>
+
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge-status active">
+                                            <span class="status-dot"></span> Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-status deactivated">
+                                            <span class="status-dot"></span> Deactivated
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <div class="actions-cell">
+                                        <form
+                                            method="POST"
+                                            action="{% url 'toggle_user_status' user.id %}"
+                                            onsubmit="return confirm('Are you sure you want to change this account status?');"
+                                            style="margin: 0;"
+                                        >
+                                            {% csrf_token %}
+                                            {% if user.is_active %}
+                                                <button type="submit" class="btn-action-toggle deactivate">
+                                                    <i class="fa-solid fa-user-slash"></i> Deactivate
+                                                </button>
+                                            {% else %}
+                                                <button type="submit" class="btn-action-toggle activate">
+                                                    <i class="fa-solid fa-user-check"></i> Activate
+                                                </button>
+                                            {% endif %}
+                                        </form>
+
+                                        <a href="{% url 'user_reservation_history' user.id %}" class="btn-view-history">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> View History
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="empty-cell">
+                                    <i class="fa-solid fa-user-slash" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                    No BASIC USER accounts found.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
 
 </body>
 </html>
