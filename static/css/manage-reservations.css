@@ -257,7 +257,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    min-width: 180px;
+    min-width: 300px;
 }
 
 .btn-action-history {
@@ -281,46 +281,22 @@
     color: var(--white, #ffffff);
 }
 
+/* Side-by-side container for Pending actions */
+.pending-actions-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
 .action-form-inline {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    margin: 0;
-}
-
-.action-input-reason {
-    padding: 6px 10px;
-    font-size: 0.78rem;
-    border: 1px solid var(--line, #e1e7f1);
-    border-radius: 6px;
-    background: var(--grey, #f1f4f9);
-    outline: none;
-    width: 130px;
-}
-
-.actions-cell-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-width: 280px;
-}
-
-/* Horizontal Row for Primary Buttons */
-.action-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.action-form-inline {
-    display: inline-flex;
-    align-items: center;
     gap: 6px;
     margin: 0;
+    width: 100%;
 }
 
-/* Reason Input Box */
 .action-input-reason {
     padding: 6px 10px;
     font-size: 0.78rem;
@@ -328,7 +304,7 @@
     border-radius: 6px;
     background: var(--grey, #f1f4f9);
     outline: none;
-    width: 130px;
+    width: 100%;
     transition: all 0.2s ease;
 }
 
@@ -347,9 +323,11 @@
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     transition: all 0.2s ease;
     white-space: nowrap;
+    width: 100%;
 }
 
 .btn-act.approve, .btn-act.check-in, .btn-act.complete {
@@ -370,27 +348,6 @@
 .btn-act.reject:hover, .btn-act.cancel:hover, .btn-act.no-show:hover {
     background: #c5221f;
     color: #ffffff;
-}
-
-.btn-action-history {
-    padding: 6px 12px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--navy, #14213d);
-    background: var(--grey, #f1f4f9);
-    border: 1px solid var(--line, #e1e7f1);
-    border-radius: 6px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    width: fit-content;
-    transition: all 0.2s ease;
-}
-
-.btn-action-history:hover {
-    background: var(--navy, #14213d);
-    color: var(--white, #ffffff);
 }
 
 .empty-cell {
