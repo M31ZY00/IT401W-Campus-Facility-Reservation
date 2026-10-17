@@ -13,8 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- External Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'css/manage-reservations.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'css/manage-reservations.css' %}?v=2">
 </head>
 <body>
 
@@ -236,58 +236,65 @@
                                     </a>
 
                                     {% if reservation.status == 'pending' %}
-                                        <!-- Hidden Form for Rejection Handling via HTML5 form attribute -->
-                                        <form id="reject-form-{{ reservation.id }}" method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="display: none;">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="action" value="REJECT">
-                                        </form>
+                                        <!-- Side-by-Side Approve & Reject Grid Container -->
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
 
-                                        <!-- Side-by-Side Approve & Reject Buttons Row -->
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                                <form
-                                                    method="POST"
-                                                    action="{% url 'update_reservation_status' reservation.id %}"
-                                                    style="margin: 0;"
+                                            <!-- Approve Form -->
+                                            <form
+                                                method="POST"
+                                                action="{% url 'update_reservation_status' reservation.id %}"
+                                                style="margin: 0; display: flex; flex-direction: column; gap: 4px;"
+                                            >
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="APPROVE">
+                                                <input
+                                                    type="text"
+                                                    name="reason"
+                                                    class="action-input-reason"
+                                                    placeholder="Approval reason..."
+                                                    aria-label="Approval reason for reservation {{ reservation.id }}"
+                                                    maxlength="500"
+                                                    required
+                                                    style="width: 100%;"
                                                 >
+                                                <button
+                                                    type="submit"
+                                                    class="btn-act approve"
+                                                    style="width: 100%; justify-content: center;"
+                                                >
+                                                    <i class="fa-solid fa-check"></i>
+                                                    Approve
+                                                </button>
+                                            </form>
 
-                                                    {% csrf_token %}
+                                            <!-- Reject Form -->
+                                            <form
+                                                method="POST"
+                                                action="{% url 'update_reservation_status' reservation.id %}"
+                                                style="margin: 0; display: flex; flex-direction: column; gap: 4px;"
+                                            >
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="REJECT">
+                                                <input
+                                                    type="text"
+                                                    name="reason"
+                                                    class="action-input-reason"
+                                                    placeholder="Rejection reason..."
+                                                    aria-label="Rejection reason for reservation {{ reservation.id }}"
+                                                    maxlength="500"
+                                                    required
+                                                    style="width: 100%;"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    class="btn-act reject"
+                                                    style="width: 100%; justify-content: center;"
+                                                >
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                    Reject
+                                                </button>
+                                            </form>
 
-                                                    <input
-                                                        type="hidden"
-                                                        name="action"
-                                                        value="APPROVE"
-                                                    >
-
-                                                    <!-- Required Approval Reason -->
-                                                    <input
-                                                        type="text"
-                                                        name="reason"
-                                                        class="action-input-reason"
-                                                        placeholder="Approval reason..."
-                                                        aria-label="Approval reason for reservation {{ reservation.id }}"
-                                                        maxlength="500"
-                                                        required
-                                                        style="width: 100%; margin-bottom: 6px;"
-                                                    >
-
-                                                    <!-- Approve Button -->
-                                                    <button
-                                                        type="submit"
-                                                        class="btn-act approve"
-                                                    >
-                                                        <i class="fa-solid fa-check"></i>
-                                                        Approve
-                                                    </button>
-                                                </form>
-
-                                            <button type="submit" form="reject-form-{{ reservation.id }}" class="btn-act reject">
-                                                <i class="fa-solid fa-xmark"></i> Reject
-                                            </button>
-                                        </div>
-
-                                        <!-- Rejection Reason Input Field Below -->
-                                        <div style="margin-top: 6px;">
-                                            <input type="text" name="reason" form="reject-form-{{ reservation.id }}" placeholder="Rejection reason..." required class="action-input-reason" style="width: 100%;">
                                         </div>
 
                                     {% elif reservation.status == 'approved' %}
