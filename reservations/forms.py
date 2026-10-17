@@ -35,6 +35,19 @@ class ReservationForm(forms.ModelForm):
         self.fields['start_time'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['end_time'].input_formats = ['%Y-%m-%dT%H:%M']
 
+    def clean_event_title(self):
+
+        title = (
+            self.cleaned_data.get('event_title') or ''
+        ).strip()
+
+        if not title:
+            raise forms.ValidationError(
+                'Event title is required.'
+            )
+
+        return title
+
     def clean(self):
         cleaned_data = super().clean()
 

@@ -1,120 +1,495 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ facility.name }}</title>
 
+    <title>{{ facility.name }} | Facility Availability</title>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/../../../static/css/home.css' %}">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <!-- Existing Project CSS -->
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/facilities.css' %}">
 
 </head>
+
 <body>
 
+    <!-- ============================= -->
+    <!-- NAVIGATION BAR -->
+    <!-- ============================= -->
+
     <header class="topbar">
+
         <a href="{% url 'home' %}" class="topbar-brand">
             <i class="fa-solid fa-graduation-cap"></i>
             School Name
         </a>
 
         <div class="topbar-right">
+
             <a href="{% url 'home' %}" class="topbar-link">
-                <i class="fa-solid fa-house"></i><span>Home</span>
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
             </a>
 
             {% if user.is_authenticated %}
+
                 <div class="user-chip">
-                    <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+                    <div class="avatar">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+
                     <span>{{ user.username }}</span>
                 </div>
 
-                <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% if not user.is_staff and not user.is_superuser %}
+                    <a href="{% url 'profile' %}" class="topbar-link">
+                        <i class="fa-solid fa-user"></i>
+                        <span>My Profile</span>
+                    </a>
+                {% endif %}
+
+                <form
+                    method="POST"
+                    action="{% url 'logout' %}"
+                    class="logout-form"
+                >
                     {% csrf_token %}
+
                     <button type="submit" class="logout-btn">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <span>Log out</span>
                     </button>
                 </form>
+
             {% else %}
+
                 <a href="{% url 'login' %}" class="topbar-link">
-                    <i class="fa-solid fa-right-to-bracket"></i><span>Log in</span>
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Log in</span>
                 </a>
+
             {% endif %}
+
         </div>
+
     </header>
 
+
+    <!-- ============================= -->
+    <!-- FACILITY HEADER -->
+    <!-- ============================= -->
+
     <section class="hero page-hero">
+
         <div class="hero-inner">
+
             <div class="eyebrow">
                 <i class="fa-solid fa-building"></i>
                 {{ facility.category.name|default:"Facility" }}
             </div>
+
             <h1>{{ facility.name }}</h1>
+
             <p>{{ facility.location }}</p>
+
         </div>
+
     </section>
+
+
+    <!-- ============================= -->
+    <!-- MAIN CONTENT -->
+    <!-- ============================= -->
 
     <main class="content page-content">
 
         <div class="detail-layout">
 
+            <!-- FACILITY INFORMATION -->
+
             <section class="detail-card">
+
                 <h2>Facility Details</h2>
 
                 <div class="info-grid">
+
+                    <!-- Location -->
                     <div class="info-item">
-                        <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
+
+                        <div class="icon">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
+
                         <div>
                             <small>Location</small>
                             <strong>{{ facility.location }}</strong>
                         </div>
+
                     </div>
 
+                    <!-- Capacity -->
                     <div class="info-item">
-                        <div class="icon"><i class="fa-solid fa-users"></i></div>
+
+                        <div class="icon">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+
                         <div>
                             <small>Capacity</small>
-                            <strong>{{ facility.capacity }} students</strong>
+
+                            <strong>
+                                {{ facility.capacity }} participants
+                            </strong>
                         </div>
+
                     </div>
+
+                    <!-- Operating Hours -->
+                    <div class="info-item">
+
+                        <div class="icon">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+
+                        <div>
+                            <small>Operating Hours</small>
+
+                            <strong>
+                                {{ facility.opening_time|time:"g:i A" }}
+                                –
+                                {{ facility.closing_time|time:"g:i A" }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    <!-- Facility Code -->
+                    <div class="info-item">
+
+                        <div class="icon">
+                            <i class="fa-solid fa-hashtag"></i>
+                        </div>
+
+                        <div>
+                            <small>Facility Code</small>
+
+                            <strong>
+                                {{ facility.code|default:"N/A" }}
+                            </strong>
+                        </div>
+
+                    </div>
+
                 </div>
 
+
+                <!-- Description -->
+
                 <h2>Description</h2>
-                <p class="detail-desc">{{ facility.description }}</p>
+
+                <p class="detail-desc">
+                    {{ facility.description|default:"No description available." }}
+                </p>
+
+
+                <!-- Amenities -->
+
+                <h2 style="margin-top: 28px;">
+                    Available Amenities
+                </h2>
+
+                <ul class="facility-amenities">
+
+                    {% for amenity in amenities %}
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            {{ amenity.name }}
+                        </li>
+
+                    {% empty %}
+
+                        <li>
+                            No amenities are currently listed.
+                        </li>
+
+                    {% endfor %}
+
+                </ul>
+
             </section>
 
+
+            <!-- RESERVATION CARD -->
+
             <aside class="reserve-card">
-                <span class="status">Available for reservation requests</span>
+
+                <span class="status">
+                    Reservation Requests Open
+                </span>
 
                 <h2>Want to use this facility?</h2>
 
-                {% if user.is_authenticated %}
-                    <p>Submit a reservation request and track its status from your reservations page.</p>
-                    <a href="{% url 'create_reservation' facility.id %}" class="btn btn-gold btn-block">
-                        <i class="fa-solid fa-calendar-plus"></i> Reserve Facility
+                <p>
+                    Check the available schedule below before
+                    submitting your reservation request.
+                    All requests are subject to administrator
+                    approval.
+                </p>
+
+                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                    <a
+                        href="{% url 'facility_list' %}?reserve={{ facility.id }}#{{ facility.id }}"
+                        class="btn btn-gold btn-block"
+                    >
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        Reserve Facility
                     </a>
+
+                {% elif user.is_authenticated %}
+
+                    <p>
+                        Administrators manage facility
+                        reservations through the management
+                        dashboard.
+                    </p>
+
+                    <a
+                        href="{% url 'admin_dashboard' %}"
+                        class="btn btn-gold btn-block"
+                    >
+                        <i class="fa-solid fa-gauge"></i>
+                        Admin Dashboard
+                    </a>
+
                 {% else %}
-                    <p>Please log in to reserve this facility.</p>
-                    <a href="{% url 'login' %}" class="btn btn-gold btn-block">
-                        <i class="fa-solid fa-right-to-bracket"></i> Login to Reserve
+
+                    <p>
+                        Please log in to submit a reservation
+                        request for this facility.
+                    </p>
+
+                    <a
+                        href="{% url 'login' %}"
+                        class="btn btn-gold btn-block"
+                    >
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Login to Reserve
                     </a>
+
                 {% endif %}
+
             </aside>
 
         </div>
 
-        <a href="{% url 'facility_list' %}" class="back-link">
-            <i class="fa-solid fa-arrow-left"></i> Back to Facilities
+
+        <!-- ============================= -->
+        <!-- FACILITY AVAILABILITY -->
+        <!-- ============================= -->
+
+        <section class="detail-card availability-section">
+
+            <h2>
+                <i class="fa-solid fa-calendar-days"></i>
+                Facility Availability
+            </h2>
+
+            <p>
+                Select a date to view the available and
+                unavailable time slots for this facility.
+            </p>
+
+
+            <!-- DATE SELECTION FORM -->
+
+            <form method="GET" class="availability-filter">
+
+                <div class="field">
+
+                    <label for="availability-date">
+                        Select Reservation Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="availability-date"
+                        name="date"
+                        value="{{ selected_date|date:'Y-m-d' }}"
+                        min="{{ today|date:'Y-m-d' }}"
+                        max="{{ latest_date|date:'Y-m-d' }}"
+                        required
+                    >
+
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Check Availability
+                </button>
+
+            </form>
+
+
+            <!-- BOOKING WINDOW INFORMATION -->
+
+            <p class="availability-note">
+                <i class="fa-solid fa-circle-info"></i>
+
+                Reservations may be requested up to
+                {{ system_setting.advance_booking_days }}
+                calendar days in advance.
+            </p>
+
+
+            <!-- DATE VALIDATION -->
+
+            {% if date_error %}
+
+                <p class="availability-error" role="alert">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ date_error }}
+                </p>
+
+            {% else %}
+
+
+                <!-- SELECTED DATE -->
+
+                <h3 class="availability-date-heading">
+                    Schedule for
+                    {{ selected_date|date:"F d, Y" }}
+                </h3>
+
+
+                <!-- AVAILABILITY LEGEND -->
+
+                <div class="availability-legend">
+
+                    <span class="legend-free">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Available
+                    </span>
+
+                    <span class="legend-unavailable">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        Unavailable
+                    </span>
+
+                </div>
+
+
+                <!-- TIME SLOT GRID -->
+
+                <div class="availability-grid">
+
+                    {% for slot in slots %}
+
+                        <div class="availability-slot {% if slot.available %}slot-free{% else %}slot-unavailable{% endif %}">
+
+                            <!-- Time Interval -->
+
+                            <strong class="slot-time">
+                                {{ slot.start|time:"g:i A" }}
+                                –
+                                {{ slot.end|time:"g:i A" }}
+                            </strong>
+
+
+                            <!-- Availability Status -->
+
+                            {% if slot.available %}
+
+                                <span class="slot-label">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                    Available
+                                </span>
+
+                            {% else %}
+
+                                <span class="slot-label">
+                                    <i class="fa-solid fa-times-circle"></i>
+                                    Unavailable
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    {% empty %}
+
+                        <p class="availability-empty">
+                            No time slots can be displayed
+                            for the selected date.
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- AVAILABILITY REMINDER -->
+
+            <p class="availability-reminder">
+
+                <i class="fa-solid fa-circle-info"></i>
+
+                Time slots are displayed in 30-minute
+                intervals. Pending requests do not block
+                time slots, while approved reservations
+                and active facility closures affect availability.
+
+                Actual reservations may use other valid
+                start and end times within operating hours.
+                Final availability is verified when an
+                administrator approves the request.
+
+            </p>
+
+        </section>
+
+
+        <!-- BACK BUTTON -->
+
+        <a
+            href="{% url 'facility_list' %}"
+            class="back-link"
+        >
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Facilities
         </a>
 
     </main>
 
+    <!-- FOOTER -->
     <footer class="footer">
-        &copy; {% now "Y" %} School Name &middot; Campus Facility Reservation System
+
+        &copy; {% now "Y" %}
+        School Name
+        &middot;
+        Campus Facility Reservation System
+
     </footer>
 
 </body>

@@ -778,10 +778,16 @@ class Command(BaseCommand):
                 )
 
             if old_closures.exists():
-                old_closures.update(reason=reason)
+                old_closures.update(
+                    reason=reason,
+                    created_by=admin
+                )
                 continue
 
             if new_closures.exists():
+                new_closures.filter(
+                    created_by__isnull=True
+                ).update(created_by=admin)
                 continue
 
             closure_day = today + timedelta(days=45 + index)
@@ -792,6 +798,7 @@ class Command(BaseCommand):
                 end_time=local_datetime(closure_day, 15),
                 reason=reason,
                 is_active=True,
+                created_by=admin,
             )
 
             closure.full_clean()

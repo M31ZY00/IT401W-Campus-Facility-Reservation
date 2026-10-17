@@ -34,6 +34,9 @@ class FacilityForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.fields['code'].required = True
+        self.fields['category'].required = True
+
         categories = FacilityCategory.objects.filter(
             is_active=True
         )

@@ -78,16 +78,18 @@
                     </div>
 
                     <div class="field">
-                        <label for="category">Category</label>
-                        <select id="category" name="category">
-                            <option value="">All Categories</option>
-                            {% for category in categories %}
-                                <option value="{{ category.id }}"
-                                    {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ category.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                        <label for="capacity">
+                            Minimum Capacity
+                        </label>
+
+                        <input
+                            type="number"
+                            id="capacity"
+                            name="capacity"
+                            min="1"
+                            value="{{ capacity_value }}"
+                            placeholder="Enter number of participants"
+                        >
                     </div>
 
                     <div class="row">
@@ -142,32 +144,65 @@
                                     </div>
                                 </div>
 
-                                <h3>Description</h3>
-                                <p class="detail-desc">{{ facility.description }}</p>
+                                    <h3>Description</h3>
+                                    <p class="detail-desc">{{ facility.description }}</p>
+
+                                    <div style="margin-top: 20px;">
+
+                                        <a
+                                            href="{% url 'facility_detail' facility.id %}"
+                                            class="btn btn-primary"
+                                        >
+                                            <i class="fa-solid fa-calendar-days"></i>
+                                            View Availability
+                                        </a>
+                                    </div>
                             </div>
 
                             <div class="reserve-bar">
                                 <div>
-                                    <span class="status">Available for reservation requests</span>
+                                    <span class="status">
+                                        Check the schedule before requesting
+                                    </span>
                                     <p>Want to use this facility?</p>
                                 </div>
 
-                                {% if user.is_authenticated %}
-                                    <button type="button"
-                                            class="btn btn-gold js-reserve"
-                                            data-url="{% url 'create_reservation' facility.id %}">
-                                        <i class="fa-solid fa-calendar-plus"></i> Reserve Facility
+                                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-gold js-reserve"
+                                        data-url="{% url 'create_reservation' facility.id %}"
+                                    >
+                                        <i class="fa-solid fa-calendar-plus"></i>
+                                        Reserve Facility
                                     </button>
-                                {% else %}
-                                    <a href="{% url 'login' %}" class="btn btn-gold">
-                                        <i class="fa-solid fa-right-to-bracket"></i> Login to Reserve
+
+                                {% elif user.is_authenticated %}
+
+                                    <a
+                                        href="{% url 'admin_dashboard' %}"
+                                        class="btn btn-gold"
+                                    >
+                                        Go to Admin Dashboard
                                     </a>
+
+                                {% else %}
+
+                                    <a
+                                        href="{% url 'login' %}"
+                                        class="btn btn-gold"
+                                    >
+                                        <i class="fa-solid fa-right-to-bracket"></i>
+                                        Login to Reserve
+                                    </a>
+
                                 {% endif %}
                             </div>
                         </div>
 
                         <!-- Reserve form (opens below details) -->
-                        {% if user.is_authenticated %}
+                        {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
                             <div class="res-panel" hidden>
                                 <div class="res-head">
                                     <h2>Reserve {{ facility.name }}</h2>
@@ -200,7 +235,10 @@
     <script>
     (function () {
 
-        /* ---------- Select a facility ---------- */
+        var autoReserveFacilityId = new URLSearchParams(
+            window.location.search
+        ).get('reserve');
+
         var items = document.querySelectorAll('.fac-item');
         var wraps = document.querySelectorAll('.fac-wrap');
 
@@ -312,6 +350,30 @@
         document.querySelectorAll('.res-close').forEach(function (b) {
             b.addEventListener('click', function () { b.closest('.res-panel').hidden = true; });
         });
+
+            if (
+                autoReserveFacilityId &&
+                /^\d+$/.test(autoReserveFacilityId)
+            ) {
+                var autoReserveButton = document.querySelector(
+                    '.fac-wrap[data-id="' +
+                    autoReserveFacilityId +
+                    '"] .js-reserve'
+                );
+
+                if (autoReserveButton) {
+
+                    select(autoReserveFacilityId, false);
+
+                    autoReserveButton.click();
+
+                    history.replaceState(
+                        null,
+                        '',
+                        '#' + autoReserveFacilityId
+                    );
+                }
+            }
 
     })();
     </script>

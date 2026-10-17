@@ -62,42 +62,124 @@
             </div>
         {% endif %}
 
-        <!-- Search & Filter Card -->
+
+        <!-- SEARCH AND FILTER SECTION -->
         <div class="search-card">
+
             <form method="GET" class="search-form">
+
+                <!-- Search Reservations -->
                 <div class="search-input-wrapper">
+
                     <i class="fa-solid fa-magnifying-glass"></i>
+
                     <input
                         type="text"
                         name="search"
                         class="search-input"
                         value="{{ search_query }}"
                         placeholder="Search reservations..."
+                        aria-label="Search reservations"
                     >
+
                 </div>
 
-                <select name="status" class="status-select">
+
+                <!-- Reservation Status Filter -->
+                <select
+                    name="status"
+                    class="status-select"
+                    aria-label="Filter by reservation status"
+                >
+
                     <option value="">All Statuses</option>
+
                     {% for value, label in status_choices %}
+
                         <option
                             value="{{ value }}"
-                            {% if status_filter == value %}selected{% endif %}
+                            {% if status_filter == value %}
+                                selected
+                            {% endif %}
                         >
                             {{ label }}
                         </option>
+
                     {% endfor %}
+
                 </select>
 
-                <button type="submit" class="btn-search">
-                    <i class="fa-solid fa-magnifying-glass"></i> Search
+
+                <!-- Facility Filter -->
+                <select
+                    name="facility"
+                    class="status-select"
+                    aria-label="Filter by facility"
+                >
+
+                    <option value="">All Facilities</option>
+
+                    {% for facility in facilities %}
+
+                        <option
+                            value="{{ facility.id }}"
+                            {% if facility_filter == facility.id|stringformat:"s" %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ facility.name }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+
+                <!-- Reservation Date Filter -->
+                <input
+                    type="date"
+                    name="date"
+                    class="status-select"
+                    value="{{ date_filter }}"
+                    aria-label="Filter by reservation date"
+                    title="Reservation Date"
+                >
+
+
+                <!-- Apply Filters Button -->
+                <button
+                    type="submit"
+                    class="btn-search"
+                >
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Search
                 </button>
 
-                {% if search_query or status_filter %}
-                    <a href="{% url 'manage_reservations' %}" class="btn-clear">
-                        <i class="fa-solid fa-xmark"></i> Clear Filters
+
+                <!-- Clear Filters Button -->
+                {% if search_query or status_filter or facility_filter or date_filter %}
+
+                    <a
+                        href="{% url 'manage_reservations' %}"
+                        class="btn-clear"
+                    >
+                        <i class="fa-solid fa-xmark"></i>
+                        Clear Filters
                     </a>
+
                 {% endif %}
+
             </form>
+
+            {% if date_error %}
+                <p
+                    role="alert"
+                    style="color: #b91c1c; margin-top: 12px;"
+                >
+                    {{ date_error }}
+                </p>
+            {% endif %}
+
         </div>
 
         <!-- Table Card Wrapper -->
@@ -162,13 +244,41 @@
 
                                         <!-- Side-by-Side Approve & Reject Buttons Row -->
                                         <div style="display: flex; align-items: center; gap: 8px;">
-                                            <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="action" value="APPROVE">
-                                                <button type="submit" class="btn-act approve">
-                                                    <i class="fa-solid fa-check"></i> Approve
-                                                </button>
-                                            </form>
+                                                <form
+                                                    method="POST"
+                                                    action="{% url 'update_reservation_status' reservation.id %}"
+                                                    style="margin: 0;"
+                                                >
+
+                                                    {% csrf_token %}
+
+                                                    <input
+                                                        type="hidden"
+                                                        name="action"
+                                                        value="APPROVE"
+                                                    >
+
+                                                    <!-- Required Approval Reason -->
+                                                    <input
+                                                        type="text"
+                                                        name="reason"
+                                                        class="action-input-reason"
+                                                        placeholder="Approval reason..."
+                                                        aria-label="Approval reason for reservation {{ reservation.id }}"
+                                                        maxlength="500"
+                                                        required
+                                                        style="width: 100%; margin-bottom: 6px;"
+                                                    >
+
+                                                    <!-- Approve Button -->
+                                                    <button
+                                                        type="submit"
+                                                        class="btn-act approve"
+                                                    >
+                                                        <i class="fa-solid fa-check"></i>
+                                                        Approve
+                                                    </button>
+                                                </form>
 
                                             <button type="submit" form="reject-form-{{ reservation.id }}" class="btn-act reject">
                                                 <i class="fa-solid fa-xmark"></i> Reject
@@ -243,30 +353,47 @@
                 </table>
             </div>
 
-            <!-- Pagination Footer -->
+
+            <!-- PAGINATION FOOTER -->
             {% if page_obj.has_other_pages %}
             <div class="pagination-container">
+                <!-- Previous Page -->
                 <div>
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}" class="page-link-btn">
-                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        <a
+                            href="?page={{ page_obj.previous_page_number }}&amp;search={{ search_query|urlencode }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;date={{ date_filter|urlencode }}"
+                            class="page-link-btn"
+                        >
+                            <i class="fa-solid fa-chevron-left"></i>
+                            Previous
                         </a>
                     {% endif %}
                 </div>
 
-                <span>Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</span>
 
+                <!-- Current Page -->
+                <span>
+                    Page
+                    <strong>{{ page_obj.number }}</strong>
+                    of
+                    {{ page_obj.paginator.num_pages }}
+                </span>
+
+                <!-- Next Page -->
                 <div>
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query|urlencode }}&status={{ status_filter|urlencode }}" class="page-link-btn">
-                            Next <i class="fa-solid fa-chevron-right"></i>
+                        <a
+                            href="?page={{ page_obj.next_page_number }}&amp;search={{ search_query|urlencode }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;date={{ date_filter|urlencode }}"
+                            class="page-link-btn"
+                        >
+                            Next
+                            <i class="fa-solid fa-chevron-right"></i>
                         </a>
                     {% endif %}
                 </div>
             </div>
             {% endif %}
         </div>
-
     </main>
 
 </body>

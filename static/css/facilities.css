@@ -880,3 +880,182 @@ body.no-scroll { overflow: hidden; }
 @media (max-width: 620px) {
     .res-body form { grid-template-columns: 1fr; }
 }
+
+
+/* Facility availability */
+
+.availability-section {
+    margin-top: 28px;
+}
+
+.availability-heading h2 {
+    margin-bottom: 8px;
+}
+
+.availability-heading p,
+.availability-note {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Date Filter */
+.availability-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 16px;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+.availability-filter .field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.availability-filter .btn {
+    min-height: 46px;
+}
+
+/* Selected Date */
+.availability-date-heading {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: var(--navy);
+}
+
+/* Legend */
+.availability-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.legend-free {
+    color: #166534;
+}
+
+.legend-unavailable {
+    color: #991b1b;
+}
+
+/* Time Slot Grid */
+.availability-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(185px, 1fr)
+    );
+    gap: 12px;
+}
+
+/* Individual Time Slot */
+.availability-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.slot-time {
+    font-size: 0.85rem;
+    color: var(--navy);
+}
+
+.slot-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* Available */
+.slot-free {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.slot-free .slot-label {
+    color: #166534;
+}
+
+/* Unavailable */
+.slot-unavailable {
+    background: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.slot-unavailable .slot-label {
+    color: #991b1b;
+}
+
+/* Messages */
+.availability-error {
+    padding: 14px;
+    margin-top: 16px;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.availability-empty {
+    padding: 16px;
+    color: var(--ink-soft);
+}
+
+.availability-reminder {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 22px;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+}
+
+/* Facility Amenities */
+.facility-amenities {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.facility-amenities li {
+    margin-bottom: 10px;
+    color: var(--ink);
+}
+
+.facility-amenities i {
+    color: #166534;
+    margin-right: 8px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+
+    .availability-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .availability-filter .field,
+    .availability-filter .btn {
+        width: 100%;
+    }
+
+    .availability-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .availability-slot {
+        padding: 14px;
+    }
+}

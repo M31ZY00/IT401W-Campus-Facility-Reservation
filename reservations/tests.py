@@ -400,6 +400,7 @@ class ReservationWorkflowTests(TestCase):
             ).exists()
         )
 
+
     def test_reservation_during_facility_closure_is_rejected(self):
 
         FacilityClosure.objects.create(
@@ -416,8 +417,107 @@ class ReservationWorkflowTests(TestCase):
         )
 
         with self.assertRaises(ValidationError):
-
             reservation.full_clean()
+
+
+    def test_basic_user_cancellation_creates_audit_log(self):
+
+        # Create a pending reservation
+        reservation = self.make_reservation(
+            status='pending'
+        )
+
+        # Sign in as reservation owner
+        self.client.force_login(self.basic_user)
+
+        # Cancel the reservation
+        response = self.client.post(
+            reverse(
+                'cancel_reservation',
+                args=[reservation.pk]
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        # Verify reservation status
+        reservation.refresh_from_db()
+
+        self.assertEqual(
+            reservation.status,
+            'cancelled'
+        )
+
+        # Verify ReservationChange history
+        self.assertTrue(
+            ReservationChange.objects.filter(
+                reservation=reservation,
+                previous_status='pending',
+                new_status='cancelled',
+                changed_by=self.basic_user
+            ).exists()
+        )
+
+        # Verify AuditLog entry
+        self.assertTrue(
+            AuditLog.objects.filter(
+                admin_user=self.basic_user,
+                action='CANCEL',
+                model_name='Reservation',
+                object_id=reservation.pk
+            ).exists()
+        )
+
+        # Verify entry appears in Admin Audit Logs
+        self.client.force_login(self.admin_user)
+
+        response = self.client.get(
+            reverse('view_audit_logs'),
+            {'action': 'CANCEL'}
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertContains(
+            response,
+            f'Reservation #{reservation.pk} was cancelled'
+        )
+
+
+    def test_failed_cancellation_does_not_create_audit_log(self):
+
+        # Completed reservations cannot be cancelled
+        reservation = self.make_reservation(
+            status='completed'
+        )
+
+        self.client.force_login(self.basic_user)
+
+        response = self.client.post(
+            reverse(
+                'cancel_reservation',
+                args=[reservation.pk]
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        reservation.refresh_from_db()
+
+        self.assertEqual(
+            reservation.status,
+            'completed'
+        )
+
+        # No cancellation audit entry should exist
+        self.assertFalse(
+            AuditLog.objects.filter(
+                action='CANCEL',
+                model_name='Reservation',
+                object_id=reservation.pk
+            ).exists()
+        )
+
 
 class AdvancedSchedulingTests(TestCase):
 

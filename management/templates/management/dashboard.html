@@ -74,29 +74,82 @@
 
             <hr style="border: 0; border-top: 1px solid var(--line); margin: 1rem 0 1.5rem;">
 
-            <!-- Live Statistics Grid -->
-            <h3 class="section-title"><i class="fa-solid fa-chart-line"></i> Live Statistics</h3>
+            <!-- LIVE DASHBOARD STATISTICS -->
+            <h3 class="section-title">
+                <i class="fa-solid fa-chart-line"></i>
+                Live Statistics
+            </h3>
+
             <div class="cards">
+
+                <!-- Pending Requests -->
                 <div class="card">
-                    <span>Active Basic Users</span>
-                    <strong>{{ cards.basic_users }}</strong>
+
+                    <span>
+                        <i class="fa-solid fa-clock"></i>
+                        Pending Requests
+                    </span>
+
+                    <strong style="color: var(--gold);">
+                        {{ cards.pending_reservations }}
+                    </strong>
+
                 </div>
+
+
+                <!-- Approved Upcoming Bookings -->
                 <div class="card">
-                    <span>Active Facilities</span>
-                    <strong>{{ cards.active_facilities }}</strong>
+
+                    <span>
+                        <i class="fa-solid fa-calendar-check"></i>
+                        Approved Upcoming Bookings
+                    </span>
+
+                    <strong>
+                        {{ cards.upcoming_events }}
+                    </strong>
+
                 </div>
+
+
+                <!-- Completed Events -->
                 <div class="card">
-                    <span>Pending Reservations</span>
-                    <strong style="color: var(--gold);">{{ cards.pending_reservations }}</strong>
+
+                    <span>
+                        <i class="fa-solid fa-circle-check"></i>
+                        Completed Events
+                    </span>
+
+                    <strong>
+                        {{ cards.completed_events }}
+                    </strong>
+
                 </div>
+
+
+                <!-- Active Facilities -->
                 <div class="card">
-                    <span>Upcoming Approved Events</span>
-                    <strong>{{ cards.upcoming_events }}</strong>
+
+                    <span>
+                        <i class="fa-solid fa-building"></i>
+                        Active Facilities
+                    </span>
+
+                    <strong>
+                        {{ cards.active_facilities }}
+                    </strong>
+
                 </div>
             </div>
 
+            <!-- Booked Hours Summary -->
             <div class="meta-summary">
-                <strong>Total booked hours:</strong> {{ booked_hours }} &nbsp; | &nbsp; <strong>Completed events:</strong> {{ completed_events }}
+
+                <i class="fa-solid fa-clock"></i>
+
+                <strong>Total Booked Hours:</strong>
+                {{ booked_hours }} hours
+
             </div>
 
             <!-- Analytics Grid -->
