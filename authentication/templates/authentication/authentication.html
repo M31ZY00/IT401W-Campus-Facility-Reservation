@@ -99,6 +99,66 @@
                         {% endfor %}
                     </div>
 
+                    <!-- First Name -->
+                    <div class="field">
+                        <label for="{{ register_form.first_name.id_for_label }}">
+                            First Name
+                        </label>
+
+                        {{ register_form.first_name }}
+
+                        {% for error in register_form.first_name.errors %}
+                            <p class="form-error" role="alert">
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="field">
+                        <label for="{{ register_form.last_name.id_for_label }}">
+                            Last Name
+                        </label>
+
+                        {{ register_form.last_name }}
+
+                        {% for error in register_form.last_name.errors %}
+                            <p class="form-error" role="alert">
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Email Address -->
+                    <div class="field">
+                        <label for="{{ register_form.email.id_for_label }}">
+                            Email Address
+                        </label>
+
+                        {{ register_form.email }}
+
+                        {% for error in register_form.email.errors %}
+                            <p class="form-error" role="alert">
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Contact Number -->
+                    <div class="field">
+                        <label for="{{ register_form.phone_number.id_for_label }}">
+                            Contact Number (Optional)
+                        </label>
+
+                        {{ register_form.phone_number }}
+
+                        {% for error in register_form.phone_number.errors %}
+                            <p class="form-error" role="alert">
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    </div>
+
                     <!-- Password -->
                     <div class="field">
                         <label for="{{ register_form.password1.id_for_label }}">

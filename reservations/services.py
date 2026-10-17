@@ -29,8 +29,10 @@ def update_reservation(request, reservation_id, action, reason=''):
 
     expected_status, new_status = ALLOWED_TRANSITIONS[action]
 
-    if action in ['REJECT', 'CANCEL'] and not reason:
-        raise ValidationError('A reason is required for this action.')
+    if action in ['APPROVE', 'REJECT', 'CANCEL'] and not reason:
+        raise ValidationError(
+            'A reason is required for this action.'
+        )
 
     reservation_reference = Reservation.objects.only(
         'facility_id'
@@ -129,11 +131,38 @@ def update_reservation(request, reservation_id, action, reason=''):
             )
 
         elif action == 'COMPLETE':
-            reservation.status = 'completed'
-            reservation.save(update_fields=['status'])
 
-            event_record, created = EventRecord.objects.get_or_create(
-                reservation=reservation
+            event_record = (
+                EventRecord.objects
+                .select_for_update()
+                .filter(reservation=reservation)
+                .first()
+            )
+
+            if event_record is None:
+                raise ValidationError(
+                    'The event must be checked in '
+                    'before it can be completed.'
+                )
+
+            if (
+                    event_record.actual_start is None
+                    or event_record.checked_in_by_id is None
+
+            ):
+                raise ValidationError(
+                    'The event has no valid check-in record.'
+                )
+
+            if now < event_record.actual_start:
+                raise ValidationError(
+                    'Actual end time cannot be earlier '
+                    'than actual start time.'
+                )
+
+            reservation.status = 'completed'
+            reservation.save(
+                update_fields=['status']
             )
 
             event_record.actual_end = now

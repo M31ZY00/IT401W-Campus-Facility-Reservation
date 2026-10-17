@@ -1,0 +1,391 @@
+.profile-body {
+    margin: 0;
+    min-height: 100vh;
+    display: block;
+    background: #f1f4f9;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #14213d;
+}
+
+/* Main Layout */
+
+.profile-container {
+    width: 100%;
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 55px 20px 80px;
+}
+
+/* Back Navigation */
+
+.profile-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-bottom: 24px;
+
+    color: #14213d;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    transition: color 0.2s;
+}
+
+.profile-back:hover {
+    color: #d48900;
+}
+
+/* Main Profile Card */
+
+.profile-card {
+    position: relative;
+    width: 100%;
+    padding: 40px;
+
+    background: #ffffff;
+    border: 1px solid #e1e7f1;
+    border-radius: 18px;
+
+    box-shadow: 0 12px 36px rgba(20, 33, 61, 0.08);
+}
+
+.profile-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 40px;
+
+    width: 45px;
+    height: 4px;
+
+    background: #fda30f;
+    border-radius: 0 0 4px 4px;
+}
+
+/* Profile Header */
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.profile-icon {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: #14213d;
+    color: #fda30f;
+
+    border-radius: 16px;
+    font-size: 1.7rem;
+}
+
+.profile-header h1 {
+    margin: 0 0 6px;
+
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+    line-height: 1.3;
+
+    color: #14213d;
+}
+
+.profile-header p {
+    margin: 0;
+
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #64748b;
+}
+
+/* Username Panel */
+
+.profile-account {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 18px 20px;
+    margin-bottom: 30px;
+
+    background: #f8fafc;
+    border: 1px solid #e1e7f1;
+    border-radius: 12px;
+}
+
+.account-icon {
+    font-size: 2rem;
+    color: #14213d;
+}
+
+.profile-account .account-label {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.profile-account strong {
+    display: block;
+
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #14213d;
+}
+
+/* Section Heading */
+
+.profile-section-heading {
+    margin-bottom: 24px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e1e7f1;
+}
+
+.profile-section-heading h2 {
+    margin: 0 0 6px;
+
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #14213d;
+}
+
+.profile-section-heading p {
+    margin: 0;
+
+    color: #64748b;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* Form */
+
+.profile-form {
+    width: 100%;
+}
+
+.profile-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.profile-field {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profile-field label {
+    color: #14213d;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.profile-field .required {
+    color: #c2410c;
+}
+
+/* Inputs */
+
+.profile-field input,
+.profile-field select,
+.profile-field textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+
+    padding: 12px 14px;
+
+    background: #ffffff;
+    color: #14213d;
+
+    border: 1px solid #d5dfed;
+    border-radius: 10px;
+
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.9rem;
+
+    outline: none;
+    box-sizing: border-box;
+
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+
+.profile-field input:focus,
+.profile-field select:focus,
+.profile-field textarea:focus {
+    border-color: #fda30f;
+    box-shadow: 0 0 0 3px rgba(253, 163, 15, 0.16);
+}
+
+.profile-field input:disabled {
+    background: #f1f4f9;
+    color: #64748b;
+}
+
+.profile-field small {
+    font-size: 0.77rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.field-error {
+    margin: 0;
+    color: #b91c1c;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+/* Save / Cancel Actions */
+
+.profile-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    margin-top: 34px;
+    padding-top: 24px;
+
+    border-top: 1px solid #e1e7f1;
+}
+
+.profile-btn-cancel,
+.profile-btn-save {
+    min-height: 45px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    padding: 12px 20px;
+
+    border-radius: 10px;
+
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+
+    transition: background-color 0.2s;
+}
+
+.profile-btn-cancel {
+    background: #ffffff;
+    border: 1px solid #d5dfed;
+    color: #14213d;
+}
+
+.profile-btn-cancel:hover {
+    background: #f1f4f9;
+}
+
+.profile-btn-save {
+    background: #fda30f;
+    border: 1px solid #fda30f;
+    color: #14213d;
+}
+
+.profile-btn-save:hover {
+    background: #e99500;
+}
+
+/* Messages */
+
+.profile-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 14px 16px;
+    margin-bottom: 24px;
+
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+
+    color: #1e40af;
+    font-size: 0.86rem;
+}
+
+.profile-message.success {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.profile-message.error,
+.profile-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 14px;
+    color: #991b1b;
+    font-size: 0.86rem;
+}
+
+.profile-error {
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+
+    .profile-container {
+        padding: 25px 15px 50px;
+    }
+
+    .profile-card {
+        padding: 26px 20px;
+    }
+
+    .profile-card::before {
+        left: 20px;
+    }
+
+    .profile-header {
+        gap: 12px;
+    }
+
+    .profile-icon {
+        width: 52px;
+        height: 52px;
+        font-size: 1.4rem;
+    }
+
+    .profile-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .profile-btn-cancel,
+    .profile-btn-save {
+        width: 100%;
+    }
+}

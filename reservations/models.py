@@ -35,9 +35,7 @@ class Reservation(models.Model):
     )
 
     event_title = models.CharField(
-        max_length=200,
-        blank=True,
-        default=''
+        max_length=200
     )
 
     purpose = models.TextField()
@@ -82,7 +80,14 @@ class Reservation(models.Model):
 
         errors = {}
 
+        if not self.event_title or not self.event_title.strip():
+            errors['event_title'] = (
+                'Event title is required.'
+            )
+
         if not self.start_time or not self.end_time:
+            if errors:
+                raise ValidationError(errors)
             return
 
         if self.end_time <= self.start_time:
@@ -160,7 +165,14 @@ class Reservation(models.Model):
                     'This facility is currently inactive.'
                 )
 
-            if not facility.category.is_active:
+            if facility.category_id is None:
+
+                errors['facility'] = (
+                    'This facility does not have an assigned category.'
+                )
+
+            elif not facility.category.is_active:
+
                 errors['facility'] = (
                     'This facility category is currently inactive.'
                 )

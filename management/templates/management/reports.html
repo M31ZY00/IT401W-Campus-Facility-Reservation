@@ -101,12 +101,34 @@
                 </div>
 
                 <div class="filter-actions">
-                    <button type="submit" class="btn-filter">
-                        <i class="fa-solid fa-filter"></i> Filter
+                    <button
+                        type="submit"
+                        class="btn-filter"
+                    >
+                        <i class="fa-solid fa-filter"></i>
+                        Filter
                     </button>
-                    <button type="submit" formaction="{% url 'export_reservation_report' %}" class="btn-export" {% if error %}disabled{% endif %}>
-                        <i class="fa-solid fa-file-arrow-down"></i> Export CSV
+
+                    <button
+                        type="submit"
+                        formaction="{% url 'export_reservation_report' %}"
+                        class="btn-export"
+                        {% if error %}disabled{% endif %}
+                    >
+                        <i class="fa-solid fa-file-csv"></i>
+                        Export Reservations CSV
                     </button>
+
+                    <button
+                        type="submit"
+                        formaction="{% url 'export_utilization_report' %}"
+                        class="btn-export"
+                        {% if error %}disabled{% endif %}
+                    >
+                        <i class="fa-solid fa-chart-column"></i>
+                        Export Utilization CSV
+                    </button>
+
                 </div>
             </form>
         </div>
@@ -133,6 +155,125 @@
 
         <p class="reports-note">
             <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i> Booked hours include approved, checked-in, completed, and no-show reservations. All times are referenced in Asia/Manila.
+        </p>
+
+        <!-- FACILITY UTILIZATION REPORT -->
+        <div class="table-card" style="margin-bottom: 28px;">
+
+            <!-- Section Header -->
+            <div class="table-header-bar">
+
+                <h2>
+                    <i class="fa-solid fa-chart-column"></i>
+                    Facility Utilization Report
+                </h2>
+
+            </div>
+
+            <!-- Utilization Table -->
+            <div class="table-responsive">
+
+                <table class="data-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Facility Code</th>
+                            <th>Facility Name</th>
+                            <th>Booked Hours</th>
+                            <th>Completed Events</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for row in utilization_rows %}
+
+                            <tr>
+
+                                <!-- Facility Code -->
+                                <td>
+                                    <strong>
+                                        {{ row.facility_code }}
+                                    </strong>
+                                </td>
+
+                                <!-- Facility Name -->
+                                <td>
+                                    {{ row.facility_name }}
+                                </td>
+
+                                <!-- Booked Hours -->
+                                <td>
+                                    <strong>
+                                        {{ row.booked_hours }}
+                                    </strong>
+                                    hrs
+                                </td>
+
+                                <!-- Completed Events -->
+                                <td>
+
+                                    {% if row.completed_events > 0 %}
+
+                                        <span class="badge-status completed">
+                                            <span class="status-dot"></span>
+                                            {{ row.completed_events }} Completed
+                                        </span>
+
+                                    {% else %}
+
+                                        <span>0</span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+
+                                <td colspan="4" class="empty-cell">
+
+                                    <i class="fa-solid fa-chart-simple"></i>
+
+                                    No facility utilization records
+                                    match the selected filters.
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        <!-- Utilization Information -->
+        <p class="reports-note">
+
+            <i class="fa-solid fa-circle-info"></i>
+
+            Facility utilization is calculated using reservations
+            within the selected scheduled start-date range.
+
+            Booked hours include Approved, Checked In,
+            Completed, and No Show reservations.
+
+            Cancelled, Rejected, and Pending reservations
+            do not contribute to booked hours.
+
+            Completed Events counts only reservations
+            with Completed status.
+
         </p>
 
         <!-- Table Card Wrapper -->

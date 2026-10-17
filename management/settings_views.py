@@ -1,3 +1,4 @@
+from functools import wraps
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -12,10 +13,17 @@ from .forms import SystemSettingForm
 from .models import AuditLog, SystemSetting
 
 
+
 def administrator_required(view_func):
-    @login_required(login_url="/accounts/admin-login/")
+
+    @wraps(view_func)
+    @login_required(login_url='login')
     def wrapper(request, *args, **kwargs):
-        if not request.user.is_active or not request.user.is_staff:
+
+        if (
+            not request.user.is_active
+            or not request.user.is_staff
+        ):
             raise PermissionDenied
 
         return view_func(request, *args, **kwargs)

@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.utils import timezone
@@ -9,12 +8,14 @@ from django.db.models import F
 
 from facilities.models import Facility
 from management.models import SystemSetting
+from management.audit import record_audit
 
 from .forms import ReservationForm
 from .models import Reservation, ReservationChange
 
+from authentication.decorators import basic_user_required
 
-@login_required
+@basic_user_required
 def create_reservation(request, facility_id):
 
     facility = get_object_or_404(
@@ -84,7 +85,7 @@ def create_reservation(request, facility_id):
     )
 
 
-@login_required
+@basic_user_required
 def my_reservations(request):
 
     reservations = Reservation.objects.filter(
@@ -102,7 +103,7 @@ def my_reservations(request):
     )
 
 
-@login_required
+@basic_user_required
 @require_POST
 def cancel_reservation(request, reservation_id):
 
@@ -165,7 +166,21 @@ def cancel_reservation(request, reservation_id):
                 new_start_time=reservation.start_time,
                 new_end_time=reservation.end_time,
                 reason='Cancelled by the reservation owner.'
+
             )
+
+            record_audit(
+                request,
+                'CANCEL',
+                reservation,
+                (
+                    f'Reservation #{reservation.pk} was cancelled '
+                    f'by Basic User {request.user.username}. '
+                    f'Previous status: {previous_status}. '
+                    f'New status: cancelled.'
+                )
+            )
+
 
     except DatabaseError:
 

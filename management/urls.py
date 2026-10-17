@@ -20,7 +20,6 @@ urlpatterns = [
     path('amenities/<int:amenity_id>/toggle-status/', views.toggle_amenity_status, name='toggle_amenity_status'),
     path('reservations/', views.manage_reservations, name='manage_reservations'),
     path('reservations/<int:reservation_id>/update-status/', views.update_reservation_status, name='update_reservation_status'),
-    path('audit-logs/', views.view_audit_logs, name='view_audit_logs'),
     path('reservations/<int:reservation_id>/history/', views.reservation_history, name='reservation_history'),
     path('calendar/', views.reservation_calendar, name='reservation_calendar'),
     path('reservations/<int:reservation_id>/reschedule/', views.reschedule_reservation_view, name='reschedule_reservation'),
@@ -34,6 +33,7 @@ urlpatterns = [
     path('closures/<int:closure_id>/archive/', views.archive_closure, name='archive_closure'),
     path('reports/', views.reservation_reports, name='reservation_reports'),
     path('reports/export/', views.export_reservation_report, name='export_reservation_report'),
+    path('reports/utilization/export/',views.export_utilization_report,name='export_utilization_report'),
     path('audit-logs/', settings_views.audit_log_list, name='view_audit_logs'),
     path('settings/', settings_views.system_settings, name='system_settings'),
 ]

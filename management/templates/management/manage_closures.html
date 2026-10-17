@@ -113,6 +113,7 @@
                             <th>Start Date & Time</th>
                             <th>End Date & Time</th>
                             <th>Reason</th>
+                            <th>Created By</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -128,6 +129,24 @@
                             <td>{{ closure.end_time|date:"M d, Y h:i A" }}</td>
 
                             <td>{{ closure.reason }}</td>
+
+                            <td>
+
+                                {% if closure.created_by %}
+
+                                    <strong>
+                                        {{ closure.created_by.username }}
+                                    </strong>
+
+                                {% else %}
+
+                                    <span style="color: #64748b;">
+                                        Legacy Record
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
 
                             <td>
                                 {% if closure.is_active %}
@@ -167,7 +186,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="empty-cell">
+                            <td colspan="7" class="empty-cell">
                                 <i class="fa-solid fa-ban" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
                                 No facility closures found.
                             </td>

@@ -45,13 +45,32 @@ def admin_dashboard(request):
     first_month = current_date.replace(day=1)
     active_statuses = ['approved', 'checked_in', 'completed', 'no_show']
 
+
+    # Required live dashboard statistics
     cards = {
-        'basic_users': User.objects.filter(is_staff=False, is_superuser=False, is_active=True).count(),
-        'active_facilities': Facility.objects.filter(is_active=True, category__is_active=True).count(),
-        'pending_reservations': Reservation.objects.filter(status='pending').count(),
-        'upcoming_events': Reservation.objects.filter(
-            status='approved', start_time__gte=timezone.now()
+
+        # Reservation requests awaiting admin approval
+        'pending_reservations': Reservation.objects.filter(
+            status='pending'
         ).count(),
+
+        # Approved bookings scheduled in the future
+        'upcoming_events': Reservation.objects.filter(
+            status='approved',
+            start_time__gte=timezone.now()
+        ).count(),
+
+        # Reservations marked as completed
+        'completed_events': Reservation.objects.filter(
+            status='completed'
+        ).count(),
+
+        # Facilities that are active and have active categories
+        'active_facilities': Facility.objects.filter(
+            is_active=True,
+            category__is_active=True
+        ).count(),
+
     }
 
     monthly_query = (
@@ -99,7 +118,7 @@ def admin_dashboard(request):
         'monthly_rows': monthly_rows,
         'facility_rows': facility_rows,
         'booked_hours': round(booked_duration.total_seconds() / 3600, 2),
-        'completed_events': Reservation.objects.filter(status='completed').count(),
+        'completed_events': cards['completed_events'],
     })
 
 
@@ -502,39 +521,108 @@ def toggle_amenity_status(request, amenity_id):
     messages.success(request, description)
     return redirect('manage_amenities')
 
-
 @admin_required
 def manage_reservations(request):
+
+    # Get filter values from the URL
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', '').strip()
+    facility_filter = request.GET.get('facility', '').strip()
+    date_filter = request.GET.get('date', '').strip()
 
+    date_error = ''
+
+    # Retrieve reservation records
     reservations = Reservation.objects.select_related(
         'user',
         'facility'
     ).order_by('-created_at')
 
+    # Search reservations by username, facility,
+    # event title, or event purpose
     if search_query:
+
         reservations = reservations.filter(
-            Q(user__username__icontains=search_query) |
-            Q(facility__name__icontains=search_query) |
-            Q(purpose__icontains=search_query)
+            Q(user__username__icontains=search_query)
+            | Q(facility__name__icontains=search_query)
+            | Q(event_title__icontains=search_query)
+            | Q(purpose__icontains=search_query)
         )
 
+    # Filter by reservation status
     valid_statuses = dict(Reservation.STATUS_CHOICES)
 
-    if status_filter in valid_statuses:
-        reservations = reservations.filter(status=status_filter)
+    if status_filter:
 
+        if status_filter in valid_statuses:
+            reservations = reservations.filter(
+                status=status_filter
+            )
+        else:
+            reservations = reservations.none()
+
+    # Filter by selected facility
+    if facility_filter:
+
+        if (
+            facility_filter.isascii()
+            and facility_filter.isdigit()
+            and len(facility_filter) <= 12
+        ):
+            reservations = reservations.filter(
+                facility_id=int(facility_filter)
+            )
+
+        else:
+            reservations = reservations.none()
+
+    # Filter by reservation start date
+    if date_filter:
+
+        try:
+            selected_date = date.fromisoformat(
+                date_filter
+            )
+
+            reservations = reservations.filter(
+                start_time__date=selected_date
+            )
+
+        except (ValueError, TypeError):
+
+            reservations = reservations.none()
+
+            date_error = (
+                'Please enter a valid reservation date.'
+            )
+
+    # Paginate results (10 reservations per page)
     paginator = Paginator(reservations, 10)
-    page_obj = paginator.get_page(request.GET.get('page'))
 
-    return render(request, 'management/manage_reservations.html', {
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'status_filter': status_filter,
-        'status_choices': Reservation.STATUS_CHOICES,
-    })
+    page_obj = paginator.get_page(
+        request.GET.get('page')
+    )
 
+    # Retrieve all facilities for dropdown
+    facilities = Facility.objects.order_by('name')
+
+    return render(
+        request,
+        'management/manage_reservations.html',
+        {
+            'page_obj': page_obj,
+
+            'search_query': search_query,
+            'status_filter': status_filter,
+            'facility_filter': facility_filter,
+            'date_filter': date_filter,
+
+            'date_error': date_error,
+
+            'status_choices': Reservation.STATUS_CHOICES,
+            'facilities': facilities,
+        }
+    )
 
 @admin_required
 @require_POST
@@ -1050,7 +1138,10 @@ def manage_closures(request):
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'active')
 
-    closures = FacilityClosure.objects.select_related('facility')
+    closures = FacilityClosure.objects.select_related(
+        'facility',
+        'created_by'
+    )
 
     if search_query:
         closures = closures.filter(
@@ -1075,19 +1166,119 @@ def manage_closures(request):
     })
 
 
+def _closure_preview_context(form, exclude_closure_id=None):
+    """
+    Inspect submitted closure dates without saving anything.
+
+    This performs field-level validation separately because
+    the FacilityClosure model rejects conflicting bookings
+    during normal form validation.
+    """
+
+    context = {
+        'preview_requested': True,
+        'preview_ready': False,
+        'preview_reservations': [],
+        'preview_closures': [],
+        'preview_has_conflicts': False,
+    }
+
+    try:
+        facility = form.fields['facility'].clean(
+            form.data.get('facility')
+        )
+
+        start_time = form.fields['start_time'].clean(
+            form.data.get('start_time')
+        )
+
+        end_time = form.fields['end_time'].clean(
+            form.data.get('end_time')
+        )
+
+    except ValidationError:
+        return context
+
+    if (
+        facility is None
+        or start_time is None
+        or end_time is None
+        or end_time <= start_time
+    ):
+        return context
+
+    reservations = list(
+        Reservation.objects.filter(
+            facility=facility,
+            status__in=['approved', 'checked_in'],
+            start_time__lt=end_time,
+            end_time__gt=start_time
+        )
+        .select_related('user', 'facility')
+        .order_by('start_time')
+    )
+
+    existing_closures = list(
+        FacilityClosure.objects.filter(
+            facility=facility,
+            is_active=True,
+            start_time__lt=end_time,
+            end_time__gt=start_time
+        )
+        .exclude(pk=exclude_closure_id)
+        .order_by('start_time')
+    )
+
+    context.update({
+        'preview_ready': True,
+        'preview_reservations': reservations,
+        'preview_closures': existing_closures,
+        'preview_has_conflicts': bool(
+            reservations or existing_closures
+        ),
+    })
+
+    return context
+
 @admin_required
 def add_closure(request):
+
+    preview_context = {}
+
     if request.method == 'POST':
+
         form = FacilityClosureForm(request.POST)
 
+        if request.POST.get('action') == 'preview':
+
+            preview_context = _closure_preview_context(form)
+
+            form.is_valid()
+
+            return render(
+                request,
+                'management/closure_form.html',
+                {
+                    'form': form,
+                    'page_title': 'Add Facility Closure',
+                    **preview_context,
+                }
+            )
+
         if form.is_valid():
+
             try:
                 with transaction.atomic():
+
                     closure = form.save(commit=False)
+
+                    closure.created_by = request.user
 
                     Facility.objects.filter(
                         pk=closure.facility_id
-                    ).update(is_active=F('is_active'))
+                    ).update(
+                        is_active=F('is_active')
+                    )
 
                     closure.full_clean()
                     closure.save()
@@ -1096,57 +1287,123 @@ def add_closure(request):
                         request,
                         'CREATE',
                         closure,
-                        f'Created closure for {closure.facility.name}. '
-                        f'From {closure.start_time} to {closure.end_time}. '
-                        f'Reason: {closure.reason}'
+                        (
+                            f'Created closure #{closure.pk} '
+                            f'for {closure.facility.name}. '
+                            f'From {closure.start_time} '
+                            f'to {closure.end_time}. '
+                            f'Reason: {closure.reason}'
+                        )
                     )
 
-                messages.success(request, 'Facility closure created successfully.')
+                messages.success(
+                    request,
+                    'Facility closure created successfully.'
+                )
+
                 return redirect('manage_closures')
 
             except ValidationError as error:
                 form.add_error(None, error)
+
             except DatabaseError:
                 messages.error(
                     request,
-                    'The closure could not be saved due to a database conflict. Please try again.'
+                    'The closure could not be saved due to '
+                    'a database conflict. Please try again.'
                 )
+
     else:
         form = FacilityClosureForm()
 
-    return render(request, 'management/closure_form.html', {
-        'form': form,
-        'page_title': 'Add Facility Closure',
-    })
+    return render(
+        request,
+        'management/closure_form.html',
+        {
+            'form': form,
+            'page_title': 'Add Facility Closure',
+            **preview_context,
+        }
+    )
 
 
 @admin_required
 def edit_closure(request, closure_id):
-    closure = get_object_or_404(FacilityClosure, pk=closure_id)
+
+    closure = get_object_or_404(
+        FacilityClosure,
+        pk=closure_id
+    )
 
     if not closure.is_active:
-        messages.error(request, 'Archived closures cannot be edited.')
+        messages.error(
+            request,
+            'Archived closures cannot be edited.'
+        )
         return redirect('manage_closures')
 
+    preview_context = {}
+
     if request.method == 'POST':
+
         old_facility_id = closure.facility_id
-        form = FacilityClosureForm(request.POST, instance=closure)
+
+        form = FacilityClosureForm(
+            request.POST,
+            instance=closure
+        )
+
+        if request.POST.get('action') == 'preview':
+
+            preview_context = _closure_preview_context(
+                form,
+                exclude_closure_id=closure.pk
+            )
+
+            form.is_valid()
+
+            return render(
+                request,
+                'management/closure_form.html',
+                {
+                    'form': form,
+                    'page_title': 'Edit Facility Closure',
+                    **preview_context,
+                }
+            )
 
         if form.is_valid():
+
             try:
                 with transaction.atomic():
-                    updated_closure = form.save(commit=False)
+
+                    updated_closure = form.save(
+                        commit=False
+                    )
 
                     Facility.objects.filter(
-                        pk__in=[old_facility_id, updated_closure.facility_id]
-                    ).update(is_active=F('is_active'))
+                        pk__in=[
+                            old_facility_id,
+                            updated_closure.facility_id
+                        ]
+                    ).order_by('pk').update(
+                        is_active=F('is_active')
+                    )
 
-                    current_closure = FacilityClosure.objects.select_for_update().get(
-                        pk=closure_id
+                    current_closure = (
+                        FacilityClosure.objects
+                        .select_for_update()
+                        .get(pk=closure_id)
                     )
 
                     if not current_closure.is_active:
-                        raise ValidationError('Archived closures cannot be edited.')
+                        raise ValidationError(
+                            'Archived closures cannot be edited.'
+                        )
+
+                    updated_closure.created_by = (
+                        current_closure.created_by
+                    )
 
                     updated_closure.full_clean()
                     updated_closure.save()
@@ -1155,30 +1412,49 @@ def edit_closure(request, closure_id):
                         request,
                         'UPDATE',
                         updated_closure,
-                        f'Updated closure #{updated_closure.pk}. '
-                        f'Facility: {updated_closure.facility.name}. '
-                        f'From {updated_closure.start_time} '
-                        f'to {updated_closure.end_time}. '
-                        f'Reason: {updated_closure.reason}'
+                        (
+                            f'Updated closure '
+                            f'#{updated_closure.pk}. '
+                            f'Facility: '
+                            f'{updated_closure.facility.name}. '
+                            f'From {updated_closure.start_time} '
+                            f'to {updated_closure.end_time}. '
+                            f'Reason: {updated_closure.reason}'
+                        )
                     )
 
-                messages.success(request, 'Facility closure updated successfully.')
+                messages.success(
+                    request,
+                    'Facility closure updated successfully.'
+                )
+
                 return redirect('manage_closures')
 
             except ValidationError as error:
                 form.add_error(None, error)
+
             except DatabaseError:
                 messages.error(
                     request,
-                    'The closure could not be updated due to a database conflict. Please try again.'
+                    'The closure could not be updated '
+                    'due to a database conflict. '
+                    'Please try again.'
                 )
-    else:
-        form = FacilityClosureForm(instance=closure)
 
-    return render(request, 'management/closure_form.html', {
-        'form': form,
-        'page_title': 'Edit Facility Closure',
-    })
+    else:
+        form = FacilityClosureForm(
+            instance=closure
+        )
+
+    return render(
+        request,
+        'management/closure_form.html',
+        {
+            'form': form,
+            'page_title': 'Edit Facility Closure',
+            **preview_context,
+        }
+    )
 
 
 @admin_required
@@ -1279,27 +1555,155 @@ def _get_report_filters(request):
     }
 
 
+def _facility_utilization_rows(filters):
+
+    if filters['error']:
+        return []
+
+    booked_statuses = (
+        'approved',
+        'checked_in',
+        'completed',
+        'no_show'
+    )
+
+    duration_expression = ExpressionWrapper(
+        F('end_time') - F('start_time'),
+        output_field=DurationField()
+    )
+
+    aggregates = (
+        filters['queryset']
+        .order_by()
+        .values('facility_id')
+        .annotate(
+            booked_duration=Sum(
+                duration_expression,
+                filter=Q(status__in=booked_statuses)
+            ),
+
+            completed_events=Count(
+                'id',
+                filter=Q(status='completed')
+            )
+        )
+    )
+
+    by_facility = {
+        row['facility_id']: row
+        for row in aggregates
+    }
+
+    facilities = Facility.objects.order_by(
+        'name',
+        'pk'
+    )
+
+    if filters['facility_filter']:
+        facilities = facilities.filter(
+            pk=int(filters['facility_filter'])
+        )
+
+    utilization_rows = []
+
+    for facility in facilities:
+
+        summary = by_facility.get(
+            facility.pk,
+            {}
+        )
+
+        booked_duration = (
+            summary.get('booked_duration')
+            or timedelta()
+        )
+
+        booked_hours = round(
+            booked_duration.total_seconds() / 3600,
+            2
+        )
+
+        utilization_rows.append({
+            'facility_code': facility.code or 'No code',
+            'facility_name': facility.name,
+            'booked_hours': booked_hours,
+            'completed_events': summary.get(
+                'completed_events',
+                0
+            )
+        })
+
+    return utilization_rows
+
+
 @admin_required
 def reservation_reports(request):
+
     filters = _get_report_filters(request)
+
     queryset = filters['queryset']
-    booked_statuses = ['approved', 'checked_in', 'completed', 'no_show']
-    duration = queryset.filter(status__in=booked_statuses).aggregate(
-        total=Sum(ExpressionWrapper(F('end_time') - F('start_time'), output_field=DurationField()))
+
+    booked_statuses = [
+        'approved',
+        'checked_in',
+        'completed',
+        'no_show'
+    ]
+
+    duration = queryset.filter(
+        status__in=booked_statuses
+    ).aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F('end_time') - F('start_time'),
+                output_field=DurationField()
+            )
+        )
     )['total'] or timedelta()
-    page_obj = Paginator(queryset, 20).get_page(request.GET.get('page'))
 
-    return render(request, 'management/reports.html', {
-        **filters,
-        'page_obj': page_obj,
-        'facilities': Facility.objects.order_by('name'),
-        'status_choices': Reservation.STATUS_CHOICES,
-        'total_reservations': queryset.count(),
-        'approved_count': queryset.filter(status='approved').count(),
-        'completed_count': queryset.filter(status='completed').count(),
-        'booked_hours': round(duration.total_seconds() / 3600, 2),
-    })
+    page_obj = Paginator(
+        queryset,
+        20
+    ).get_page(
+        request.GET.get('page')
+    )
 
+    utilization_rows = _facility_utilization_rows(
+        filters
+    )
+
+    return render(
+        request,
+        'management/reports.html',
+        {
+            **filters,
+
+            'page_obj': page_obj,
+
+            'facilities': Facility.objects.order_by(
+                'name'
+            ),
+
+            'status_choices': Reservation.STATUS_CHOICES,
+
+            'total_reservations': queryset.count(),
+
+            'approved_count': queryset.filter(
+                status='approved'
+            ).count(),
+
+            'completed_count': queryset.filter(
+                status='completed'
+            ).count(),
+
+            'booked_hours': round(
+                duration.total_seconds() / 3600,
+                2
+            ),
+
+            'utilization_rows': utilization_rows,
+        }
+    )
 
 def _csv_safe(value):
     text = '' if value is None else str(value)
@@ -1342,6 +1746,56 @@ def export_reservation_report(request):
             round(hours, 2),
             reservation.get_status_display(),
             _csv_safe(reservation.decision_reason),
+        ])
+
+    return response
+
+
+@admin_required
+def export_utilization_report(request):
+
+    filters = _get_report_filters(request)
+
+    if filters['error']:
+
+        messages.error(
+            request,
+            filters['error']
+        )
+
+        return redirect('reservation_reports')
+
+    utilization_rows = _facility_utilization_rows(
+        filters
+    )
+
+    response = HttpResponse(
+        content_type='text/csv; charset=utf-8'
+    )
+
+    response['Content-Disposition'] = (
+        f'attachment; filename="facility_utilization_'
+        f'{filters["start_date"]}_{filters["end_date"]}.csv"'
+    )
+
+    response.write('\ufeff')
+
+    writer = csv.writer(response)
+
+    writer.writerow([
+        'Facility Code',
+        'Facility Name',
+        'Booked Hours',
+        'Completed Events'
+    ])
+
+    for row in utilization_rows:
+
+        writer.writerow([
+            _csv_safe(row['facility_code']),
+            _csv_safe(row['facility_name']),
+            row['booked_hours'],
+            row['completed_events']
         ])
 
     return response

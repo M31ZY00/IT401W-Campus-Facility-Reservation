@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -64,6 +65,39 @@ class Facility(models.Model):
         default="17:00"
     )
 
+    def clean(self):
+
+        super().clean()
+
+        errors = {}
+
+        if self.category_id is None:
+            errors['category'] = (
+                'Facility category is required.'
+            )
+
+        # Facility code must not be empty.
+        if not self.code or not self.code.strip():
+            errors['code'] = (
+                'Facility code is required.'
+            )
+
+        if self.capacity is not None and self.capacity < 1:
+            errors['capacity'] = (
+                'Facility capacity must be at least 1.'
+            )
+
+        if self.opening_time and self.closing_time:
+
+            if self.closing_time <= self.opening_time:
+                errors['closing_time'] = (
+                    'Closing time must be later '
+                    'than opening time.'
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
     def __str__(self):
         return self.name
 
@@ -83,6 +117,14 @@ class FacilityClosure(models.Model):
     reason = models.TextField()
 
     is_active = models.BooleanField(default=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_facility_closures',
+        null=True,
+        blank=True
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

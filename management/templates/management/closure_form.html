@@ -1,80 +1,155 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ page_title }} | Campus Facility Reservation</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <!-- Typography & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>
+        {{ page_title }} | Campus Facility Reservation
+    </title>
 
-    <!-- External Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'css/closure-form.css' %}">
+    <!-- Fonts and Icons -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <!-- Existing CSS -->
+    <link
+        rel="stylesheet"
+        href="{% static 'css/dashboard.css' %}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/closure-form.css' %}"
+    >
+
 </head>
+
 <body>
 
-    <!-- Header Navigation -->
+    <!-- Navigation -->
     <header class="topbar">
+
         <div class="topbar-brand">
             <i class="fa-solid fa-graduation-cap"></i>
             Campus Facility Reservation System
         </div>
 
         <div class="topbar-right">
+
             <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+
                 <span>{{ request.user.username }}</span>
+
             </div>
 
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+            <form
+                method="POST"
+                action="{% url 'logout' %}"
+                class="logout-form"
+            >
                 {% csrf_token %}
+
                 <button type="submit" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>Log out</span>
                 </button>
             </form>
+
         </div>
+
     </header>
 
+
+    <!-- Main Content -->
     <main class="closure-form-container">
 
-        <!-- Header & Back Navigation -->
         <div class="form-header-wrapper">
+
             <h1>{{ page_title }}</h1>
-            <a href="{% url 'manage_closures' %}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to Facility Closures
+
+            <a
+                href="{% url 'manage_closures' %}"
+                class="back-link"
+            >
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Facility Closures
             </a>
+
         </div>
 
-        <!-- Alert Messages -->
+
+        <!-- System Messages -->
         {% if messages %}
+
             <div class="messages-container">
+
                 {% for message in messages %}
-                    <div class="alert-message">
-                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+
+                    <div class="alert-message"
+                         role="status">
+
+                        <i class="fa-solid fa-circle-info"></i>
+                        {{ message }}
+
                     </div>
+
                 {% endfor %}
+
             </div>
+
         {% endif %}
 
-        <!-- Form Card Container -->
+
+        <!-- Closure Form -->
         <div class="form-card">
-            <form method="POST" class="styled-form">
+
+            <form
+                method="POST"
+                class="styled-form"
+            >
                 {% csrf_token %}
 
+
+                <!-- Non-field Validation Errors -->
                 {% if form.non_field_errors %}
-                    <div style="background: rgba(197,34,31,0.08); border: 1px solid rgba(197,34,31,0.3); padding: 12px; border-radius: 8px; color: #c5221f; font-size: 0.88rem;">
+
+                    <div class="closure-validation-error"
+                         role="alert">
+
                         {{ form.non_field_errors }}
+
                     </div>
+
                 {% endif %}
 
+
+                <!-- Existing Form Fields -->
                 {% for field in form %}
+
                     <div class="form-field-wrapper">
+
                         <label for="{{ field.id_for_label }}">
                             {{ field.label }}
                         </label>
@@ -82,17 +157,265 @@
                         {{ field }}
 
                         {% if field.errors %}
-                            {{ field.errors }}
+
+                            <div role="alert">
+                                {{ field.errors }}
+                            </div>
+
                         {% endif %}
+
                     </div>
+
                 {% endfor %}
 
+
+                <!-- ============================== -->
+                <!-- CONFLICT PREVIEW RESULT -->
+                <!-- ============================== -->
+
+                {% if preview_requested %}
+
+                    <section
+                        class="closure-preview"
+                        aria-live="polite"
+                    >
+
+                        <h3>
+                            <i class="fa-solid fa-calendar-check"></i>
+                            Closure Conflict Preview
+                        </h3>
+
+
+                        {% if not preview_ready %}
+
+                            <div class="preview-warning"
+                                 role="alert">
+
+                                <i class="fa-solid fa-circle-exclamation"></i>
+
+                                Please select a valid facility,
+                                start date and time, and end date
+                                and time before checking conflicts.
+
+                            </div>
+
+
+                        {% else %}
+
+                            {% if preview_has_conflicts %}
+
+                                <div class="preview-warning"
+                                     role="alert">
+
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                                    Conflicting schedules were found.
+                                    The closure cannot be saved
+                                    until these conflicts are resolved.
+
+                                </div>
+
+                            {% else %}
+
+                                <div class="preview-success"
+                                     role="status">
+
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                    No conflicting approved or
+                                    checked-in reservations or
+                                    active closures were found.
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- Conflicting Reservations -->
+
+                            {% if preview_reservations %}
+
+                                <h4>
+                                    Conflicting Reservations
+                                </h4>
+
+                                <div class="preview-table-wrapper">
+
+                                    <table class="preview-table">
+
+                                        <thead>
+                                            <tr>
+                                                <th>Reservation</th>
+                                                <th>Event</th>
+                                                <th>Schedule</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            {% for reservation in preview_reservations %}
+
+                                                <tr>
+
+                                                    <td>
+                                                        #{{ reservation.pk }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ reservation.event_title }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ reservation.start_time|date:"M d, Y h:i A" }}
+                                                        –
+                                                        {{ reservation.end_time|date:"M d, Y h:i A" }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ reservation.get_status_display }}
+                                                    </td>
+
+                                                </tr>
+
+                                            {% endfor %}
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- Conflicting Closures -->
+
+                            {% if preview_closures %}
+
+                                <h4>
+                                    Existing Active Closures
+                                </h4>
+
+                                <div class="preview-table-wrapper">
+
+                                    <table class="preview-table">
+
+                                        <thead>
+                                            <tr>
+                                                <th>Closure ID</th>
+                                                <th>Schedule</th>
+                                                <th>Reason</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            {% for closure in preview_closures %}
+
+                                                <tr>
+
+                                                    <td>
+                                                        #{{ closure.pk }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ closure.start_time|date:"M d, Y h:i A" }}
+                                                        –
+                                                        {{ closure.end_time|date:"M d, Y h:i A" }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ closure.reason }}
+                                                    </td>
+
+                                                </tr>
+
+                                            {% endfor %}
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            {% if preview_has_conflicts %}
+
+                                <p class="preview-reminder">
+
+                                    <i class="fa-solid fa-circle-info"></i>
+
+                                    Resolve conflicting reservations
+                                    through an authorized
+                                    rescheduling or cancellation,
+                                    with a recorded reason,
+                                    before saving the closure.
+
+                                </p>
+
+                            {% else %}
+
+                                <p class="preview-reminder">
+
+                                    This preview does not save or
+                                    reserve the closure period.
+                                    Correct any form errors above
+                                    before saving.
+
+                                    The system will check for
+                                    conflicts again when you click
+                                    Save Closure.
+
+                                </p>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    </section>
+
+                {% endif %}
+
+
+                <!-- ============================== -->
+                <!-- FORM BUTTONS -->
+                <!-- ============================== -->
+
                 <div class="form-actions">
-                    <button type="submit" class="btn-submit">
-                        <i class="fa-solid fa-floppy-disk"></i> Save Closure
+
+                    <!-- Preview Only -->
+                    <button
+                        type="submit"
+                        name="action"
+                        value="preview"
+                        class="btn-preview"
+                    >
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Preview Conflicts
                     </button>
+
+
+                    <!-- Actual Save -->
+                    <button
+                        type="submit"
+                        name="action"
+                        value="save"
+                        class="btn-submit"
+                        {% if preview_requested and preview_ready and preview_has_conflicts %}
+                            disabled
+                        {% endif %}
+                    >
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Save Closure
+                    </button>
+
                 </div>
+
             </form>
+
         </div>
 
     </main>
