@@ -1,209 +1,162 @@
+{% extends "management/base_admin.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit Logs - Campus Facility Reservation</title>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% block title %}Audit Logs{% endblock %}
 
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/audit-logs.css' %}?v=2">
+{% endblock %}
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=2">
-    <link rel="stylesheet" href="{% static 'css/audit-logs.css' %}?v=2">
-</head>
+{% block content %}
+<main class="audit-container">
 
-<body>
+    <!-- Page Header & Back Action -->
+    <div class="page-header-flex">
+        <h1 class="audit-main-title">Audit Logs</h1>
+    </div>
 
-    <!-- Top Navigation Bar -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <i><i class="fa-solid fa-graduation-cap"></i></i>
-            <span>CAMPUS FACILITY RESERVATION SYSTEM</span>
-        </div>
-        <div class="topbar-right">
-            <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
-                <span>{{ request.user.username }}</span>
-            </div>
+    <!-- Search and Filter Card -->
+    <section class="filter-card">
+        <form method="GET">
+            <div class="filter-grid">
 
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Log out</span>
-                </button>
-            </form>
-        </div>
-    </header>
-
-    <main class="audit-container">
-
-        <!-- Page Header & Back Action -->
-        <div class="page-header-flex">
-            <h1 class="audit-main-title">Audit Logs</h1>
-            <a href="{% url 'admin_dashboard' %}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-
-        <!-- Search and Filter Card -->
-        <section class="filter-card">
-            <form method="GET">
-                <div class="filter-grid">
-
-                    <div class="filter-group">
-                        <label>SEARCH</label>
-                        <input
-                            type="text"
-                            name="search"
-                            value="{{ search }}"
-                            placeholder="Username, action, description..."
-                        >
-                    </div>
-
-                    <div class="filter-group">
-                        <label>ACTION</label>
-                        <select name="action">
-                            <option value="">All Actions</option>
-                            {% for value, label in action_choices %}
-                                <option
-                                    value="{{ value }}"
-                                    {% if selected_action == value %}selected{% endif %}
-                                >
-                                    {{ label }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label>FROM DATE</label>
-                        <input
-                            type="date"
-                            name="date_from"
-                            value="{{ date_from }}"
-                        >
-                    </div>
-
-                    <div class="filter-group">
-                        <label>TO DATE</label>
-                        <input
-                            type="date"
-                            name="date_to"
-                            value="{{ date_to }}"
-                        >
-                    </div>
-
-                    <div class="filter-actions">
-                        <button type="submit" class="btn-filter">
-                            <i class="fa-solid fa-filter"></i> Filter
-                        </button>
-                        <a href="{% url 'view_audit_logs' %}" class="btn-reset">
-                            Reset
-                        </a>
-                    </div>
-
+                <div class="filter-group">
+                    <label>SEARCH</label>
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Username, action, description..."
+                    >
                 </div>
-            </form>
-        </section>
 
-        <!-- Metrics Cards Summary (Matching Dashboard Style) -->
-        <div class="cards-grid">
-            <div class="metric-card">
-                <span class="metric-label">TOTAL RECORDS</span>
-                <strong class="metric-value">{{ total_logs }}</strong>
+                <div class="filter-group">
+                    <label>ACTION</label>
+                    <select name="action">
+                        <option value="">All Actions</option>
+                        {% for value, label in action_choices %}
+                            <option
+                                value="{{ value }}"
+                                {% if selected_action == value %}selected{% endif %}
+                            >
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>FROM DATE</label>
+                    <input
+                        type="date"
+                        name="date_from"
+                        value="{{ date_from }}"
+                    >
+                </div>
+
+                <div class="filter-group">
+                    <label>TO DATE</label>
+                    <input
+                        type="date"
+                        name="date_to"
+                        value="{{ date_to }}"
+                    >
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter">
+                        <i class="fa-solid fa-filter"></i> Filter
+                    </button>
+                    <a href="{% url 'view_audit_logs' %}" class="btn-reset">
+                        Reset
+                    </a>
+                </div>
+
             </div>
+        </form>
+    </section>
+
+    <!-- Activity History Table Section -->
+    <section class="logs-section">
+        <div class="logs-header-row">
+            <h2>FILTERED AUDIT LOGS</h2>
         </div>
 
-        <!-- Activity History Table Section -->
-        <section class="logs-section">
-            <div class="logs-header-row">
-                <h2>FILTERED AUDIT LOGS</h2>
-            </div>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>DATE AND TIME</th>
+                        <th>PERFORMED BY</th>
+                        <th>ACTION</th>
+                        <th>MODEL</th>
+                        <th>OBJECT ID</th>
+                        <th>DESCRIPTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in page_obj %}
+                    <tr>
+                        <td><strong>#{{ log.id }}</strong></td>
+                        <td>
+                            <span class="log-time-muted"><i class="fa-regular fa-clock"></i></span>
+                            {{ log.timestamp|date:"M d, Y h:i A" }}
+                        </td>
+                        <td>
+                            <span class="log-username">{{ log.admin_user.username }}</span>
+                        </td>
+                        <td>
+                            <span class="log-action-badge">
+                                {{ log.get_action_display }}
+                            </span>
+                        </td>
+                        <td>{{ log.model_name|default:"—" }}</td>
+                        <td>{{ log.object_id|default:"—" }}</td>
+                        <td class="log-description-cell">
+                            {{ log.description }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="7">
+                            <i class="fa-solid fa-folder-open empty-folder-icon"></i>
+                            No audit logs found matching your filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-            <div class="table-responsive">
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>DATE AND TIME</th>
-                            <th>PERFORMED BY</th>
-                            <th>ACTION</th>
-                            <th>MODEL</th>
-                            <th>OBJECT ID</th>
-                            <th>DESCRIPTION</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in page_obj %}
-                        <tr>
-                            <td><strong>#{{ log.id }}</strong></td>
-                            <td>
-                                <span class="log-time-muted"><i class="fa-regular fa-clock"></i></span>
-                                {{ log.timestamp|date:"M d, Y h:i A" }}
-                            </td>
-                            <td>
-                                <span class="log-username">{{ log.admin_user.username }}</span>
-                            </td>
-                            <td>
-                                <span class="log-action-badge">
-                                    {{ log.get_action_display }}
-                                </span>
-                            </td>
-                            <td>{{ log.model_name|default:"—" }}</td>
-                            <td>{{ log.object_id|default:"—" }}</td>
-                            <td class="log-description-cell">
-                                {{ log.description }}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr class="empty-row">
-                            <td colspan="7">
-                                <i class="fa-solid fa-folder-open empty-folder-icon"></i>
-                                No audit logs found matching your filters.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination Control Links -->
-            {% if page_obj.has_other_pages %}
-            <div class="pagination-container">
-                {% if page_obj.has_previous %}
-                    <a class="page-btn" href="?search={{ search|urlencode }}&action={{ selected_action|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}&page={{ page_obj.previous_page_number }}">
-                        <i class="fa-solid fa-chevron-left"></i> Previous
-                    </a>
-                {% endif %}
-
-                <span class="page-indicator">
-                    Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}
-                </span>
-
-                {% if page_obj.has_next %}
-                    <a class="page-btn" href="?search={{ search|urlencode }}&action={{ selected_action|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}&page={{ page_obj.next_page_number }}">
-                        Next <i class="fa-solid fa-chevron-right"></i>
-                    </a>
-                {% endif %}
-            </div>
+        <!-- Pagination Control Links -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-container">
+            {% if page_obj.has_previous %}
+                <a class="page-btn" href="?search={{ search|urlencode }}&amp;action={{ selected_action|urlencode }}&amp;date_from={{ date_from|urlencode }}&amp;date_to={{ date_to|urlencode }}&amp;page={{ page_obj.previous_page_number }}">
+                    <i class="fa-solid fa-chevron-left"></i> Previous
+                </a>
             {% endif %}
 
-        </section>
+            <span class="page-indicator">
+                Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}
+            </span>
 
-    </main>
+            {% if page_obj.has_next %}
+                <a class="page-btn" href="?search={{ search|urlencode }}&amp;action={{ selected_action|urlencode }}&amp;date_from={{ date_from|urlencode }}&amp;date_to={{ date_to|urlencode }}&amp;page={{ page_obj.next_page_number }}">
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
 
-    <!-- Footer -->
-    <footer class="footer audit-footer">
-        Campus Facility Reservation System &copy; 2026. All rights reserved.
-    </footer>
+    </section>
 
-</body>
-</html>
+</main>
+{% endblock %}
+
+{% block footer %}
+<footer class="footer audit-footer">
+    Campus Facility Reservation System &copy; 2026. All rights reserved.
+</footer>
+{% endblock %}

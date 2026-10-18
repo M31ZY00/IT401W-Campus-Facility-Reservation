@@ -1,496 +1,342 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>{{ facility.name }} | Facility Availability</title>
-
-    <!-- Google Fonts -->
+    <title>{{ facility.name }} | Campus Facilities</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
-
-    <!-- Font Awesome -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    >
-
-    <!-- Existing Project CSS -->
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/facilities.css' %}">
-
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 </head>
-
 <body>
-
-    <!-- ============================= -->
-    <!-- NAVIGATION BAR -->
-    <!-- ============================= -->
-
+    <!-- TOP NAVIGATION -->
     <header class="topbar">
-
-        <a href="{% url 'home' %}" class="topbar-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            School Name
-        </a>
-
+         <div class="topbar-brand">
+            Campus Facility Reservation System
+         </div>
         <div class="topbar-right">
-
-            <a href="{% url 'home' %}" class="topbar-link">
-                <i class="fa-solid fa-house"></i>
-                <span>Home</span>
-            </a>
-
             {% if user.is_authenticated %}
-
-                <div class="user-chip">
-                    <div class="avatar">
-                        {{ user.username|slice:":1"|upper }}
-                    </div>
-
+                <!-- Opens the profile modal (falls back to the profile page without JS) -->
+                <a href="{% url 'profile' %}" class="user-chip" id="profileTrigger"
+                   aria-haspopup="dialog">
+                    <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
                     <span>{{ user.username }}</span>
-                </div>
-
-                {% if not user.is_staff and not user.is_superuser %}
-                    <a href="{% url 'profile' %}" class="topbar-link">
-                        <i class="fa-solid fa-user"></i>
-                        <span>My Profile</span>
-                    </a>
-                {% endif %}
-
-                <form
-                    method="POST"
-                    action="{% url 'logout' %}"
-                    class="logout-form"
-                >
+                </a>
+                <form method="POST" action="{% url 'logout' %}" class="logout-form">
                     {% csrf_token %}
-
                     <button type="submit" class="logout-btn">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <span>Log out</span>
                     </button>
                 </form>
-
             {% else %}
-
                 <a href="{% url 'login' %}" class="topbar-link">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     <span>Log in</span>
                 </a>
-
             {% endif %}
-
         </div>
-
     </header>
 
-
-    <!-- ============================= -->
-    <!-- FACILITY HEADER -->
-    <!-- ============================= -->
-
-    <section class="hero page-hero">
-
-        <div class="hero-inner">
-
-            <div class="eyebrow">
-                <i class="fa-solid fa-building"></i>
-                {{ facility.category.name|default:"Facility" }}
+    <!-- PAGE HEADER -->
+    <div class="slim-head">
+        <div class="slim-head-inner">
+            <div>
+                <h1>Campus <span>Facilities</span></h1>
+                <p>View facility details, check availability, and reserve a facility.</p>
             </div>
-
-            <h1>{{ facility.name }}</h1>
-
-            <p>{{ facility.location }}</p>
-
         </div>
-
-    </section>
-
-
-    <!-- ============================= -->
-    <!-- MAIN CONTENT -->
-    <!-- ============================= -->
-
-    <main class="content page-content">
-
-        <div class="detail-layout">
-
-            <!-- FACILITY INFORMATION -->
-
-            <section class="detail-card">
-
-                <h2>Facility Details</h2>
-
-                <div class="info-grid">
-
-                    <!-- Location -->
-                    <div class="info-item">
-
-                        <div class="icon">
-                            <i class="fa-solid fa-location-dot"></i>
-                        </div>
-
-                        <div>
-                            <small>Location</small>
-                            <strong>{{ facility.location }}</strong>
-                        </div>
-
-                    </div>
-
-                    <!-- Capacity -->
-                    <div class="info-item">
-
-                        <div class="icon">
-                            <i class="fa-solid fa-users"></i>
-                        </div>
-
-                        <div>
-                            <small>Capacity</small>
-
-                            <strong>
-                                {{ facility.capacity }} participants
-                            </strong>
-                        </div>
-
-                    </div>
-
-                    <!-- Operating Hours -->
-                    <div class="info-item">
-
-                        <div class="icon">
-                            <i class="fa-solid fa-clock"></i>
-                        </div>
-
-                        <div>
-                            <small>Operating Hours</small>
-
-                            <strong>
-                                {{ facility.opening_time|time:"g:i A" }}
-                                –
-                                {{ facility.closing_time|time:"g:i A" }}
-                            </strong>
-                        </div>
-
-                    </div>
-
-                    <!-- Facility Code -->
-                    <div class="info-item">
-
-                        <div class="icon">
-                            <i class="fa-solid fa-hashtag"></i>
-                        </div>
-
-                        <div>
-                            <small>Facility Code</small>
-
-                            <strong>
-                                {{ facility.code|default:"N/A" }}
-                            </strong>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Description -->
-
-                <h2>Description</h2>
-
-                <p class="detail-desc">
-                    {{ facility.description|default:"No description available." }}
-                </p>
-
-
-                <!-- Amenities -->
-
-                <h2 style="margin-top: 28px;">
-                    Available Amenities
-                </h2>
-
-                <ul class="facility-amenities">
-
-                    {% for amenity in amenities %}
-
-                        <li>
-                            <i class="fa-solid fa-check"></i>
-                            {{ amenity.name }}
-                        </li>
-
-                    {% empty %}
-
-                        <li>
-                            No amenities are currently listed.
-                        </li>
-
-                    {% endfor %}
-
-                </ul>
-
-            </section>
-
-
-            <!-- RESERVATION CARD -->
-
-            <aside class="reserve-card">
-
-                <span class="status">
-                    Reservation Requests Open
-                </span>
-
-                <h2>Want to use this facility?</h2>
-
-                <p>
-                    Check the available schedule below before
-                    submitting your reservation request.
-                    All requests are subject to administrator
-                    approval.
-                </p>
-
-                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
-                    <a
-                        href="{% url 'facility_list' %}?reserve={{ facility.id }}#{{ facility.id }}"
-                        class="btn btn-gold btn-block"
-                    >
-                        <i class="fa-solid fa-calendar-plus"></i>
-                        Reserve Facility
-                    </a>
-
-                {% elif user.is_authenticated %}
-
-                    <p>
-                        Administrators manage facility
-                        reservations through the management
-                        dashboard.
-                    </p>
-
-                    <a
-                        href="{% url 'admin_dashboard' %}"
-                        class="btn btn-gold btn-block"
-                    >
-                        <i class="fa-solid fa-gauge"></i>
-                        Admin Dashboard
-                    </a>
-
-                {% else %}
-
-                    <p>
-                        Please log in to submit a reservation
-                        request for this facility.
-                    </p>
-
-                    <a
-                        href="{% url 'login' %}"
-                        class="btn btn-gold btn-block"
-                    >
-                        <i class="fa-solid fa-right-to-bracket"></i>
-                        Login to Reserve
-                    </a>
-
-                {% endif %}
-
-            </aside>
-
-        </div>
-
-
-        <!-- ============================= -->
-        <!-- FACILITY AVAILABILITY -->
-        <!-- ============================= -->
-
-        <section class="detail-card availability-section">
-
-            <h2>
-                <i class="fa-solid fa-calendar-days"></i>
-                Facility Availability
-            </h2>
-
-            <p>
-                Select a date to view the available and
-                unavailable time slots for this facility.
-            </p>
-
-
-            <!-- DATE SELECTION FORM -->
-
-            <form method="GET" class="availability-filter">
-
-                <div class="field">
-
-                    <label for="availability-date">
-                        Select Reservation Date
-                    </label>
-
-                    <input
-                        type="date"
-                        id="availability-date"
-                        name="date"
-                        value="{{ selected_date|date:'Y-m-d' }}"
-                        min="{{ today|date:'Y-m-d' }}"
-                        max="{{ latest_date|date:'Y-m-d' }}"
-                        required
-                    >
-
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    Check Availability
-                </button>
-
-            </form>
-
-
-            <!-- BOOKING WINDOW INFORMATION -->
-
-            <p class="availability-note">
-                <i class="fa-solid fa-circle-info"></i>
-
-                Reservations may be requested up to
-                {{ system_setting.advance_booking_days }}
-                calendar days in advance.
-            </p>
-
-
-            <!-- DATE VALIDATION -->
-
-            {% if date_error %}
-
-                <p class="availability-error" role="alert">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    {{ date_error }}
-                </p>
-
-            {% else %}
-
-
-                <!-- SELECTED DATE -->
-
-                <h3 class="availability-date-heading">
-                    Schedule for
-                    {{ selected_date|date:"F d, Y" }}
-                </h3>
-
-
-                <!-- AVAILABILITY LEGEND -->
-
-                <div class="availability-legend">
-
-                    <span class="legend-free">
-                        <i class="fa-solid fa-circle-check"></i>
-                        Available
-                    </span>
-
-                    <span class="legend-unavailable">
-                        <i class="fa-solid fa-circle-xmark"></i>
-                        Unavailable
-                    </span>
-
-                </div>
-
-
-                <!-- TIME SLOT GRID -->
-
-                <div class="availability-grid">
-
-                    {% for slot in slots %}
-
-                        <div class="availability-slot {% if slot.available %}slot-free{% else %}slot-unavailable{% endif %}">
-
-                            <!-- Time Interval -->
-
-                            <strong class="slot-time">
-                                {{ slot.start|time:"g:i A" }}
-                                –
-                                {{ slot.end|time:"g:i A" }}
-                            </strong>
-
-
-                            <!-- Availability Status -->
-
-                            {% if slot.available %}
-
-                                <span class="slot-label">
-                                    <i class="fa-solid fa-check-circle"></i>
-                                    Available
-                                </span>
-
-                            {% else %}
-
-                                <span class="slot-label">
-                                    <i class="fa-solid fa-times-circle"></i>
-                                    Unavailable
-                                </span>
-
-                            {% endif %}
-
-                        </div>
-
-                    {% empty %}
-
-                        <p class="availability-empty">
-                            No time slots can be displayed
-                            for the selected date.
-                        </p>
-
-                    {% endfor %}
-
-                </div>
-
-            {% endif %}
-
-
-            <!-- AVAILABILITY REMINDER -->
-
-            <p class="availability-reminder">
-
-                <i class="fa-solid fa-circle-info"></i>
-
-                Time slots are displayed in 30-minute
-                intervals. Pending requests do not block
-                time slots, while approved reservations
-                and active facility closures affect availability.
-
-                Actual reservations may use other valid
-                start and end times within operating hours.
-                Final availability is verified when an
-                administrator approves the request.
-
-            </p>
-
-        </section>
-
-
-        <!-- BACK BUTTON -->
-
-        <a
-            href="{% url 'facility_list' %}"
-            class="back-link"
-        >
+         <a href="{% url 'facility_list' %}" class="tk-back">
             <i class="fa-solid fa-arrow-left"></i>
             Back to Facilities
         </a>
+    </div>
 
+    <!-- MAIN CONTENT -->
+    <main class="content wide">
+        <div class="split-details">
+            <!-- FACILITY DETAIL CARD -->
+            <div class="fac-detail">
+                <div class="fac-detail-body">
+                    <span class="badge">{{ facility.category.name|default:"Uncategorized" }}</span>
+                    <h2>{{ facility.name }}</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="icon">
+                                <i class="fa-solid fa-location-dot"></i>
+                            </div>
+                            <div>
+                                <small>Location</small>
+                                <strong>{{ facility.location }}</strong>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <small>Capacity</small>
+                                <strong>{{ facility.capacity }} participants</strong>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div>
+                                <small>Operating Hours</small>
+                                <strong>{{ facility.opening_time|time:"g:i A" }} – {{ facility.closing_time|time:"g:i A" }}</strong>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="icon">
+                                <i class="fa-solid fa-hashtag"></i>
+                            </div>
+                            <div>
+                                <small>Facility Code</small>
+                                <strong>{{ facility.code|default:"N/A" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>Description</h3>
+                    <p class="detail-desc">{{ facility.description|default:"No description available." }}</p>
+
+                    <h3 style="margin-top: 24px;">Available Amenities</h3>
+                    <ul class="facility-amenities">
+                        {% for amenity in amenities %}
+                            <li>
+                                <i class="fa-solid fa-check"></i>
+                                {{ amenity.name }}
+                            </li>
+                        {% empty %}
+                            <li>No amenities are currently listed.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- RESERVATION BAR -->
+                <div class="reserve-bar">
+                    <div>
+                        <span class="status">Reservation Requests Open</span>
+                    </div>
+                    {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                        <a href="{% url 'facility_list' %}?reserve={{ facility.id }}#{{ facility.id }}" class="btn btn-gold">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                            Reserve Facility
+                        </a>
+                    {% elif user.is_authenticated %}
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-gold">Go to Admin Dashboard</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-gold">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            Login to Reserve
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- FACILITY AVAILABILITY -->
+            <div class="fac-detail availability-section">
+                <div class="fac-detail-body">
+                    <h2>
+                        <i class="fa-solid fa-calendar-days"></i>
+                        Facility Availability
+                    </h2>
+                    <p>Select a date to view the available and unavailable time slots for this facility.</p>
+
+                    <!-- DATE FILTER -->
+                    <form method="GET" class="availability-filter">
+                        <div class="field">
+                            <label for="availability-date">Select Reservation Date</label>
+                            <input type="date" id="availability-date" name="date" value="{{ selected_date|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}" max="{{ latest_date|date:'Y-m-d' }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            Check Availability
+                        </button>
+                    </form>
+
+                    <!-- BOOKING WINDOW -->
+                    <p class="availability-note">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Reservations may be requested up to {{ system_setting.advance_booking_days }} calendar days in advance.
+                    </p>
+
+                    {% if date_error %}
+                        <p class="availability-error" role="alert">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            {{ date_error }}
+                        </p>
+                    {% else %}
+                        <h3 class="availability-date-heading">Schedule for {{ selected_date|date:"F d, Y" }}</h3>
+
+                        <!-- AVAILABILITY LEGEND -->
+                        <div class="availability-legend">
+                            <span class="legend-free">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Available
+                            </span>
+                            <span class="legend-unavailable">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                Unavailable
+                            </span>
+                        </div>
+
+                        <!-- TIME SLOTS -->
+                        <div class="availability-grid">
+                            {% for slot in slots %}
+                                <div class="availability-slot {% if slot.available %}slot-free{% else %}slot-unavailable{% endif %}">
+                                    <strong class="slot-time">{{ slot.start|time:"g:i A" }} – {{ slot.end|time:"g:i A" }}</strong>
+                                    {% if slot.available %}
+                                        <span class="slot-label">
+                                            <i class="fa-solid fa-check-circle"></i>
+                                            Available
+                                        </span>
+                                    {% else %}
+                                        <span class="slot-label">
+                                            <i class="fa-solid fa-times-circle"></i>
+                                            Unavailable
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <p class="availability-empty">No time slots can be displayed for the selected date.</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- AVAILABILITY REMINDER -->
+                    <p class="availability-reminder">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Time slots are displayed in 30-minute intervals. Pending requests do not block time slots, while approved reservations and active facility closures affect availability. Actual reservations may use other valid start and end times within operating hours. Final availability is verified when an administrator approves the request.
+                    </p>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- FOOTER -->
     <footer class="footer">
-
-        &copy; {% now "Y" %}
-        School Name
-        &middot;
-        Campus Facility Reservation System
-
+       Campus Facility Reservation System &copy; 2026. All rights reserved.
     </footer>
+    <!-- Profile modal: opens the profile as an overlay on this page -->
+    <script>
+    (function () {
+        var trigger = document.getElementById('profileTrigger');
+        if (!trigger) { return; }
+
+        var profileUrl = trigger.getAttribute('href');
+
+        // Build the overlay once
+        var modal = document.createElement('div');
+        modal.className = 'profile-overlay';
+        modal.id = 'profileModal';
+        modal.hidden = true;
+        document.body.appendChild(modal);
+
+        function parseDialog(html) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            return doc.querySelector('.profile-container');
+        }
+
+        function render(container) {
+            modal.innerHTML = '';
+            modal.appendChild(document.importNode(container, true));
+
+            var firstError = modal.querySelector('.field-error');
+            var field = firstError
+                ? firstError.closest('.profile-field').querySelector('input, select, textarea')
+                : modal.querySelector('.profile-field input:not([disabled]), .profile-field select, .profile-field textarea');
+            if (field) { field.focus(); }
+        }
+
+        function open() {
+            modal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function close() {
+            modal.hidden = true;
+            modal.innerHTML = '';
+            document.body.style.overflow = '';
+            trigger.focus();
+        }
+
+        function load() {
+            return fetch(profileUrl, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (res) {
+                return res.text();
+            }).then(function (html) {
+                var container = parseDialog(html);
+                if (!container) { throw new Error('No profile content'); }
+                render(container);
+                open();
+            });
+        }
+
+        // Open on click (modified clicks open the normal page)
+        trigger.addEventListener('click', function (e) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) { return; }
+            e.preventDefault();
+            load().catch(function () {
+                window.location.href = profileUrl; // fallback to full page
+            });
+        });
+
+        // Close: backdrop click
+        modal.addEventListener('mousedown', function (e) {
+            if (e.target === modal) { close(); }
+        });
+
+        // Close: X and Cancel
+        modal.addEventListener('click', function (e) {
+            if (e.target.closest('.profile-close, .profile-btn-cancel')) {
+                e.preventDefault();
+                close();
+            }
+        });
+
+        // Close: Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.hidden) { close(); }
+        });
+
+        // Submit without leaving the page
+        modal.addEventListener('submit', function (e) {
+            var form = e.target.closest('.profile-form');
+            if (!form) { return; }
+            e.preventDefault();
+
+            var btn = form.querySelector('.profile-btn-save');
+            if (btn) { btn.disabled = true; }
+
+            fetch(form.getAttribute('action') || profileUrl, {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (res) {
+                return res.text();
+            }).then(function (html) {
+                var container = parseDialog(html);
+                if (!container) { throw new Error('No profile content'); }
+                render(container);
+            }).catch(function () {
+                form.submit(); // fallback to normal submit
+            });
+        });
+    })();
+    </script>
 
 </body>
 </html>

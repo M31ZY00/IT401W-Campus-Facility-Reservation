@@ -1,0 +1,954 @@
+<script>
+{% verbatim %}
+/* =====================================================
+   MANAGE MODALS (shared script)
+   Place at: static/js/manage-modal.js
+   Pair with: static/css/manage-modal.css
+
+   Each page sets window.MF_CONFIG before loading this file:
+     noun          word used in titles and text, e.g. 'amenity'
+     addButton     selector of the "Add New" link
+     editLinks     selector of the Edit links
+     formLinks     other links that open a form in a modal (e.g. Reschedule), see js-form-link below
+     toggleForms   selector of the Archive / Reactivate forms
+     wide          true for the wider modal (use when there is a 2-column grid)
+     gridFields    field names laid out in 2 columns, in order
+     switchField   checkbox turned into a toggle (default 'is_active')
+     switchOn / switchOff / switchSub   toggle texts
+     archiveVerb / reactivateVerb       words used in the confirm modal (e.g. 'deactivate' / 'activate')
+     archiveSub / reactivateSub         confirm-modal subtitles
+   ===================================================== */
+(function () {
+    'use strict';
+
+    var cfg = Object.assign({
+        noun: 'item',
+        addButton: '#addBtn',
+        editLinks: '.btn-action-edit',
+        toggleForms: '.js-toggle-form',
+        reasonForms: '.js-reason-form',
+        historyLinks: '.js-history-link',
+        formLinks: '.js-form-link',
+        wide: false,
+        formField: 'name',
+        previewButton: false,
+        gridFields: [],
+        switchField: 'is_active',
+        switchOn: 'Active',
+        switchOff: 'Archived',
+        switchSub: '',
+        archiveVerb: 'archive',
+        reactivateVerb: 'reactivate',
+        archiveSub: 'You can reactivate it later.',
+        reactivateSub: 'It will be marked as active again.'
+    }, window.MF_CONFIG || {});
+
+    if (window.console) { console.log('[manage-modal] loaded for: ' + cfg.noun); }
+
+    var NOUN = cfg.noun;
+    var NOUN_CAP = NOUN.charAt(0).toUpperCase() + NOUN.slice(1);
+
+    /* ---------- One shared overlay: only one modal at a time ---------- */
+
+    var overlay = document.createElement('div');
+    overlay.className = 'mf-overlay';
+    overlay.hidden = true;
+    document.body.appendChild(overlay);
+
+    var onClose = null;
+
+    function show(box, afterClose) {
+        overlay.innerHTML = '';
+        overlay.appendChild(box);
+        overlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        onClose = afterClose || null;
+    }
+
+    function hide() {
+        var cb = onClose;
+        onClose = null;
+        overlay.hidden = true;
+        overlay.innerHTML = '';
+        document.body.style.overflow = '';
+        if (cb) { cb(); }
+    }
+
+    overlay.addEventListener('mousedown', function (e) {
+        if (e.target === overlay) { hide(); }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !overlay.hidden) { hide(); }
+    });
+
+    /* ---------- Small DOM helpers ---------- */
+
+    function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) { e.className = cls; }
+        if (text != null) { e.textContent = text; }
+        return e;
+    }
+
+    /* Icon is only used for the error message (not on buttons) */
+    function icon(cls) {
+        var i = document.createElement('i');
+        i.className = cls;
+        return i;
+    }
+
+    /* Text-only button (no icons) */
+    function button(label, cls) {
+        var b = el('button', 'mf-btn ' + cls, label);
+        b.type = 'button';
+        return b;
+    }
+
+    function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+
+    function clean(t) { return (t || '').replace(/\s+/g, ' ').trim(); }
+
+    /* Details box built from data-info-* attributes (shown in the order they are written).
+       Used by the reason modal and the form modals (e.g. Reschedule). */
+    var INFO_LABELS = { reservation: 'Reservation ID', event: 'Event / Purpose', start: 'Start Time', end: 'End Time' };
+
+    function buildInfo(ds) {
+        var keys = Object.keys(ds || {}).filter(function (k) { return /^info[A-Z]/.test(k); });
+        if (!keys.length) { return null; }
+
+        var info = el('div');
+        info.style.cssText = 'display:grid;grid-template-columns:130px 1fr;gap:8px 14px;' +
+            'padding:14px 16px;margin-bottom:18px;background:#f8fafc;' +
+            'border:1px solid #e5e7eb;border-radius:12px;font-size:0.9rem;';
+
+        keys.forEach(function (k) {
+            var raw = k.slice(4);                                    /* e.g. "CurrentStart" */
+            var name = INFO_LABELS[raw.toLowerCase()] ||
+                       raw.replace(/([a-z])([A-Z])/g, '$1 $2');       /* "Current Start" */
+
+            var dt = el('span', '', name);
+            dt.style.cssText = 'color:#6b7280;font-weight:500;';
+            var dd = el('span', '', ds[k] || '\u2014');
+            dd.style.cssText = 'font-weight:600;color:#111827;word-break:break-word;';
+
+            info.appendChild(dt);
+            info.appendChild(dd);
+        });
+        return info;
+    }
+
+
+    function controlsIn(node) {
+        return node.querySelectorAll('input:not([type="hidden"]), select, textarea');
+    }
+
+    /* Builds header + body + footer card */
+    function buildBox(o) {
+        var box = el('div', 'mf-box' + (o.small ? ' sm' : '') + (o.wide ? ' wide' : ''));
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+
+        var x = el('button', 'mf-close', '\u00D7');   /* plain "x" character instead of an icon */
+        x.type = 'button';
+        x.setAttribute('aria-label', 'Close');
+        x.addEventListener('click', hide);
+        box.appendChild(x);
+
+        var head = el('div', 'mf-header');
+        var titles = el('div');
+        titles.appendChild(el('h2', '', o.title));
+        if (o.sub) { titles.appendChild(el('p', 'mf-sub', o.sub)); }
+        head.appendChild(titles);
+        box.appendChild(head);
+
+        o.body.classList.add('mf-body');
+        box.appendChild(o.body);
+
+        o.footer.classList.add('mf-footer');
+        box.appendChild(o.footer);
+
+        return box;
+    }
+
+    /* ---------- Success / error modal ---------- */
+
+    function showResult(messages, isError, reloadAfter) {
+        var body = el('div');
+        messages.forEach(function (m) { body.appendChild(el('p', '', m)); });
+
+        var footer = el('div');
+        var ok = button('OK', 'primary');
+        ok.addEventListener('click', hide);
+        footer.appendChild(ok);
+
+        show(buildBox({
+            small: true,
+            title: isError ? 'Something went wrong' : 'Saved Successfully',
+            body: body,
+            footer: footer
+        }), reloadAfter ? function () { window.location.reload(); } : null);
+
+        ok.focus();
+    }
+
+    /* Messages that came with this page load (e.g. after archive / edit) */
+    (function showPageMessages() {
+        var holder = document.querySelector('.messages-container');
+        if (!holder) { return; }
+
+        var items = holder.querySelectorAll('.alert-message');
+        if (!items.length) { return; }
+
+        var texts = [];
+        var isError = false;
+        items.forEach(function (m) {
+            texts.push(clean(m.textContent));
+            if (/error|warning/.test(m.getAttribute('data-tags') || '')) { isError = true; }
+        });
+
+        holder.remove();
+        showResult(texts, isError, false);
+    })();
+
+    /* ---------- Archive / Reactivate confirmation ---------- */
+
+    document.querySelectorAll(cfg.toggleForms).forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.confirmed) { return; }
+            e.preventDefault();
+
+            var archive = form.dataset.mode === 'archive';
+            var name = form.dataset.name || ('this ' + NOUN);
+
+            var body = el('div');
+            var p = el('p');
+            p.appendChild(document.createTextNode(
+                'Are you sure you want to ' + (archive ? cfg.archiveVerb : cfg.reactivateVerb) + ' '
+            ));
+            p.appendChild(el('strong', '', name));
+            p.appendChild(document.createTextNode('?'));
+            body.appendChild(p);
+
+            var footer = el('div');
+            var back = button('Back', 'ghost');
+            var yes = button(
+                cap(archive ? cfg.archiveVerb : cfg.reactivateVerb),
+                archive ? 'danger' : 'primary'
+            );
+            back.addEventListener('click', hide);
+            yes.addEventListener('click', function () {
+                yes.disabled = true;
+                form.dataset.confirmed = '1';
+                form.submit();   // page reloads, then the success modal shows
+            });
+            footer.appendChild(back);
+            footer.appendChild(yes);
+
+            show(buildBox({
+                small: true,
+                title: cap(archive ? cfg.archiveVerb : cfg.reactivateVerb) + ' ' + NOUN_CAP + '?',
+                sub: form.dataset.sub || (archive ? cfg.archiveSub : cfg.reactivateSub),
+                body: body,
+                footer: footer
+            }));
+
+            back.focus();
+        });
+    });
+
+    /* ---------- Reason prompt (Approve / Reject / Cancel ...) ----------
+       Put class="js-reason-form" on a form and these optional data attributes:
+         data-title     modal title, e.g. "Approve Reservation #5?"
+         data-sub       small text under the title
+         data-label     label above the box (default "Reason")
+         data-confirm   confirm button text (default "Confirm")
+         data-danger    "1" = red confirm button
+       The form needs <input type="hidden" name="reason">; it is filled from the modal. */
+
+    document.querySelectorAll(cfg.reasonForms).forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.confirmed) { return; }
+            e.preventDefault();
+
+            var body = el('div', 'mf-form-body');
+
+            var infoBox = buildInfo(form.dataset);
+            if (infoBox) { body.appendChild(infoBox); }
+
+            var field = el('div', 'mf-field');
+            var label = el('label', '', form.dataset.label || 'Reason');
+            label.style.cssText = 'display:block;margin-bottom:6px;font-weight:600;';
+            var area = document.createElement('textarea');
+            area.id = 'mfReason';
+            area.name = 'mf_reason_input';
+            area.rows = 4;
+            area.maxLength = 500;
+            area.placeholder = 'Type the reason here...';
+            area.style.cssText = 'display:block;width:100%;box-sizing:border-box;padding:10px 14px;' +
+                'font:inherit;color:inherit;background:#fff;border:1px solid #d1d5db;' +
+                'border-radius:12px;resize:vertical;outline:none;';
+            area.addEventListener('focus', function () { area.style.borderColor = '#f59e0b'; });
+            area.addEventListener('blur', function () { area.style.borderColor = area.classList.contains('has-error') ? '#dc2626' : '#d1d5db'; });
+            label.setAttribute('for', 'mfReason');
+            field.appendChild(label);
+            field.appendChild(area);
+            body.appendChild(field);
+
+            area.addEventListener('input', function () {
+                area.classList.remove('has-error');
+                area.removeAttribute('aria-invalid');
+                area.style.borderColor = '#f59e0b';
+                body.querySelectorAll('.mf-error').forEach(function (x) { x.remove(); });
+            });
+
+            var footer = el('div');
+            var back = button('Back', 'ghost');
+            var yes = button(form.dataset.confirm || 'Confirm', form.dataset.danger === '1' ? 'danger' : 'primary');
+
+            back.addEventListener('click', hide);
+            yes.addEventListener('click', function () {
+                var value = area.value.trim();
+
+                if (!value) {
+                    body.querySelectorAll('.mf-error').forEach(function (x) { x.remove(); });
+                    area.classList.add('has-error');
+                    area.setAttribute('aria-invalid', 'true');
+                    area.style.borderColor = '#dc2626';
+                    area.insertAdjacentElement('afterend', errorBox('Please enter a reason.', '', 'reason'));
+                    area.focus();
+                    return;
+                }
+
+                var hidden = form.querySelector('input[name="reason"]');
+                if (!hidden) {
+                    hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'reason';
+                    form.appendChild(hidden);
+                }
+                hidden.value = value;
+
+                yes.disabled = true;
+                form.dataset.confirmed = '1';
+                form.submit();   // page reloads, then the success modal shows
+            });
+            footer.appendChild(back);
+            footer.appendChild(yes);
+
+            show(buildBox({
+                title: form.dataset.title || 'Add a reason',
+                sub: form.dataset.sub || '',
+                body: body,
+                footer: footer
+            }));
+
+            area.focus();
+        });
+    });
+
+    /* ---------- History modal ----------
+       Put class="js-history-link" on a link (optional data-title="Reservation #5 History").
+       The linked page is fetched and its table (or main content) is shown in a modal.
+       If anything fails, the link just opens the normal page. */
+
+    (function addHistoryStyle() {
+        var s = document.createElement('style');
+        s.textContent =
+            /* generic table fallback (low priority) */
+            ':where(.mf-history table) { width: 100%; border-collapse: collapse; }' +
+            ':where(.mf-history th, .mf-history td) { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.88rem; vertical-align: middle; }' +
+            ':where(.mf-history th) { color: #6b7280; font-weight: 600; white-space: nowrap; }' +
+
+            /* page wrapper: no extra padding/margins from the page's own CSS */
+            '.mf-history main { display: flex !important; flex-direction: column !important; gap: 16px !important; padding: 0 !important; margin: 0 !important; max-width: none !important; width: auto !important; }' +
+            '.mf-history main > * { margin: 0 !important; }' +
+
+            /* user summary (name, email, account status): tight and tidy */
+            '.mf-history main > *:not(.table-card):not(.history-grid) { display: flex !important; flex-direction: column !important; gap: 6px !important; padding: 0 !important; }' +
+            '.mf-history main > *:not(.table-card):not(.history-grid) > * { margin: 0 !important; }' +
+
+            /* the reservation-history page layout, scoped to the modal */
+            '.mf-history .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0; }' +
+            '@media (max-width: 680px) { .mf-history .history-grid { grid-template-columns: 1fr; } }' +
+            '.mf-history .info-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; background: #fff; margin: 0; }' +
+            '.mf-history .info-card h2 { font-size: 1rem; margin: 0 0 10px; }' +
+            '.mf-history .detail-list { display: flex; flex-direction: column; }' +
+            '.mf-history .detail-item { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }' +
+            '.mf-history .detail-item:last-child { border-bottom: 0; }' +
+            '.mf-history .detail-label { color: #6b7280; }' +
+            '.mf-history .detail-value { font-weight: 600; text-align: right; word-break: break-word; }' +
+
+            /* table card: forced over the page stylesheet */
+            '.mf-history .table-card { border: 1px solid #e5e7eb !important; border-radius: 14px !important; overflow: hidden !important; background: #fff !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }' +
+            '.mf-history .table-card .table-header-bar { display: block !important; height: auto !important; min-height: 0 !important; padding: 12px 18px !important; margin: 0 !important; background: #fff !important; border: 0 !important; border-bottom: 1px solid #e5e7eb !important; }' +
+            '.mf-history .table-card .table-header-bar h2 { font-size: 1rem !important; line-height: 1.3 !important; margin: 0 !important; padding: 0 !important; }' +
+            '.mf-history .table-responsive { overflow-x: auto; margin: 0 !important; padding: 0 !important; }' +
+            '.mf-history .table-card table { margin: 0 !important; }' +
+            '.mf-history .table-card thead th { background: #f8fafc !important; font-size: 0.72rem !important; letter-spacing: 0.05em; text-transform: uppercase; padding: 10px 16px !important; }' +
+            '.mf-history .table-card tbody td { padding: 12px 16px !important; }' +
+            '.mf-history .table-card tbody tr:last-child td { border-bottom: 0 !important; }' +
+            '.mf-history .empty-cell { text-align: center; color: #6b7280; padding: 24px; }';
+        document.head.appendChild(s);
+    })();
+
+    function openHistory(link) {
+        var url = link.getAttribute('href');
+
+        fetch(url, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (res) {
+            if (!res.ok) { throw new Error('HTTP ' + res.status); }
+            return res.text();
+        }).then(function (html) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            var main = doc.querySelector('main') || doc.body;
+
+            /* Show the whole page content (summary info, table, notes...), minus the page
+               heading, scripts, messages and "Back" links, which the modal replaces */
+            var content = document.importNode(main, true);
+            content.querySelectorAll('h1, script, style, nav, .messages-container').forEach(function (x) { x.remove(); });
+            content.querySelectorAll('a').forEach(function (a) {
+                if (/back|return|close/i.test(a.textContent)) { a.remove(); }
+            });
+            content.style.cssText = 'padding:0;margin:0;max-width:none;width:auto;';
+
+            /* Keep only the reservation table (and anything after it).
+               The user summary (name, email, status) now lives in the modal subtitle. */
+            var card = content.querySelector('.table-card');
+            if (card) {
+                var node = card;
+                while (node && node !== content) {
+                    var prev = node.previousElementSibling;
+                    while (prev) {
+                        var gone = prev;
+                        prev = prev.previousElementSibling;
+                        if (!gone.classList.contains('history-grid')) { gone.remove(); }
+                    }
+                    node = node.parentElement;
+                }
+            }
+
+            if (!clean(content.textContent)) { throw new Error('Empty history page'); }
+
+            var body = el('div', 'mf-form-body');
+            var wrap = el('div', 'mf-history');
+            wrap.appendChild(content);
+            body.appendChild(wrap);
+
+            var footer = el('div');
+            var close = button('Close', 'primary');
+            close.addEventListener('click', hide);
+            footer.appendChild(close);
+
+            var box = buildBox({
+                wide: true,
+                title: link.dataset.title || 'History',
+                sub: link.dataset.sub || '',
+                body: body,
+                footer: footer
+            });
+            /* Extra-wide, for this modal only (other modals keep their normal width) */
+            box.style.width = 'min(1100px, 95vw)';
+            box.style.maxWidth = '1100px';
+
+            show(box);
+
+            close.focus();
+        }).catch(function (err) {
+            if (window.console) { console.error('[manage-modal] history: falling back to the full page:', err); }
+            window.location.href = url;
+        });
+    }
+
+    document.querySelectorAll(cfg.historyLinks).forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) { return; }
+            e.preventDefault();
+            openHistory(a);
+        });
+    });
+
+    /* ---------- Add / Edit modal ---------- */
+
+    function pathOf(u) { return new URL(u, window.location.href).pathname; }
+
+    /* Finds the form inside a fetched page */
+    function findForm(html, field) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var forms = doc.querySelectorAll('form');
+        var found = null;
+
+        /* 1) the form that holds the page's main field (avoids picking a sidebar/header form) */
+        forms.forEach(function (f) {
+            if (!found && f.querySelector('[name="' + (field || cfg.formField) + '"]')) { found = f; }
+        });
+
+        /* 2) otherwise any form with at least 2 visible fields */
+        if (!found) {
+            forms.forEach(function (f) {
+                if (found || f.classList.contains('logout-form')) { return; }
+                if (f.querySelectorAll('input:not([type="hidden"]), select, textarea').length >= 2) { found = f; }
+            });
+        }
+
+        /* 3) otherwise the first POST form that has at least one visible field (e.g. a short reschedule form) */
+        if (!found) {
+            forms.forEach(function (f) {
+                if (found || f.classList.contains('logout-form')) { return; }
+                if ((f.getAttribute('method') || '').toLowerCase() !== 'post') { return; }
+                if (f.querySelectorAll('input:not([type="hidden"]), select, textarea').length >= 1) { found = f; }
+            });
+        }
+        return found;
+    }
+
+    /* Removes the page's own Save / Cancel controls (the modal footer replaces them) */
+    function stripActions(form) {
+        form.querySelectorAll('button[type="submit"], input[type="submit"], button:not([type])').forEach(function (b) {
+            var wrap = b.closest('.form-actions, .form-buttons, .actions, .button-group, .btn-row');
+            (wrap && form.contains(wrap) ? wrap : b).remove();
+        });
+        form.querySelectorAll('a').forEach(function (a) {
+            if (/cancel|back/i.test(a.textContent)) { a.remove(); }
+        });
+    }
+
+    /* =====================================================
+       FIELD ERRORS: exactly ONE custom message per field
+       ===================================================== */
+
+    var ERR_SEL = '.errorlist, .field-error, .invalid-feedback, .text-danger';
+    var HELP_SEL = '.helptext, .help-text, small';
+
+    function errorTexts(err) {
+        var out = [];
+        var lis = err.querySelectorAll('li');
+        if (lis.length) { lis.forEach(function (l) { out.push(clean(l.textContent)); }); }
+        else { out.push(clean(err.textContent)); }
+        return out.filter(Boolean);
+    }
+
+    function pushUnique(arr, items) {
+        items.forEach(function (t) { if (arr.indexOf(t) < 0) { arr.push(t); } });
+    }
+
+    /* The element that represents a whole field (the input, or the list of checkboxes) */
+    function groupAnchor(form, name) {
+        var ctls = Array.prototype.slice.call(form.querySelectorAll(
+            'input:not([type="hidden"])[name="' + name + '"], select[name="' + name + '"], textarea[name="' + name + '"]'
+        ));
+        if (!ctls.length) { return null; }
+        if (ctls.length === 1) { return ctls[0]; }
+
+        var a = ctls[0];
+        while (a.parentElement && a.parentElement !== form &&
+               !ctls.every(function (c) { return a.contains(c); })) {
+            a = a.parentElement;
+        }
+        return a;
+    }
+
+    /* Which field does this error belong to? */
+    function ownerOf(form, err) {
+        var p = err.parentElement;
+        while (p && p !== form && form.contains(p)) {
+            var names = {};
+            var count = 0;
+            controlsIn(p).forEach(function (c) {
+                if (c.name && !names[c.name]) { names[c.name] = 1; count++; }
+            });
+            if (count === 1) { return Object.keys(names)[0]; }
+            if (count > 1) { break; }
+            p = p.parentElement;
+        }
+
+        /* Django prints errors above the field: use the next control after it */
+        var all = controlsIn(form);
+        for (var i = 0; i < all.length; i++) {
+            if ((err.compareDocumentPosition(all[i]) & Node.DOCUMENT_POSITION_FOLLOWING) && !err.contains(all[i])) {
+                return all[i].name || null;
+            }
+        }
+        return null;
+    }
+
+    /* Step 1: pull every error out of the form, remember its text per field */
+    function collectErrors(form) {
+        var result = { fields: {}, general: [] };
+
+        var list = Array.prototype.slice.call(form.querySelectorAll(ERR_SEL)).filter(function (e) {
+            if (e.closest('label')) { return false; }
+            return !(e.parentElement && e.parentElement.closest(ERR_SEL));
+        });
+
+        list.forEach(function (e) {
+            var texts = errorTexts(e);
+            var name = e.classList.contains('nonfield') ? null : ownerOf(form, e);
+            e.remove();
+
+            if (!texts.length) { return; }
+            if (!name) { pushUnique(result.general, texts); return; }
+
+            result.fields[name] = result.fields[name] || [];
+            pushUnique(result.fields[name], texts);
+        });
+
+        return result;
+    }
+
+    function errorBox(msg, kind, name) {
+        var b = el('div', 'mf-error' + (kind ? ' ' + kind : ''));
+        b.setAttribute('role', 'alert');
+        if (name) { b.setAttribute('data-for', name); }
+        b.appendChild(icon('fa-solid fa-circle-exclamation'));
+        b.appendChild(el('span', '', msg));
+        return b;
+    }
+
+    /* Step 3 (after the layout is built): draw one message per field */
+    function renderErrors(form, errs) {
+        var general = errs.general.slice();
+
+        Object.keys(errs.fields).forEach(function (name) {
+            var anchor = groupAnchor(form, name);
+            if (!anchor) { pushUnique(general, errs.fields[name]); return; }
+
+            var target = anchor.classList.contains('mf-switch-input') ? anchor.closest('.mf-switch') : anchor;
+
+            anchor.classList.add('has-error');
+            anchor.setAttribute('aria-invalid', 'true');
+            target.insertAdjacentElement('afterend', errorBox(errs.fields[name].join(' '), '', name));
+        });
+
+        if (general.length) {
+            form.insertBefore(errorBox(general.join(' '), 'general'), form.firstChild);
+        }
+    }
+
+    /* The error goes away as soon as the person edits that field */
+    function watchInputs(form) {
+        function clear(e) {
+            var n = e.target && e.target.name;
+            if (!n) { return; }
+
+            form.querySelectorAll('.mf-error[data-for="' + n + '"]').forEach(function (x) { x.remove(); });
+            var a = groupAnchor(form, n);
+            if (a) {
+                a.classList.remove('has-error');
+                a.removeAttribute('aria-invalid');
+            }
+        }
+        form.addEventListener('input', clear);
+        form.addEventListener('change', clear);
+    }
+
+    /* =====================================================
+       Status checkbox -> toggle switch
+       ===================================================== */
+
+    function makeSwitch(form) {
+        if (!cfg.switchField) { return; }
+        var cb = form.querySelector('input[type="checkbox"][name="' + cfg.switchField + '"]');
+        if (!cb) { return; }
+
+        var w = cb;
+        while (w.parentElement && w.parentElement !== form && controlsIn(w.parentElement).length === 1) {
+            w = w.parentElement;
+        }
+        var lab = cb.id ? form.querySelector('label[for="' + cb.id + '"]') : null;
+
+        var row = el('label', 'mf-switch');
+        var track = el('span', 'mf-switch-track');
+        var text = el('span', 'mf-switch-text');
+        var state = el('strong', 'mf-switch-state');
+        var sub = el('span', 'mf-switch-sub', cfg.switchSub || ('Switch off to archive this ' + NOUN + '.'));
+        text.appendChild(state);
+        text.appendChild(sub);
+
+        w.parentNode.insertBefore(row, w);
+        cb.classList.add('mf-switch-input');
+        cb.setAttribute('role', 'switch');
+        row.appendChild(cb);
+        row.appendChild(track);
+        row.appendChild(text);
+
+        if (w !== cb) { w.remove(); }
+        if (lab && lab.isConnected) { lab.remove(); }
+
+        function sync() {
+            state.textContent = cb.checked ? cfg.switchOn : cfg.switchOff;
+            row.classList.toggle('on', cb.checked);
+        }
+        cb.addEventListener('change', sync);
+        sync();
+    }
+
+    /* Checkbox lists (if a form has one) -> 2-column grid */
+    function markCheckGroups(form) {
+        var seen = {};
+        form.querySelectorAll('input[type="checkbox"]').forEach(function (c) {
+            if (!c.name || seen[c.name]) { return; }
+            seen[c.name] = 1;
+
+            var all = form.querySelectorAll('input[type="checkbox"][name="' + c.name + '"]');
+            if (all.length < 2) { return; }
+
+            var a = groupAnchor(form, c.name);
+            if (a && a !== form) { a.classList.add('mf-checks'); }
+        });
+    }
+
+    /* Loose label + input directly in the form -> one block */
+    function wrapLoose(form) {
+        Array.prototype.slice.call(controlsIn(form)).forEach(function (ctl) {
+            if (ctl.type === 'radio' || ctl.parentElement !== form) { return; }
+
+            var lab = ctl.id ? form.querySelector('label[for="' + ctl.id + '"]') : null;
+            if (lab && lab.parentNode !== form) { lab = null; }
+
+            var block = el('div', 'mf-field');
+            ctl.parentNode.insertBefore(block, lab || ctl);
+            if (lab) { block.appendChild(lab); }
+            block.appendChild(ctl);
+
+            var n = block.nextElementSibling;
+            while (n && n.matches(HELP_SEL)) {
+                var nx = n.nextElementSibling;
+                block.appendChild(n);
+                n = nx;
+            }
+        });
+    }
+
+    function wrapperOf(form, fieldName) {
+        var ctl = form.querySelector('[name="' + fieldName + '"]');
+        if (!ctl) { return null; }
+
+        var w = ctl;
+        while (w.parentElement && w.parentElement !== form && controlsIn(w.parentElement).length === 1) {
+            w = w.parentElement;
+        }
+
+        if (w === ctl) {
+            var d = document.createElement('div');
+            var lab = ctl.id ? form.querySelector('label[for="' + ctl.id + '"]') : null;
+            ctl.parentNode.insertBefore(d, ctl);
+            if (lab) { d.appendChild(lab); }
+            d.appendChild(ctl);
+            w = d;
+        }
+
+        if (/^(TR|TD|TH|TBODY|THEAD|TABLE)$/.test(w.tagName)) { return null; }
+        return w;
+    }
+
+    /* Puts cfg.gridFields side by side in 2 columns */
+    function arrange(form) {
+        if (!cfg.gridFields.length) { return; }
+
+        var found = {};
+        cfg.gridFields.forEach(function (n) {
+            var w = wrapperOf(form, n);
+            if (w) { found[n] = w; }
+        });
+
+        var names = cfg.gridFields.filter(function (n) { return found[n]; });
+        if (names.length < 2) { return; }
+
+        var grid = document.createElement('div');
+        grid.className = 'mf-grid';
+        found[names[0]].parentNode.insertBefore(grid, found[names[0]]);
+        names.forEach(function (n) { grid.appendChild(found[n]); });
+    }
+
+    /* Gives every field that is NOT already wrapped the same .mf-field block,
+       so spacing is consistent on every page (e.g. fields inside <p> or custom divs) */
+    function normalizeFields(form) {
+        Array.prototype.slice.call(controlsIn(form)).forEach(function (ctl) {
+            if (ctl.type === 'checkbox' || ctl.type === 'radio') { return; }
+            if (ctl.closest('.mf-field, .mf-switch')) { return; }
+
+            var w = ctl;
+            while (w.parentElement && w.parentElement !== form && controlsIn(w.parentElement).length === 1) {
+                w = w.parentElement;
+            }
+            if (w === ctl || w.classList.contains('mf-field')) { return; }
+            if (w.parentElement && w.parentElement.classList.contains('mf-grid')) { return; }
+            if (/^(TR|TD|TH|TBODY|THEAD|TABLE)$/.test(w.tagName)) { return; }
+
+            w.classList.add('mf-field');
+        });
+    }
+
+    /* Low-priority spacing rule (zero specificity, so manage-modal.css always wins) */
+    (function addSpacingFallback() {
+        var s = document.createElement('style');
+        s.textContent = ':where(.mf-form-body .mf-field) { margin-bottom: 16px; }' +
+                        ':where(.mf-form-body .mf-grid) { margin-bottom: 16px; }';
+        document.head.appendChild(s);
+    })();
+
+    /* Order matters: read the errors first, build the layout, then draw the errors */
+    function prepareForm(form) {
+        var errs = collectErrors(form);
+        makeSwitch(form);
+        markCheckGroups(form);
+        wrapLoose(form);
+        arrange(form);
+        normalizeFields(form);
+        renderErrors(form, errs);
+        watchInputs(form);
+    }
+
+    function showForm(formFromPage, url, mode, opts) {
+        opts = opts || {};
+        var edit = mode === 'edit';
+
+        var form = document.importNode(formFromPage, true);
+        form.id = 'mfForm';
+        form.noValidate = true;   /* skip the browser's own "Please fill out this field" popup so the server's inline errors show on every page */
+        stripActions(form);
+        prepareForm(form);
+
+        var body = el('div', 'mf-form-body');
+        var infoBox = buildInfo(opts.info);
+        if (infoBox) { body.appendChild(infoBox); }
+        body.appendChild(form);
+
+        var footer = el('div');
+        var cancel = button('Cancel', 'ghost');
+        cancel.addEventListener('click', hide);
+
+        var save = button(opts.save || (edit ? 'Save Changes' : 'Save ' + NOUN_CAP), 'primary');
+        save.type = 'submit';
+        save.setAttribute('form', 'mfForm');   // submits the form even though it sits outside it
+
+        footer.appendChild(cancel);
+        if (opts.preview != null ? opts.preview : cfg.previewButton) {
+            var prev = button('Preview Conflicts', 'ghost');
+            prev.type = 'submit';
+            prev.name = 'action';
+            prev.value = 'preview';
+            prev.setAttribute('form', 'mfForm');
+            footer.appendChild(prev);
+        }
+        footer.appendChild(save);
+
+        show(buildBox({
+            wide: opts.wide != null ? opts.wide : cfg.wide,
+            title: opts.title || (edit ? 'Edit ' + NOUN_CAP : 'Add New ' + NOUN_CAP),
+            sub: opts.sub != null ? opts.sub : (edit ? 'Update the details of this ' + NOUN + '.' : 'Enter the details of the new ' + NOUN + '.'),
+            body: body,
+            footer: footer
+        }));
+
+        /* Focus the first field with an error, otherwise the first field */
+        var bad = form.querySelector('.has-error');
+        var first = bad
+            ? (controlsIn(bad)[0] || bad)
+            : form.querySelector('input:not([type="hidden"]), select, textarea');
+        if (first && first.focus) { first.focus(); }
+
+        form.addEventListener('submit', function (e) {
+            /* Preview Conflicts: let the normal page submit so your existing preview page shows */
+            if (e.submitter && e.submitter.value === 'preview') { return; }
+
+            e.preventDefault();
+            save.disabled = true;
+
+            fetch(form.getAttribute('action') || url, {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (res) {
+                return res.text().then(function (html) {
+                    return { res: res, html: html };
+                });
+            }).then(function (r) {
+                var saved = r.res.redirected && pathOf(r.res.url) !== pathOf(url);
+
+                if (saved) {
+                    var doc = new DOMParser().parseFromString(r.html, 'text/html');
+                    var texts = [];
+                    var isError = false;
+                    doc.querySelectorAll('.alert-message').forEach(function (m) {
+                        texts.push(clean(m.textContent));
+                        if (/error|warning/.test(m.getAttribute('data-tags') || '')) { isError = true; }
+                    });
+                    if (!texts.length) { texts.push('The ' + NOUN + ' was saved successfully.'); }
+
+                    hide();                                   /* form modal closes... */
+                    setTimeout(function () {                  /* ...then success appears */
+                        showResult(texts, isError, true);     /* OK reloads the list */
+                    }, 200);
+                    return;
+                }
+
+                /* Validation errors: show the form again with one error per field */
+                var again = findForm(r.html, opts.formField);
+                if (!again) { throw new Error('No form in response'); }
+                showForm(again, url, mode, opts);
+            }).catch(function () {
+                form.submit();   // plain submit as a fallback
+            });
+        });
+    }
+
+    function openForm(url, mode, opts) {
+        fetch(url, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (res) {
+            return res.text();
+        }).then(function (html) {
+            var f = findForm(html, opts && opts.formField);
+            if (!f) { throw new Error('No form found'); }
+            showForm(f, url, mode, opts);
+        }).catch(function (err) {
+            if (window.console) { console.error('[manage-modal] falling back to the full page:', err); }
+            window.location.href = url;   // fall back to the normal page
+        });
+    }
+
+    function bindOpen(link, mode) {
+        link.addEventListener('click', function (e) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) { return; }
+            e.preventDefault();
+            openForm(link.getAttribute('href'), mode);
+        });
+    }
+
+    /* Other links that open a form in a modal (e.g. Reschedule).
+       class="js-form-link" plus optional attributes:
+         data-title, data-sub, data-save (button text), data-form-field (a field name inside the form),
+         data-wide="1", data-preview="1" (adds a Preview Conflicts button) */
+    document.querySelectorAll(cfg.formLinks).forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) { return; }
+            e.preventDefault();
+            var d = a.dataset;
+            openForm(a.getAttribute('href'), 'edit', {
+                title: d.title,
+                sub: d.sub,
+                save: d.save,
+                formField: d.formField,
+                wide: d.wide === '1',
+                preview: d.preview === '1',
+                info: d
+            });
+        });
+    });
+
+    var addBtn = document.querySelector(cfg.addButton);
+    if (addBtn) { bindOpen(addBtn, 'add'); }
+
+    document.querySelectorAll(cfg.editLinks).forEach(function (a) {
+        bindOpen(a, 'edit');
+    });
+})();
+
+{% endverbatim %}
+</script>

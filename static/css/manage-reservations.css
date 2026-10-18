@@ -1,7 +1,7 @@
 .reservations-container {
     max-width: 1400px;
-    width: 92%;
-    margin: 2rem auto;
+    width: 98%;
+    margin: 1rem auto;
     padding: 0 1rem;
 }
 
@@ -253,12 +253,6 @@
 .badge-status.completed .status-dot { background: #5f6368; }
 .badge-status.rejected .status-dot, .badge-status.cancelled .status-dot { background: #c5221f; }
 
-.actions-cell-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 300px;
-}
 
 .btn-action-history {
     padding: 6px 12px;
@@ -331,7 +325,7 @@
 }
 
 .btn-act.approve, .btn-act.check-in, .btn-act.complete {
-    background: rgba(19, 115, 51, 0.08);
+    background: transparent;
     color: #137333;
     border-color: rgba(19, 115, 51, 0.2);
 }
@@ -341,7 +335,7 @@
 }
 
 .btn-act.reject, .btn-act.cancel, .btn-act.no-show {
-    background: rgba(197, 34, 31, 0.08);
+    background: transparent;
     color: #c5221f;
     border-color: rgba(197, 34, 31, 0.2);
 }

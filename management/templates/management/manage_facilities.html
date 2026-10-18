@@ -1,190 +1,176 @@
+{% extends "management/base_admin.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facility Management | Campus Facility Reservation</title>
 
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Facility Management{% endblock %}
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'css/manage-facilities.css' %}">
-</head>
-<body>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/manage-facilities.css' %}">
+<link rel="stylesheet" href="{% static 'css/manage-modal.css' %}?v=2">
+{% endblock %}
 
-    <!-- Header Navigation -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            Campus Facility Reservation System
+{% block content %}
+<main class="facilities-container">
+
+    <!-- Header & Action Links -->
+    <div class="facilities-header-wrapper">
+        <h1>Facility Management</h1>
+        <div class="header-actions">
+            <!-- Opens the Add Facility modal (falls back to the normal page without JS) -->
+            <a href="{% url 'add_facility' %}" class="btn-add-facility" id="addFacilityBtn">
+                 <i class="fa-solid fa-plus"></i> Add New Facility
+            </a>
         </div>
+    </div>
 
-        <div class="topbar-right">
-            <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
-                <span>{{ request.user.username }}</span>
-            </div>
-
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Log out</span>
-                </button>
-            </form>
-        </div>
-    </header>
-
-    <main class="facilities-container">
-
-        <!-- Header & Action Links -->
-        <div class="facilities-header-wrapper">
-            <h1>Facility Management</h1>
-            <div class="header-actions">
-                <a href="{% url 'add_facility' %}" class="btn-add-facility">
-                    <i class="fa-solid fa-plus"></i> Add New Facility
-                </a>
-                <a href="{% url 'admin_dashboard' %}" class="back-link">
-                    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-                </a>
-            </div>
-        </div>
-
-        <!-- Alert Messages -->
-        {% if messages %}
-            <div class="messages-container">
-                {% for message in messages %}
-                    <div class="alert-message">
-                        <i class="fa-solid fa-circle-info"></i> {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <!-- Search Card -->
-        <div class="search-card">
-            <form method="GET" class="search-form">
-                <div class="search-input-wrapper">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input
-                        type="text"
-                        name="search"
-                        class="search-input"
-                        placeholder="Search facilities by name, code, or location..."
-                        value="{{ search_query }}"
-                    >
+    <!-- Alert Messages (shown in the success modal when JavaScript is on) -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert-message" data-tags="{{ message.tags }}">
+                    <i class="fa-solid fa-circle-info"></i> {{ message }}
                 </div>
-
-                <button type="submit" class="btn-search">
-                    <i class="fa-solid fa-magnifying-glass"></i> Search
-                </button>
-
-                {% if search_query %}
-                    <a href="{% url 'manage_facilities' %}" class="btn-clear">
-                        <i class="fa-solid fa-xmark"></i> Clear Search
-                    </a>
-                {% endif %}
-            </form>
+            {% endfor %}
         </div>
+    {% endif %}
 
-        <!-- Table Card -->
-        <div class="table-card">
-            <div class="table-header-bar">
-                <h2>All Facilities</h2>
+    <!-- Search Card -->
+    <div class="search-card">
+        <form method="GET" class="search-form">
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                    type="text"
+                    name="search"
+                    class="search-input"
+                    placeholder="Search facilities by name, code, or location..."
+                    value="{{ search_query }}"
+                >
             </div>
 
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
+            <button type="submit" class="btn-search">
+                Search
+            </button>
+
+            {% if search_query %}
+                <a href="{% url 'manage_facilities' %}" class="btn-clear">
+                    Clear Search
+                </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-header-bar">
+            <h2>All Facilities</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Facility Name</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Capacity</th>
+                        <th>Operating Hours</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for facility in facilities %}
                         <tr>
-                            <th>Code</th>
-                            <th>Facility Name</th>
-                            <th>Category</th>
-                            <th>Location</th>
-                            <th>Capacity</th>
-                            <th>Operating Hours</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <td>
+                                <span class="code-tag">{{ facility.code|default:"N/A" }}</span>
+                            </td>
+
+                            <td><strong>{{ facility.name }}</strong></td>
+
+                            <td>{{ facility.category.name|default:"&mdash;" }}</td>
+
+                            <td>{{ facility.location }}</td>
+
+                            <td><i class="fa-solid fa-users" style="color: var(--ink-soft); font-size: 0.8rem;"></i> {{ facility.capacity }}</td>
+
+                            <td>
+                                {{ facility.opening_time|time:"h:i A" }} &ndash; {{ facility.closing_time|time:"h:i A" }}
+                            </td>
+
+                            <td>
+                                {% if facility.is_active %}
+                                    <span class="badge-status active">
+                                        <span class="status-dot"></span> Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge-status deactivated">
+                                        <span class="status-dot"></span> Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="actions-cell">
+                                    <a href="{% url 'edit_facility' facility.id %}" class="btn-action-edit">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </a>
+
+                                    <!-- Confirmed through the shared modal (no browser confirm box) -->
+                                    <form
+                                        method="POST"
+                                        action="{% url 'toggle_facility_status' facility.id %}"
+                                        class="js-toggle-form"
+                                        data-mode="{% if facility.is_active %}archive{% else %}reactivate{% endif %}"
+                                        data-name="{{ facility.name }}"
+                                        style="margin: 0;"
+                                    >
+                                        {% csrf_token %}
+                                        {% if facility.is_active %}
+                                            <button type="submit" class="btn-action-toggle archive">
+                                                Archive
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="btn-action-toggle reactivate">
+                                                Reactivate
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for facility in facilities %}
-                            <tr>
-                                <td>
-                                    <span class="code-tag">{{ facility.code|default:"N/A" }}</span>
-                                </td>
-
-                                <td><strong>{{ facility.name }}</strong></td>
-
-                                <td>{{ facility.category.name|default:"&mdash;" }}</td>
-
-                                <td>{{ facility.location }}</td>
-
-                                <td><i class="fa-solid fa-users" style="color: var(--ink-soft); font-size: 0.8rem;"></i> {{ facility.capacity }}</td>
-
-                                <td>
-                                    {{ facility.opening_time|time:"h:i A" }} &ndash; {{ facility.closing_time|time:"h:i A" }}
-                                </td>
-
-                                <td>
-                                    {% if facility.is_active %}
-                                        <span class="badge-status active">
-                                            <span class="status-dot"></span> Active
-                                        </span>
-                                    {% else %}
-                                        <span class="badge-status deactivated">
-                                            <span class="status-dot"></span> Inactive
-                                        </span>
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    <div class="actions-cell">
-                                        <a href="{% url 'edit_facility' facility.id %}" class="btn-action-edit">
-                                            <i class="fa-solid fa-pen-to-square"></i> Edit
-                                        </a>
-
-                                        <form
-                                            method="POST"
-                                            action="{% url 'toggle_facility_status' facility.id %}"
-                                            onsubmit="return confirm('Are you sure you want to change this facility status?');"
-                                            style="margin: 0;"
-                                        >
-                                            {% csrf_token %}
-                                            {% if facility.is_active %}
-                                                <button type="submit" class="btn-action-toggle archive">
-                                                    <i class="fa-solid fa-box-archive"></i> Archive
-                                                </button>
-                                            {% else %}
-                                                <button type="submit" class="btn-action-toggle reactivate">
-                                                    <i class="fa-solid fa-rotate-left"></i> Reactivate
-                                                </button>
-                                            {% endif %}
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="8" class="empty-cell">
-                                    <i class="fa-solid fa-building-circle-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
-                                    No facilities found.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="empty-cell">
+                                <i class="fa-solid fa-building-circle-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                No facilities found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+    </div>
 
-    </main>
+</main>
 
-</body>
-</html>
+<!-- Without JavaScript, show messages inline as before -->
+<noscript><style>.messages-container { display: block !important; }</style></noscript>
+
+<!-- Shared modal script: settings for this page, then the shared file -->
+<script>
+    window.MF_CONFIG = {
+        noun: 'facility',
+        addButton: '#addFacilityBtn',
+        wide: true,
+        formField: 'name',
+        gridFields: ['name', 'category', 'location', 'capacity', 'opening_time', 'closing_time'],
+        switchField: 'is_active',
+        switchOn: 'Active',
+        switchOff: 'Inactive',
+        switchSub: 'Switch off to mark this facility as inactive.'
+    };
+</script>
+{% include "management/modal_script.html" %}
+{% endblock %}

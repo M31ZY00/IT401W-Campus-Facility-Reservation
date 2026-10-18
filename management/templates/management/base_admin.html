@@ -1,0 +1,135 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ADMIN{% endblock %} | Campus Facility Reservation</title>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Shared Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+
+    <!-- Admin layout: sidebar stays put, only the right side scrolls -->
+    <style>
+        .sidebar-link {
+            white-space: nowrap;
+        }
+
+        /* Current page: same look as hover */
+        .sidebar-link.active {
+            background: var(--navy);
+            color: var(--white);
+            border-color: var(--navy);
+        }
+
+        .sidebar-link.active i {
+            background: var(--gold);
+            color: var(--navy-deep);
+        }
+
+        .admin-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        @media (min-width: 1025px) {
+            /* The page itself never scrolls; the layout fills the screen under the topbar */
+            html, body {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            .admin-layout-wrapper {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            /* Sidebar: shrink to its longest link, fixed in place, scrolls only if too tall */
+            .admin-sidebar {
+                position: static;
+                height: auto;
+                align-self: stretch;
+                flex: 0 0 auto;
+                width: max-content;
+                max-width: 100%;
+                overflow-y: auto;
+            }
+
+            /* Right side: the only thing that scrolls */
+            .admin-content {
+                height: 100%;
+                overflow-y: auto;
+            }
+        }
+    </style>
+
+    <!-- Page-specific stylesheets -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            Campus Facility Reservation System
+        </div>
+
+        <div class="topbar-right">
+            <div class="user-chip">
+                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                <span>{{ request.user.username }}</span>
+            </div>
+
+            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Main Layout Wrapper with Sidebar -->
+    <div class="admin-layout-wrapper">
+
+        <!-- Sidebar Navigation (written once, shown on every admin page) -->
+        <aside class="admin-sidebar">
+            <nav class="sidebar-nav">
+                {% with current=request.resolver_match.url_name %}
+                <a href="{% url 'admin_dashboard' %}" class="sidebar-link {% if current == 'admin_dashboard' %}active{% endif %}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                <a href="{% url 'manage_users' %}" class="sidebar-link {% if current == 'manage_users' %}active{% endif %}"><i class="fa-solid fa-users"></i> Account Management</a>
+                <a href="{% url 'manage_facilities' %}" class="sidebar-link {% if current == 'manage_facilities' %}active{% endif %}"><i class="fa-solid fa-building"></i> Manage Facilities</a>
+                <a href="{% url 'manage_categories' %}" class="sidebar-link {% if current == 'manage_categories' %}active{% endif %}"><i class="fa-solid fa-layer-group"></i> Manage Categories</a>
+                <a href="{% url 'manage_amenities' %}" class="sidebar-link {% if current == 'manage_amenities' %}active{% endif %}"><i class="fa-solid fa-list-check"></i> Manage Amenities</a>
+                <a href="{% url 'manage_reservations' %}" class="sidebar-link {% if current == 'manage_reservations' %}active{% endif %}"><i class="fa-solid fa-calendar-days"></i> Manage Reservations</a>
+                <a href="{% url 'reservation_calendar' %}" class="sidebar-link {% if current == 'reservation_calendar' %}active{% endif %}"><i class="fa-solid fa-calendar"></i> Reservation Calendar</a>
+                <a href="{% url 'event_monitoring' %}" class="sidebar-link {% if current == 'event_monitoring' %}active{% endif %}"><i class="fa-solid fa-desktop"></i> Event Monitoring</a>
+                <a href="{% url 'manage_closures' %}" class="sidebar-link {% if current == 'manage_closures' %}active{% endif %}"><i class="fa-solid fa-ban"></i> Manage Closures</a>
+                <a href="{% url 'reservation_reports' %}" class="sidebar-link {% if current == 'reservation_reports' %}active{% endif %}"><i class="fa-solid fa-file-export"></i> Reports &amp; CSV Export</a>
+                <a href="{% url 'view_audit_logs' %}" class="sidebar-link {% if current == 'view_audit_logs' %}active{% endif %}"><i class="fa-solid fa-clipboard-list"></i> Audit Logs</a>
+                <a href="{% url 'system_settings' %}" class="sidebar-link {% if current == 'system_settings' %}active{% endif %}"><i class="fa-solid fa-gear"></i> System Settings</a>
+                {% endwith %}
+            </nav>
+        </aside>
+
+        <!-- Right side (the only part that scrolls). Each page puts its own <main> here -->
+        <div class="admin-content">
+            {% block content %}{% endblock %}
+            {% block footer %}{% endblock %}
+        </div>
+
+    </div>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

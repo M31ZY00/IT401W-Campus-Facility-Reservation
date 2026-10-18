@@ -1,176 +1,433 @@
+{% extends "management/base_admin.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Calendar | Campus Facility Reservation</title>
 
-    <!-- Typography & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Reservation Calendar{% endblock %}
 
-    <!-- External Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'css/reservation-calendar.css' %}">
-</head>
-<body>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reservation-calendar.css' %}">
+<link rel="stylesheet" href="{% static 'css/manage-modal.css' %}?v=4">
+<style>
+    /* ---------- Week overview strip (shows at a glance which days are free) ---------- */
+    .week-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .week-chip {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 12px 6px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+    .week-chip:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08); border-color: #f59e0b; }
+    .week-chip .wd { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; }
+    .week-chip .dn { font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
+    .week-chip .st { margin-top: 2px; padding: 2px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
+    .week-chip.is-open .st { background: #dcfce7; color: #166534; }
+    .week-chip.is-busy .st { background: #fef3c7; color: #92400e; }
+    .week-chip.is-today { border-color: #f59e0b; }
+    .week-chip.is-selected { box-shadow: 0 0 0 2px #f59e0b; }
 
-    <!-- Header Navigation -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            Campus Facility Reservation System
+    /* ---------- Today button ---------- */
+    .btn-today {
+        display: inline-flex;
+        align-items: center;
+        height: 38px;
+        padding: 0 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fff;
+        color: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .btn-today:hover { border-color: #f59e0b; }
+
+    /* ---------- Availability block inside each day card ---------- */
+    .avail { padding: 14px 20px 10px; background: #fafbfc; border-bottom: 1px solid #eef0f3; }
+    .avail-title { margin: 0 0 2px; font-size: 0.9rem; font-weight: 700; }
+    .avail-hint { margin: 0 0 8px; font-size: 0.78rem; color: #6b7280; }
+    .avail-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 210px) 1fr;
+        gap: 4px 16px;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px dashed #e5e7eb;
+    }
+    .avail-name { font-weight: 600; font-size: 0.88rem; }
+    .avail-bar { position: relative; height: 10px; border-radius: 999px; background: #bbf7d0; overflow: hidden; }
+    .avail-busy { position: absolute; top: 0; bottom: 0; background: #f59e0b; }
+    .avail-free { grid-column: 2; font-size: 0.82rem; color: #166534; font-weight: 600; }
+    .avail-free.is-full { color: #b45309; }
+    .avail-legend { display: flex; gap: 14px; margin-top: 6px; font-size: 0.75rem; color: #6b7280; }
+    .avail-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+    .avail-legend .lg-free::before { background: #bbf7d0; }
+    .avail-legend .lg-busy::before { background: #f59e0b; }
+
+    /* ---------- Row actions (text buttons, same size) ---------- */
+    .calendar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+    .calendar-actions a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+        text-decoration: none;
+    }
+
+    /* ---------- Empty state: only shown when NO day has reservations ---------- */
+    .calendar-empty {
+        padding: 40px 20px;
+        text-align: center;
+        border: 1px dashed #d1d5db;
+        border-radius: 16px;
+        background: #fff;
+    }
+    .calendar-empty h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .calendar-empty p { margin: 0; color: #6b7280; font-size: 0.9rem; }
+    .day-card ~ .calendar-empty { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="calendar-container">
+
+    <!-- Header -->
+    <div class="calendar-header-wrapper">
+        <h1>Reservation Calendar</h1>
+    </div>
+
+    <!-- Alert Messages (shown in the success modal when JavaScript is on) -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert-message" data-tags="{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
         </div>
+    {% endif %}
 
-        <div class="topbar-right">
-            <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
-                <span>{{ request.user.username }}</span>
-            </div>
-
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Log out</span>
-                </button>
-            </form>
-        </div>
-    </header>
-
-    <main class="calendar-container">
-
-        <!-- Header & Back Navigation -->
-        <div class="calendar-header-wrapper">
-            <h1>Reservation Calendar</h1>
-            <a href="{% url 'admin_dashboard' %}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    <!-- Controls Toolbar Card -->
+    <div class="calendar-controls-card">
+        <!-- View Switcher -->
+        <div class="view-toggles">
+            <a href="{% url 'reservation_calendar' %}?view=day&amp;date={{ selected_date|date:'Y-m-d' }}" class="view-btn {% if selected_view == 'day' %}active{% endif %}">
+                Daily View
+            </a>
+            <a href="{% url 'reservation_calendar' %}?view=week&amp;date={{ selected_date|date:'Y-m-d' }}" class="view-btn {% if selected_view == 'week' %}active{% endif %}">
+                Weekly View
             </a>
         </div>
 
-        <!-- Controls Toolbar Card -->
-        <div class="calendar-controls-card">
-            <!-- View Switcher -->
-            <div class="view-toggles">
-                <a href="{% url 'reservation_calendar' %}?view=day&date={{ selected_date|date:'Y-m-d' }}" class="view-btn {% if selected_view == 'day' %}active{% endif %}">
-                    <i class="fa-solid fa-calendar-day"></i> Daily View
-                </a>
-                <a href="{% url 'reservation_calendar' %}?view=week&date={{ selected_date|date:'Y-m-d' }}" class="view-btn {% if selected_view == 'week' %}active{% endif %}">
-                    <i class="fa-solid fa-calendar-week"></i> Weekly View
-                </a>
-            </div>
+        <!-- Date Picker Form -->
+        <form method="GET" class="date-picker-form">
+            <input type="hidden" name="view" value="{{ selected_view }}">
+            <label for="date-select">Select Date:</label>
+            <input
+                type="date"
+                id="date-select"
+                name="date"
+                class="date-input"
+                value="{{ selected_date|date:'Y-m-d' }}"
+            >
+            <button type="submit" class="btn-go">Go</button>
+            <a href="?view={{ selected_view }}&amp;date={% now 'Y-m-d' %}" class="btn-today">Today</a>
+        </form>
+    </div>
 
-            <!-- Date Picker Form -->
-            <form method="GET" class="date-picker-form">
-                <input type="hidden" name="view" value="{{ selected_view }}">
-                <label for="date-select">Select Date:</label>
-                <input
-                    type="date"
-                    id="date-select"
-                    name="date"
-                    class="date-input"
-                    value="{{ selected_date|date:'Y-m-d' }}"
+    <!-- Date Range Navigation Header -->
+    <div class="calendar-range-nav">
+        <a href="?view={{ selected_view }}&amp;date={{ previous_date|date:'Y-m-d' }}" class="nav-arrow-btn">
+            Previous
+        </a>
+
+        <h2>
+            {{ start_date|date:"F d, Y" }}
+            {% if selected_view == 'week' %}
+                &mdash; {{ end_date|date:"F d, Y" }}
+            {% endif %}
+        </h2>
+
+        <a href="?view={{ selected_view }}&amp;date={{ next_date|date:'Y-m-d' }}" class="nav-arrow-btn">
+            Next
+        </a>
+    </div>
+
+    <!-- Week overview: every day of the week, with how busy it is (click a day to open it) -->
+    {% if selected_view == 'week' %}
+        {% now "Y-m-d" as today_str %}
+        <div class="week-strip">
+            {% for day in calendar_days %}
+                <a
+                    href="?view=day&amp;date={{ day.date|date:'Y-m-d' }}"
+                    class="week-chip {% if day.reservations %}is-busy{% else %}is-open{% endif %}{% if day.date|date:'Y-m-d' == today_str %} is-today{% endif %}{% if day.date|date:'Y-m-d' == selected_date|date:'Y-m-d' %} is-selected{% endif %}"
+                    title="{{ day.date|date:'l, F d' }}"
                 >
-                <button type="submit" class="btn-go">
-                    <i class="fa-solid fa-filter"></i> Go
-                </button>
-            </form>
+                    <span class="wd">{{ day.date|date:"D" }}</span>
+                    <span class="dn">{{ day.date|date:"j" }}</span>
+                    <span class="st">
+                        {% if day.reservations %}{{ day.reservations|length }} booked{% else %}Open{% endif %}
+                    </span>
+                </a>
+            {% endfor %}
         </div>
+    {% endif %}
 
-        <!-- Date Range Navigation Header -->
-        <div class="calendar-range-nav">
-            <a href="?view={{ selected_view }}&date={{ previous_date|date:'Y-m-d' }}" class="nav-arrow-btn">
-                <i class="fa-solid fa-chevron-left"></i> Previous
-            </a>
-
-            <h2>
-                {{ start_date|date:"F d, Y" }}
-                {% if selected_view == 'week' %}
-                    &mdash; {{ end_date|date:"F d, Y" }}
-                {% endif %}
-            </h2>
-
-            <a href="?view={{ selected_view }}&date={{ next_date|date:'Y-m-d' }}" class="nav-arrow-btn">
-                Next <i class="fa-solid fa-chevron-right"></i>
-            </a>
-        </div>
-
-        <!-- Calendar Days Iteration -->
-        {% for day in calendar_days %}
-            <div class="day-card">
+    <!-- Only days that actually have reservations get a card -->
+    {% for day in calendar_days %}
+        {% if day.reservations %}
+            <div class="day-card" data-date="{{ day.date|date:'Y-m-d' }}">
                 <div class="day-header-bar">
                     <h3>
-                        <i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--gold);"></i>
                         {{ day.date|date:"l, F d, Y" }}
                     </h3>
                 </div>
 
-                {% if day.reservations %}
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Time Slot</th>
-                                    <th>Facility</th>
-                                    <th>Event / Purpose</th>
-                                    <th>Reserved By</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
+                <!-- Filled in by the script below: free / booked times per facility -->
+                <div class="avail" hidden></div>
 
-                            <tbody>
-                                {% for reservation in day.reservations %}
-                                    <tr>
-                                        <td>
-                                            <strong>
-                                                {{ reservation.start_time|date:"h:i A" }} &mdash; {{ reservation.end_time|date:"h:i A" }}
-                                            </strong>
-                                        </td>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time Slot</th>
+                                <th>Facility</th>
+                                <th>Event / Purpose</th>
+                                <th>Reserved By</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
 
-                                        <td>{{ reservation.facility.name }}</td>
+                        <tbody>
+                            {% for reservation in day.reservations %}
+                                <tr
+                                    class="res-row"
+                                    data-facility="{{ reservation.facility.name }}"
+                                    data-status="{{ reservation.status }}"
+                                    data-start="{{ reservation.start_time|date:'Y-m-d H:i' }}"
+                                    data-end="{{ reservation.end_time|date:'Y-m-d H:i' }}"
+                                    data-open="{{ reservation.facility.opening_time|time:'H:i' }}"
+                                    data-close="{{ reservation.facility.closing_time|time:'H:i' }}"
+                                >
+                                    <td>
+                                        <strong>
+                                            {{ reservation.start_time|date:"h:i A" }} &mdash; {{ reservation.end_time|date:"h:i A" }}
+                                        </strong>
+                                    </td>
 
-                                        <td>{{ reservation.event_title|default:reservation.purpose }}</td>
+                                    <td>{{ reservation.facility.name }}</td>
 
-                                        <td>{{ reservation.user.username }}</td>
+                                    <td>{{ reservation.event_title|default:reservation.purpose }}</td>
 
-                                        <td>
-                                            <span class="badge-status {{ reservation.status }}">
-                                                <span class="status-dot"></span> {{ reservation.get_status_display }}
-                                            </span>
-                                        </td>
+                                    <td>{{ reservation.user.username }}</td>
 
-                                        <td>
-                                            <div class="actions-cell">
-                                                <a href="{% url 'reservation_history' reservation.id %}" class="btn-action-view">
-                                                    <i class="fa-solid fa-eye"></i> Details
+                                    <td>
+                                        <span class="badge-status {{ reservation.status }}">
+                                            <span class="status-dot"></span> {{ reservation.get_status_display }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="calendar-actions">
+                                            <a
+                                                href="{% url 'reservation_history' reservation.id %}"
+                                                class="btn-action-view js-history-link"
+                                                data-title="Reservation #{{ reservation.id }} Details"
+                                                data-sub="{{ reservation.facility.name }} &middot; {{ reservation.user.username }}"
+                                            >
+                                                Details
+                                            </a>
+
+                                            {% if reservation.status == 'approved' %}
+                                                <a href="{% url 'reschedule_reservation' reservation.id %}"
+                                                   class="btn-action-reschedule js-form-link"
+                                                   data-title="Reschedule Reservation #{{ reservation.id }}"
+                                                   data-sub="{{ reservation.facility.name }} &middot; {{ reservation.user.username }}"
+                                                   data-save="Reschedule"
+                                                   data-info-reservation="#{{ reservation.id }}"
+                                                   data-info-facility="{{ reservation.facility.name }}"
+                                                   data-info-user="{{ reservation.user.username }}"
+                                                   data-info-event="{% if reservation.event_title %}{{ reservation.event_title }}{% else %}{{ reservation.purpose }}{% endif %}"
+                                                   data-info-status="{{ reservation.get_status_display }}"
+                                                   data-info-current-start="{{ reservation.start_time|date:'F d, Y h:i A' }}"
+                                                   data-info-current-end="{{ reservation.end_time|date:'F d, Y h:i A' }}">
+                                                    Reschedule
                                                 </a>
-
-                                                {% if reservation.status == 'approved' %}
-                                                    <a href="{% url 'reschedule_reservation' reservation.id %}" class="btn-action-reschedule">
-                                                        <i class="fa-solid fa-calendar-days"></i> Reschedule
-                                                    </a>
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="empty-schedule">
-                        <i class="fa-regular fa-calendar-check" style="font-size: 1.25rem; margin-bottom: 6px; display: block;"></i>
-                        No scheduled reservations for this day.
-                    </div>
-                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        {% endfor %}
+        {% endif %}
+    {% endfor %}
 
-    </main>
+    <!-- Shown only when none of the days above have reservations -->
+    <div class="calendar-empty">
+        <h3>Nothing is booked {% if selected_view == 'week' %}this week{% else %}on this day{% endif %}</h3>
+        <p>All facilities are open for booking. Use Previous / Next or pick another date to look elsewhere.</p>
+    </div>
 
-</body>
-</html>
+</main>
+
+<!-- Free / booked times per facility (built from the rows above) -->
+<script>
+(function () {
+    'use strict';
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+    function toMin(hhmm, fallback) {
+        if (!hhmm) { return fallback; }
+        var p = hhmm.split(':');
+        return (parseInt(p[0], 10) * 60) + parseInt(p[1], 10);
+    }
+
+    /* "2026-10-18 14:30" -> minutes inside the given day (clipped to 0..1440) */
+    function clip(stamp, day) {
+        var d = stamp.slice(0, 10);
+        if (d < day) { return 0; }
+        if (d > day) { return 1440; }
+        return toMin(stamp.slice(11), 0);
+    }
+
+    function fmt(m) {
+        var h = Math.floor(m / 60) % 24;
+        var mm = m % 60;
+        var ap = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12 === 0 ? 12 : h % 12;
+        return h12 + ':' + pad(mm) + ' ' + ap;
+    }
+
+    function make(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) { e.className = cls; }
+        if (text != null) { e.textContent = text; }
+        return e;
+    }
+
+    var now = new Date();
+    var today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+    var nowMin = now.getHours() * 60 + now.getMinutes();
+    var MIN_GAP = 30;   /* ignore free gaps shorter than 30 minutes */
+
+    document.querySelectorAll('.day-card').forEach(function (card) {
+        var day = card.getAttribute('data-date');
+        var box = card.querySelector('.avail');
+        if (!box) { return; }
+
+        /* Past days: nobody can book them, so no availability block */
+        if (day < today) { box.remove(); return; }
+
+        var groups = {};
+        var order = [];
+
+        card.querySelectorAll('tr.res-row').forEach(function (tr) {
+            var d = tr.dataset;
+            var name = d.facility;
+
+            if (!groups[name]) {
+                var open = toMin(d.open, 0);
+                var close = toMin(d.close, 1440);
+                if (close <= open) { close = 1440; }
+                groups[name] = { open: open, close: close, busy: [] };
+                order.push(name);
+            }
+
+            /* Rejected / cancelled / no-show reservations do not block the slot */
+            if (/^(rejected|cancelled|canceled|no_show)$/.test(d.status)) { return; }
+
+            var s = clip(d.start, day);
+            var e = clip(d.end, day);
+            if (e > s) { groups[name].busy.push([s, e]); }
+        });
+
+        if (!order.length) { box.remove(); return; }
+
+        box.appendChild(make('p', 'avail-title', 'Availability'));
+        box.appendChild(make('p', 'avail-hint',
+            'Free and booked times for facilities with reservations on this day. Facilities not listed have no bookings and are free all day.'));
+
+        order.forEach(function (name) {
+            var g = groups[name];
+            var from = g.open;
+            if (day === today) { from = Math.max(from, nowMin); }   /* today: only what is still ahead */
+
+            /* Merge overlapping busy blocks */
+            g.busy.sort(function (a, b) { return a[0] - b[0]; });
+            var merged = [];
+            g.busy.forEach(function (b) {
+                var s = Math.max(b[0], g.open);
+                var e = Math.min(b[1], g.close);
+                if (e <= s) { return; }
+                var last = merged[merged.length - 1];
+                if (last && s <= last[1]) { last[1] = Math.max(last[1], e); }
+                else { merged.push([s, e]); }
+            });
+
+            /* Free gaps between the busy blocks */
+            var free = [];
+            var cursor = from;
+            merged.forEach(function (b) {
+                if (b[0] - cursor >= MIN_GAP) { free.push([cursor, b[0]]); }
+                cursor = Math.max(cursor, b[1]);
+            });
+            if (g.close - cursor >= MIN_GAP) { free.push([cursor, g.close]); }
+
+            var span = g.close - g.open;
+            var row = make('div', 'avail-row');
+            row.appendChild(make('span', 'avail-name', name));
+
+            var bar = make('div', 'avail-bar');
+            merged.forEach(function (b) {
+                var blk = make('div', 'avail-busy');
+                blk.style.left = ((b[0] - g.open) / span * 100) + '%';
+                blk.style.width = ((b[1] - b[0]) / span * 100) + '%';
+                bar.appendChild(blk);
+            });
+            row.appendChild(bar);
+
+            var text;
+            if (!free.length) {
+                text = 'Fully booked' + (day === today ? ' for the rest of today' : '');
+            } else {
+                text = 'Free: ' + free.map(function (f) { return fmt(f[0]) + ' – ' + fmt(f[1]); }).join(',  ');
+            }
+            row.appendChild(make('span', 'avail-free' + (free.length ? '' : ' is-full'), text));
+
+            box.appendChild(row);
+        });
+
+        var legend = make('div', 'avail-legend');
+        legend.appendChild(make('span', 'lg-free', 'Free'));
+        legend.appendChild(make('span', 'lg-busy', 'Booked'));
+        box.appendChild(legend);
+
+        box.hidden = false;
+    });
+})();
+</script>
+
+<!-- Shared modal script: this page only uses the Details (history) modal -->
+<script>
+    window.MF_CONFIG = { noun: 'reservation', addButton: '#noAddButton', editLinks: '#noEditLinks', toggleForms: '#noToggleForms', reasonForms: '#noReasonForms', switchField: '' };
+</script>
+{% include "management/modal_script.html" %}
+{% endblock %}

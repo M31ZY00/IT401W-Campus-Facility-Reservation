@@ -1,352 +1,270 @@
+{% extends "management/base_admin.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Reports | Campus Facility Reservation</title>
 
-    <!-- Typography & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Reservation Reports{% endblock %}
 
-    <!-- External Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'css/reservation-reports.css' %}">
-</head>
-<body>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reservation-reports.css' %}">
+{% endblock %}
 
-    <!-- Header Navigation -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            Campus Facility Reservation System
-        </div>
+{% block content %}
+<main class="reports-container">
 
-        <div class="topbar-right">
-            <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
-                <span>{{ request.user.username }}</span>
-            </div>
+    <!-- Header & Back Navigation -->
+    <div class="reports-header-wrapper">
+        <h1>Reservation Reports &amp; Analytics</h1>
+    </div>
 
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Log out</span>
-                </button>
-            </form>
-        </div>
-    </header>
-
-    <main class="reports-container">
-
-        <!-- Header & Back Navigation -->
-        <div class="reports-header-wrapper">
-            <h1>Reservation Reports & Analytics</h1>
-            <a href="{% url 'admin_dashboard' %}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-
-        <!-- Alert Messages & Errors -->
-        {% if messages or error %}
-            <div class="messages-container">
-                {% for message in messages %}
-                    <div class="alert-message">
-                        <i class="fa-solid fa-triangle-exclamation"></i> {{ message }}
-                    </div>
-                {% endfor %}
-                {% if error %}
-                    <div class="alert-message">
-                        <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
-                    </div>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        <!-- Filter Card Toolbar -->
-        <div class="filter-card">
-            <form method="get" class="filters-form" action="{% url 'reservation_reports' %}">
-                <div class="filter-group">
-                    <label for="start_date">Start Date</label>
-                    <input type="date" id="start_date" name="start_date" class="filter-input" value="{{ start_date|date:'Y-m-d' }}" required>
+    <!-- Alert Messages & Errors -->
+    {% if messages or error %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert-message">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ message }}
                 </div>
-
-                <div class="filter-group">
-                    <label for="end_date">End Date</label>
-                    <input type="date" id="end_date" name="end_date" class="filter-input" value="{{ end_date|date:'Y-m-d' }}" required>
+            {% endfor %}
+            {% if error %}
+                <div class="alert-message">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
                 </div>
-
-                <div class="filter-group">
-                    <label for="status">Status</label>
-                    <select name="status" id="status" class="filter-select">
-                        <option value="">All Statuses</option>
-                        {% for value, label in status_choices %}
-                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="facility">Facility</label>
-                    <select name="facility" id="facility" class="filter-select">
-                        <option value="">All Facilities</option>
-                        {% for facility in facilities %}
-                            <option value="{{ facility.pk }}" {% if facility_filter == facility.pk|stringformat:'s' %}selected{% endif %}>{{ facility.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="filter-actions">
-                    <button
-                        type="submit"
-                        class="btn-filter"
-                    >
-                        <i class="fa-solid fa-filter"></i>
-                        Filter
-                    </button>
-
-                    <button
-                        type="submit"
-                        formaction="{% url 'export_reservation_report' %}"
-                        class="btn-export"
-                        {% if error %}disabled{% endif %}
-                    >
-                        <i class="fa-solid fa-file-csv"></i>
-                        Export Reservations CSV
-                    </button>
-
-                    <button
-                        type="submit"
-                        formaction="{% url 'export_utilization_report' %}"
-                        class="btn-export"
-                        {% if error %}disabled{% endif %}
-                    >
-                        <i class="fa-solid fa-chart-column"></i>
-                        Export Utilization CSV
-                    </button>
-
-                </div>
-            </form>
-        </div>
-
-        <!-- Statistics Metrics Cards Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Reservations</div>
-                <div class="stat-value">{{ total_reservations }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Approved Count</div>
-                <div class="stat-value">{{ approved_count }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Completed Count</div>
-                <div class="stat-value">{{ completed_count }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Booked Hours</div>
-                <div class="stat-value">{{ booked_hours }} hrs</div>
-            </div>
-        </div>
-
-        <p class="reports-note">
-            <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i> Booked hours include approved, checked-in, completed, and no-show reservations. All times are referenced in Asia/Manila.
-        </p>
-
-        <!-- FACILITY UTILIZATION REPORT -->
-        <div class="table-card" style="margin-bottom: 28px;">
-
-            <!-- Section Header -->
-            <div class="table-header-bar">
-
-                <h2>
-                    <i class="fa-solid fa-chart-column"></i>
-                    Facility Utilization Report
-                </h2>
-
-            </div>
-
-            <!-- Utilization Table -->
-            <div class="table-responsive">
-
-                <table class="data-table">
-
-                    <thead>
-
-                        <tr>
-                            <th>Facility Code</th>
-                            <th>Facility Name</th>
-                            <th>Booked Hours</th>
-                            <th>Completed Events</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for row in utilization_rows %}
-
-                            <tr>
-
-                                <!-- Facility Code -->
-                                <td>
-                                    <strong>
-                                        {{ row.facility_code }}
-                                    </strong>
-                                </td>
-
-                                <!-- Facility Name -->
-                                <td>
-                                    {{ row.facility_name }}
-                                </td>
-
-                                <!-- Booked Hours -->
-                                <td>
-                                    <strong>
-                                        {{ row.booked_hours }}
-                                    </strong>
-                                    hrs
-                                </td>
-
-                                <!-- Completed Events -->
-                                <td>
-
-                                    {% if row.completed_events > 0 %}
-
-                                        <span class="badge-status completed">
-                                            <span class="status-dot"></span>
-                                            {{ row.completed_events }} Completed
-                                        </span>
-
-                                    {% else %}
-
-                                        <span>0</span>
-
-                                    {% endif %}
-
-                                </td>
-
-                            </tr>
-
-                        {% empty %}
-
-                            <tr>
-
-                                <td colspan="4" class="empty-cell">
-
-                                    <i class="fa-solid fa-chart-simple"></i>
-
-                                    No facility utilization records
-                                    match the selected filters.
-
-                                </td>
-
-                            </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-        <!-- Utilization Information -->
-        <p class="reports-note">
-
-            <i class="fa-solid fa-circle-info"></i>
-
-            Facility utilization is calculated using reservations
-            within the selected scheduled start-date range.
-
-            Booked hours include Approved, Checked In,
-            Completed, and No Show reservations.
-
-            Cancelled, Rejected, and Pending reservations
-            do not contribute to booked hours.
-
-            Completed Events counts only reservations
-            with Completed status.
-
-        </p>
-
-        <!-- Table Card Wrapper -->
-        <div class="table-card">
-            <div class="table-header-bar">
-                <h2>Filtered Reservation Records</h2>
-            </div>
-
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Facility</th>
-                            <th>Event / Purpose</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for reservation in page_obj %}
-                            <tr>
-                                <td><strong>#{{ reservation.pk }}</strong></td>
-                                <td>{{ reservation.user.username }}</td>
-                                <td>{{ reservation.facility.name }}</td>
-                                <td>{{ reservation.event_title|default:reservation.purpose }}</td>
-                                <td>{{ reservation.start_time|date:'Y-m-d H:i' }}</td>
-                                <td>{{ reservation.end_time|date:'Y-m-d H:i' }}</td>
-                                <td>
-                                    <span class="badge-status {{ reservation.status }}">
-                                        <span class="status-dot"></span> {{ reservation.get_status_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="7" class="empty-cell">
-                                    <i class="fa-solid fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
-                                    No reservations match the selected filters.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination Footer -->
-            {% if page_obj.has_other_pages %}
-            <div class="pagination-container">
-                <div>
-                    {% if page_obj.has_previous %}
-                        <a href="?start_date={{ start_date|date:'Y-m-d' }}&amp;end_date={{ end_date|date:'Y-m-d' }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;page={{ page_obj.previous_page_number }}" class="page-link-btn">
-                            <i class="fa-solid fa-chevron-left"></i> Previous
-                        </a>
-                    {% endif %}
-                </div>
-
-                <span>Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</span>
-
-                <div>
-                    {% if page_obj.has_next %}
-                        <a href="?start_date={{ start_date|date:'Y-m-d' }}&amp;end_date={{ end_date|date:'Y-m-d' }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;page={{ page_obj.next_page_number }}" class="page-link-btn">
-                            Next <i class="fa-solid fa-chevron-right"></i>
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
             {% endif %}
         </div>
+    {% endif %}
 
-    </main>
+    <!-- Filter Card Toolbar -->
+    <div class="filter-card">
+        <form method="get" class="filters-form" action="{% url 'reservation_reports' %}">
+            <div class="filter-group">
+                <label for="start_date">Start Date</label>
+                <input type="date" id="start_date" name="start_date" class="filter-input" value="{{ start_date|date:'Y-m-d' }}" required>
+            </div>
 
-</body>
-</html>
+            <div class="filter-group">
+                <label for="end_date">End Date</label>
+                <input type="date" id="end_date" name="end_date" class="filter-input" value="{{ end_date|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="filter-group">
+                <label for="status">Status</label>
+                <select name="status" id="status" class="filter-select">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="facility">Facility</label>
+                <select name="facility" id="facility" class="filter-select">
+                    <option value="">All Facilities</option>
+                    {% for facility in facilities %}
+                        <option value="{{ facility.pk }}" {% if facility_filter == facility.pk|stringformat:'s' %}selected{% endif %}>{{ facility.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <i class="fa-solid fa-filter"></i>
+                    Filter
+                </button>
+
+                <button
+                    type="submit"
+                    formaction="{% url 'export_reservation_report' %}"
+                    class="btn-export"
+                    {% if error %}disabled{% endif %}
+                >
+                    <i class="fa-solid fa-file-csv"></i>
+                    Export Reservations CSV
+                </button>
+
+                <button
+                    type="submit"
+                    formaction="{% url 'export_utilization_report' %}"
+                    class="btn-export"
+                    {% if error %}disabled{% endif %}
+                >
+                    <i class="fa-solid fa-chart-column"></i>
+                    Export Utilization CSV
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistics Metrics Cards Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Reservations</div>
+            <div class="stat-value">{{ total_reservations }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Approved Count</div>
+            <div class="stat-value">{{ approved_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Completed Count</div>
+            <div class="stat-value">{{ completed_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Booked Hours</div>
+            <div class="stat-value">{{ booked_hours }} hrs</div>
+        </div>
+    </div>
+
+    <p class="reports-note">
+        <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i> Booked hours include approved, checked-in, completed, and no-show reservations. All times are referenced in Asia/Manila.
+    </p>
+
+    <!-- FACILITY UTILIZATION REPORT -->
+    <div class="table-card" style="margin-bottom: 28px;">
+
+        <!-- Section Header -->
+        <div class="table-header-bar">
+            <h2>
+                <i class="fa-solid fa-chart-column"></i>
+                Facility Utilization Report
+            </h2>
+        </div>
+
+        <!-- Utilization Table -->
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Facility Code</th>
+                        <th>Facility Name</th>
+                        <th>Booked Hours</th>
+                        <th>Completed Events</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in utilization_rows %}
+                        <tr>
+                            <!-- Facility Code -->
+                            <td><strong>{{ row.facility_code }}</strong></td>
+
+                            <!-- Facility Name -->
+                            <td>{{ row.facility_name }}</td>
+
+                            <!-- Booked Hours -->
+                            <td><strong>{{ row.booked_hours }}</strong> hrs</td>
+
+                            <!-- Completed Events -->
+                            <td>
+                                {% if row.completed_events > 0 %}
+                                    <span class="badge-status completed">
+                                        <span class="status-dot"></span>
+                                        {{ row.completed_events }} Completed
+                                    </span>
+                                {% else %}
+                                    <span>0</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="empty-cell">
+                                <i class="fa-solid fa-chart-simple"></i>
+                                No facility utilization records
+                                match the selected filters.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Utilization Information -->
+    <p class="reports-note">
+        <i class="fa-solid fa-circle-info"></i>
+
+        Facility utilization is calculated using reservations
+        within the selected scheduled start-date range.
+
+        Booked hours include Approved, Checked In,
+        Completed, and No Show reservations.
+
+        Cancelled, Rejected, and Pending reservations
+        do not contribute to booked hours.
+
+        Completed Events counts only reservations
+        with Completed status.
+    </p>
+
+    <!-- Table Card Wrapper -->
+    <div class="table-card">
+        <div class="table-header-bar">
+            <h2>Filtered Reservation Records</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Facility</th>
+                        <th>Event / Purpose</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in page_obj %}
+                        <tr>
+                            <td><strong>#{{ reservation.pk }}</strong></td>
+                            <td>{{ reservation.user.username }}</td>
+                            <td>{{ reservation.facility.name }}</td>
+                            <td>{{ reservation.event_title|default:reservation.purpose }}</td>
+                            <td>{{ reservation.start_time|date:'Y-m-d H:i' }}</td>
+                            <td>{{ reservation.end_time|date:'Y-m-d H:i' }}</td>
+                            <td>
+                                <span class="badge-status {{ reservation.status }}">
+                                    <span class="status-dot"></span> {{ reservation.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="empty-cell">
+                                <i class="fa-solid fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                                No reservations match the selected filters.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-container">
+            <div>
+                {% if page_obj.has_previous %}
+                    <a href="?start_date={{ start_date|date:'Y-m-d' }}&amp;end_date={{ end_date|date:'Y-m-d' }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;page={{ page_obj.previous_page_number }}" class="page-link-btn">
+                        <i class="fa-solid fa-chevron-left"></i> Previous
+                    </a>
+                {% endif %}
+            </div>
+
+            <span>Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</span>
+
+            <div>
+                {% if page_obj.has_next %}
+                    <a href="?start_date={{ start_date|date:'Y-m-d' }}&amp;end_date={{ end_date|date:'Y-m-d' }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;page={{ page_obj.next_page_number }}" class="page-link-btn">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</main>
+{% endblock %}

@@ -44,162 +44,200 @@
 
 <body class="profile-body">
 
-    <main class="profile-container">
+    <!-- Modal Overlay (clicking the backdrop closes the modal) -->
+    <div class="profile-overlay"
+         id="profileOverlay"
+         data-close-url="{% url 'home' %}">
 
-        <!-- Back Navigation -->
-        <a href="{% url 'home' %}"
-           class="profile-back">
+        <main class="profile-container"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profileTitle">
 
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Home
+            <section class="profile-card">
 
-        </a>
+                <!-- Close Button -->
+                <a href="{% url 'home' %}"
+                   class="profile-close"
+                   id="profileClose"
+                   aria-label="Close profile">
 
-        <section class="profile-card">
+                    <i class="fa-solid fa-xmark"></i>
 
-            <!-- Header -->
-            <div class="profile-header">
+                </a>
 
-                <div class="profile-icon">
-                    <i class="fa-solid fa-user-gear"></i>
-                </div>
+                <!-- ========== HEADER (fixed) ========== -->
+                <div class="profile-header">
+                    <div>
+                        <h1 id="profileTitle">My Profile</h1>
 
-                <div>
-                    <h1>My Profile</h1>
-
-                    <p>
-                        Manage and update your
-                        personal information.
-                    </p>
-                </div>
-
-            </div>
-
-            <!-- Messages -->
-            {% if messages %}
-
-                {% for message in messages %}
-
-                    <div class="profile-message {{ message.tags }}"
-                         role="status">
-
-                        <i class="fa-solid fa-circle-info"></i>
-                        {{ message }}
-
+                        <p>
+                            Manage and update your
+                            personal information.
+                        </p>
                     </div>
 
-                {% endfor %}
-
-            {% endif %}
-
-            <!-- Username Information -->
-            <div class="profile-account">
-
-                <div class="account-icon">
-                    <i class="fa-solid fa-circle-user"></i>
                 </div>
 
-                <div>
-                    <span class="account-label">
-                        Username
-                    </span>
+                <!-- Profile Update Form -->
+                <form method="POST"
+                      class="profile-form">
 
-                    <strong>
-                        {{ request.user.username }}
-                    </strong>
-                </div>
+                    {% csrf_token %}
 
-            </div>
+                    <!-- ========== BODY (scrollable) ========== -->
+                    <div class="profile-scroll">
 
-            <div class="profile-section-heading">
-                <h2>Personal Information</h2>
+                        <!-- Messages -->
+                        {% if messages %}
 
-                <p>
-                    Update the details associated
-                    with your account.
-                </p>
-            </div>
+                            {% for message in messages %}
 
-            <!-- Profile Update Form -->
-            <form method="POST"
-                  class="profile-form">
+                                <div class="profile-message {{ message.tags }}"
+                                     role="status">
 
-                {% csrf_token %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    {{ message }}
 
-                <!-- General Form Errors -->
-                {% if form.non_field_errors %}
+                                </div>
 
-                    <div class="profile-error"
-                         role="alert">
+                            {% endfor %}
 
-                        {{ form.non_field_errors }}
+                        {% endif %}
 
-                    </div>
+                        <!-- Username Information -->
+                        <div class="profile-account">
 
-                {% endif %}
+                            <div class="account-icon">
+                                <i class="fa-solid fa-circle-user"></i>
+                            </div>
 
-                <!-- Form Fields -->
-                <div class="profile-fields">
+                            <div>
+                                <span class="account-label">
+                                    Username
+                                </span>
 
-                    {% for field in form %}
+                                <strong>
+                                    {{ request.user.username }}
+                                </strong>
+                            </div>
 
-                        <div class="profile-field">
+                        </div>
 
-                            <label for="{{ field.id_for_label }}">
-                                {{ field.label }}
+                        <div class="profile-section-heading">
+                            <h2>Personal Information</h2>
 
-                                {% if field.field.required %}
-                                    <span class="required">*</span>
-                                {% endif %}
-                            </label>
+                            <p>
+                                Update the details associated
+                                with your account.
+                            </p>
+                        </div>
 
-                            {{ field }}
+                        <!-- General Form Errors -->
+                        {% if form.non_field_errors %}
 
-                            {% if field.help_text %}
-                                <small>
-                                    {{ field.help_text }}
-                                </small>
-                            {% endif %}
+                            <div class="profile-error"
+                                 role="alert">
 
-                            {% for error in field.errors %}
-                                <p class="field-error"
-                                   role="alert">
-                                    {{ error }}
-                                </p>
+                                {{ form.non_field_errors }}
+
+                            </div>
+
+                        {% endif %}
+
+                        <!-- Form Fields -->
+                        <div class="profile-fields">
+
+                            {% for field in form %}
+
+                                <div class="profile-field">
+
+                                    <label for="{{ field.id_for_label }}">
+                                        {{ field.label }}
+
+                                        {% if field.field.required %}
+                                            <span class="required">*</span>
+                                        {% endif %}
+                                    </label>
+
+                                    {{ field }}
+
+                                    {% if field.help_text %}
+                                        <small>
+                                            {{ field.help_text }}
+                                        </small>
+                                    {% endif %}
+
+                                    {% for error in field.errors %}
+                                        <p class="field-error"
+                                           role="alert">
+                                            {{ error }}
+                                        </p>
+                                    {% endfor %}
+
+                                </div>
+
                             {% endfor %}
 
                         </div>
 
-                    {% endfor %}
+                    </div>
 
-                </div>
+                    <!-- ========== FOOTER (fixed) ========== -->
+                    <div class="profile-actions">
 
-                <!-- Buttons -->
-                <div class="profile-actions">
+                        <a href="{% url 'home' %}"
+                           class="profile-btn-cancel">
 
-                    <a href="{% url 'home' %}"
-                       class="profile-btn-cancel">
+                            Cancel
 
-                        Cancel
+                        </a>
 
-                    </a>
+                        <button
+                            type="submit"
+                            class="profile-btn-save">
 
-                    <button
-                        type="submit"
-                        class="profile-btn-save">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Save Changes
 
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        Save Changes
+                        </button>
 
-                    </button>
+                    </div>
 
-                </div>
+                </form>
 
-            </form>
+            </section>
 
-        </section>
+        </main>
 
-    </main>
+    </div>
+
+    <script>
+        (function () {
+            var overlay = document.getElementById('profileOverlay');
+            var closeUrl = overlay.dataset.closeUrl;
+
+            // Click on the dimmed backdrop (not the card) closes the modal
+            overlay.addEventListener('mousedown', function (e) {
+                if (e.target === overlay) {
+                    window.location.href = closeUrl;
+                }
+            });
+
+            // Escape closes the modal
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    window.location.href = closeUrl;
+                }
+            });
+
+            // Focus the first field (or the first field with an error)
+            var target = document.querySelector('.profile-field .field-error')
+                ? document.querySelector('.profile-field .field-error').closest('.profile-field').querySelector('input, select, textarea')
+                : document.querySelector('.profile-field input:not([disabled]), .profile-field select, .profile-field textarea');
+            if (target) { target.focus(); }
+        })();
+    </script>
 
 </body>
 </html>

@@ -1,7 +1,7 @@
 .facilities-container {
     max-width: 1400px;
-    width: 92%;
-    margin: 2rem auto;
+    width: 98%;
+    margin: 1rem auto;
     padding: 0 1rem;
 }
 
@@ -140,7 +140,7 @@
     font-size: 0.88rem;
     font-weight: 700;
     color: var(--navy-deep, #13213e);
-    background: var(--gold, #fda30f);
+    background: var(--gold);
     border: none;
     border-radius: 10px;
     cursor: pointer;

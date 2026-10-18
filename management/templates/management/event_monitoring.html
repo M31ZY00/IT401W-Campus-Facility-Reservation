@@ -1,145 +1,107 @@
+{% extends "management/base_admin.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Monitoring | Campus Facility Reservation</title>
 
-    <!-- Typography & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Event Monitoring{% endblock %}
 
-    <!-- External Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'css/event-monitoring.css' %}">
-</head>
-<body>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/event-monitoring.css' %}">
+{% endblock %}
 
-    <!-- Header Navigation -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            Campus Facility Reservation System
+{% block content %}
+<main class="monitoring-container">
+
+    <!-- Header & Back Navigation -->
+    <div class="monitoring-header-wrapper">
+        <h1>Event Monitoring</h1>
+    </div>
+
+    <!-- Alert Messages -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert-message">
+                    <i class="fa-solid fa-circle-info"></i> {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Date Filter Card Toolbar -->
+    <div class="filter-card">
+        <form method="GET" class="filter-form">
+            <label for="date-filter">Select Date:</label>
+            <input
+                type="date"
+                id="date-filter"
+                name="date"
+                class="date-input"
+                value="{{ selected_date|date:'Y-m-d' }}"
+            >
+            <button type="submit" class="btn-filter">
+                <i class="fa-solid fa-filter"></i> View Events
+            </button>
+        </form>
+    </div>
+
+    <!-- Table Card Wrapper -->
+    <div class="table-card">
+        <div class="table-header-bar">
+            <h2>Scheduled Events</h2>
         </div>
 
-        <div class="topbar-right">
-            <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
-                <span>{{ request.user.username }}</span>
-            </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Reservation ID</th>
+                        <th>Facility</th>
+                        <th>Event / Purpose</th>
+                        <th>User</th>
+                        <th>Scheduled Start</th>
+                        <th>Scheduled End</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
 
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Log out</span>
-                </button>
-            </form>
+                <tbody>
+                    {% for reservation in reservations %}
+                    <tr>
+                        <td><strong>#{{ reservation.id }}</strong></td>
+                        <td>{{ reservation.facility.name }}</td>
+                        <td>{{ reservation.event_title|default:reservation.purpose }}</td>
+                        <td>{{ reservation.user.username }}</td>
+                        <td>{{ reservation.start_time|date:"h:i A" }}</td>
+                        <td>{{ reservation.end_time|date:"h:i A" }}</td>
+                        <td>
+                            <span class="badge-status {{ reservation.status }}">
+                                <span class="status-dot"></span> {{ reservation.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <a href="{% url 'event_detail' reservation.id %}" class="btn-action-view">
+                                    <i class="fa-solid fa-eye"></i> View Event
+                                </a>
+
+                                <a href="{% url 'printable_event_slip' reservation.id %}" class="btn-action-print" target="_blank">
+                                    <i class="fa-solid fa-print"></i> Print Slip
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="empty-cell">
+                            <i class="fa-regular fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                            No events scheduled for this date.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </header>
+    </div>
 
-    <main class="monitoring-container">
-
-        <!-- Header & Back Navigation -->
-        <div class="monitoring-header-wrapper">
-            <h1>Event Monitoring</h1>
-            <a href="{% url 'admin_dashboard' %}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-
-        <!-- Alert Messages -->
-        {% if messages %}
-            <div class="messages-container">
-                {% for message in messages %}
-                    <div class="alert-message">
-                        <i class="fa-solid fa-circle-info"></i> {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <!-- Date Filter Card Toolbar -->
-        <div class="filter-card">
-            <form method="GET" class="filter-form">
-                <label for="date-filter">Select Date:</label>
-                <input
-                    type="date"
-                    id="date-filter"
-                    name="date"
-                    class="date-input"
-                    value="{{ selected_date|date:'Y-m-d' }}"
-                >
-                <button type="submit" class="btn-filter">
-                    <i class="fa-solid fa-filter"></i> View Events
-                </button>
-            </form>
-        </div>
-
-        <!-- Table Card Wrapper -->
-        <div class="table-card">
-            <div class="table-header-bar">
-                <h2>Scheduled Events</h2>
-            </div>
-
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Reservation ID</th>
-                            <th>Facility</th>
-                            <th>Event / Purpose</th>
-                            <th>User</th>
-                            <th>Scheduled Start</th>
-                            <th>Scheduled End</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for reservation in reservations %}
-                        <tr>
-                            <td><strong>#{{ reservation.id }}</strong></td>
-                            <td>{{ reservation.facility.name }}</td>
-                            <td>{{ reservation.event_title|default:reservation.purpose }}</td>
-                            <td>{{ reservation.user.username }}</td>
-                            <td>{{ reservation.start_time|date:"h:i A" }}</td>
-                            <td>{{ reservation.end_time|date:"h:i A" }}</td>
-                            <td>
-                                <span class="badge-status {{ reservation.status }}">
-                                    <span class="status-dot"></span> {{ reservation.get_status_display }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="actions-cell">
-                                    <a href="{% url 'event_detail' reservation.id %}" class="btn-action-view">
-                                        <i class="fa-solid fa-eye"></i> View Event
-                                    </a>
-
-                                    <a href="{% url 'printable_event_slip' reservation.id %}" class="btn-action-print" target="_blank">
-                                        <i class="fa-solid fa-print"></i> Print Slip
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="empty-cell">
-                                <i class="fa-regular fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
-                                No events scheduled for this date.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </main>
-
-</body>
-</html>
+</main>
+{% endblock %}

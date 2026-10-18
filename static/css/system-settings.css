@@ -1,10 +1,8 @@
 .settings-container {
     max-width: 1400px;
-    width: 92%;
-    margin: 2.5rem auto 4rem;
+    width: 98%;
+    margin: 1rem auto;
     padding: 0 1rem;
-    position: relative;
-    z-index: 2;
 }
 
 .page-header-flex {

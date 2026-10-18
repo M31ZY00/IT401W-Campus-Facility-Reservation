@@ -1,0 +1,496 @@
+/* =====================================================
+   MANAGE FACILITIES MODALS
+   One shared overlay; modals replace each other so only
+   one is ever visible. Matches the profile modal look:
+   fixed header, scrollable body, fixed footer.
+   Place at: static/css/manage-modal.css
+   ===================================================== */
+
+/* Messages are shown in the success modal instead (see script).
+   Fallback: visible again when JavaScript is off. */
+.messages-container { display: none; }
+
+/* ---------- Overlay ---------- */
+
+.mf-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px 20px;
+    overflow: hidden;
+
+    background: rgba(20, 33, 61, 0.6);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+
+    animation: mf-fade 0.2s ease-out;
+}
+
+.mf-overlay[hidden] { display: none; }
+
+@keyframes mf-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes mf-pop {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mf-overlay,
+    .mf-box { animation: none; }
+}
+
+/* ---------- Card ---------- */
+
+.mf-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+
+    background: #ffffff;
+    border: 1px solid #e1e7f1;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(20, 33, 61, 0.35);
+
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    color: #14213d;
+
+    animation: mf-pop 0.25s ease-out both;
+}
+
+.mf-box.sm { max-width: 440px; }
+
+/* Close button */
+
+.mf-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+
+    width: 38px;
+    height: 38px;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 1.05rem;
+    color: #14213d;
+    background: #f1f4f9;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mf-close:hover,
+.mf-close:focus-visible {
+    background: #fda30f;
+    outline: none;
+}
+
+/* ===== HEADER (fixed) ===== */
+
+.mf-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    border-bottom: 1px solid #e1e7f1;
+}
+
+.mf-header h2 {
+    margin: 0;
+    font-family: var(--font-display, 'Cinzel', serif);
+    font-size: clamp(1.2rem, 3vw, 1.2rem);
+    font-weight: 700;
+    line-height: 1.3;
+    color: #14213d;
+}
+
+.mf-sub {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #64748b;
+}
+
+/* ===== BODY (the only scrollable part) ===== */
+
+.mf-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.mf-body p {
+    margin: 0 0 10px;
+    font-size: 0.93rem;
+    line-height: 1.6;
+    color: #5b6578;
+}
+
+.mf-body p:last-child { margin-bottom: 0; }
+.mf-body p strong { color: #14213d; }
+
+/* Add-facility form fields (generic, works with Django-rendered forms) */
+
+.mf-form-body form { margin: 0; }
+
+.mf-form-body p,
+.mf-form-body .form-group,
+.mf-form-body .field,
+.mf-form-body .form-row {
+    margin: 0 0 18px;
+}
+
+.mf-form-body label {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #14213d;
+}
+
+.mf-form-body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+.mf-form-body select,
+.mf-form-body textarea {
+    display: block;
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 14px;
+    box-sizing: border-box;
+
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #14213d;
+    background: #ffffff;
+    border: 1px solid #d5dfed;
+    border-radius: 10px;
+    outline: none;
+
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mf-form-body textarea { min-height: 96px; resize: vertical; }
+
+.mf-form-body input:focus,
+.mf-form-body select:focus,
+.mf-form-body textarea:focus {
+    border-color: #fda30f;
+    box-shadow: 0 0 0 3px rgba(253, 163, 15, 0.16);
+}
+
+.mf-form-body small,
+.mf-form-body .helptext {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.77rem;
+    line-height: 1.5;
+    color: #64748b;
+}
+
+/* Django's own error lists are removed by the script and replaced by .mf-error.
+   This only hides any that slip through, so an error is never shown twice. */
+.mf-form-body .errorlist { display: none; }
+
+/* ===== FOOTER (fixed) ===== */
+
+.mf-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    padding: 18px;
+    background: #ffffff;
+    border-top: 1px solid #e1e7f1;
+}
+
+.mf-btn {
+    min-height: 45px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mf-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.mf-btn.ghost {
+    color: #14213d;
+    background: #ffffff;
+    border: 1px solid #d5dfed;
+}
+.mf-btn.ghost:hover { background: #f1f4f9; }
+
+.mf-btn.primary {
+    color: #14213d;
+    background: #fda30f;
+    border: 1px solid #fda30f;
+}
+.mf-btn.primary:hover { background: #e99500; border-color: #e99500; }
+
+.mf-btn.danger {
+    color: #ffffff;
+    background: #d64545;
+    border: 1px solid #d64545;
+}
+.mf-btn.danger:hover { background: #b83232; border-color: #b83232; }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 600px) {
+    .mf-overlay { padding: 12px; }
+
+    .mf-box::before { left: 20px; }
+    .mf-close { top: 12px; right: 12px; }
+
+    .mf-header { gap: 12px; padding: 22px 56px 16px 20px; }
+    .mf-body { padding: 20px; }
+
+    .mf-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        padding: 14px 20px;
+    }
+
+    .mf-btn { width: 100%; }
+}
+
+/* ---------- Facility form: 2-column grid ---------- */
+
+.mf-box.wide { max-width: 640px; }
+
+.mf-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 16px;
+    margin-bottom: 18px;
+}
+
+.mf-grid > * { margin: 0; min-width: 0; }
+
+@media (max-width: 600px) {
+    .mf-grid { grid-template-columns: 1fr; }
+}
+
+/* Field block created around loose label + input */
+.mf-form-body .mf-field { margin: 0 0 18px; }
+.mf-form-body .mf-grid > * { margin: 0; min-width: 0; }
+
+/* ---------- Custom field errors (one per field) ---------- */
+
+.mf-form-body .mf-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: #b91c1c;
+}
+
+.mf-error i {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    font-size: 0.78rem;
+}
+
+/* Errors not tied to one field (shown at the top of the form) */
+.mf-form-body .mf-error.general {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    background: #fdecec;
+    border: 1px solid #f5c2c2;
+    border-radius: 10px;
+}
+
+.mf-form-body input.has-error,
+.mf-form-body select.has-error,
+.mf-form-body textarea.has-error {
+    border-color: #d64545;
+    box-shadow: 0 0 0 3px rgba(214, 69, 69, 0.12);
+}
+
+/* ---------- Checkbox lists (amenities): 2 columns ---------- */
+
+.mf-form-body .mf-checks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mf-form-body .mf-checks > * {
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    list-style: none;
+}
+
+.mf-form-body .mf-checks label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+    margin: 0;
+    padding: 11px 14px;
+    box-sizing: border-box;
+
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #14213d;
+    background: #ffffff;
+    border: 1px solid #d5dfed;
+    border-radius: 10px;
+    cursor: pointer;
+
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.mf-form-body .mf-checks label:hover { background: #f8fafd; }
+
+.mf-form-body .mf-checks label:has(input:checked) {
+    background: #fff7e8;
+    border-color: #fda30f;
+}
+
+.mf-form-body .mf-checks label:has(input:focus-visible) {
+    box-shadow: 0 0 0 3px rgba(253, 163, 15, 0.25);
+}
+
+.mf-form-body .mf-checks input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #fda30f;
+    cursor: pointer;
+}
+
+.mf-form-body .mf-checks.has-error label { border-color: #f0b4b4; }
+
+@media (max-width: 400px) {
+    .mf-form-body .mf-checks { grid-template-columns: 1fr; }
+}
+
+/* ---------- "Is active" toggle switch ---------- */
+
+.mf-form-body .mf-switch {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+
+    background: #ffffff;
+    border: 1px solid #d5dfed;
+    border-radius: 12px;
+    cursor: pointer;
+
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.mf-form-body .mf-switch:hover { background: #f8fafd; }
+.mf-form-body .mf-switch.on { background: #fff7e8; border-color: #fda30f; }
+
+/* The real checkbox stays in the page (keyboard + form submit), just not visible */
+.mf-form-body .mf-switch-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mf-switch-track {
+    position: relative;
+    flex: 0 0 auto;
+    width: 46px;
+    height: 26px;
+    background: #cbd5e1;
+    border-radius: 999px;
+    transition: background-color 0.2s;
+}
+
+.mf-switch-track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(20, 33, 61, 0.3);
+    transition: transform 0.2s;
+}
+
+.mf-switch-input:checked + .mf-switch-track { background: #fda30f; }
+.mf-switch-input:checked + .mf-switch-track::after { transform: translateX(20px); }
+
+.mf-switch-input:focus-visible + .mf-switch-track {
+    outline: 3px solid rgba(253, 163, 15, 0.35);
+    outline-offset: 2px;
+}
+
+.mf-switch-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.mf-switch-state {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.mf-switch.on .mf-switch-state { color: #14213d; }
+
+.mf-switch-sub {
+    font-size: 0.77rem;
+    line-height: 1.4;
+    color: #64748b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mf-switch-track,
+    .mf-switch-track::after { transition: none; }
+}

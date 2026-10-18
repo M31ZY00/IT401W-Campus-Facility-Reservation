@@ -1,407 +1,390 @@
+{% extends "management/base_admin.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Management | Campus Facility Reservation</title>
 
-    <!-- Typography & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Reservation Management{% endblock %}
 
-    <!-- External Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=2">
-    <link rel="stylesheet" href="{% static 'css/manage-reservations.css' %}?v=2">
-</head>
-<body>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/manage-reservations.css' %}?v=2">
+<link rel="stylesheet" href="{% static 'css/manage-modal.css' %}?v=4">
+<style>
+    /* Actions column: one tidy, evenly sized set of buttons */
+    .actions-cell-wrapper {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+    }
+    .actions-cell-wrapper > * { flex: 0 0 auto; }
+    .actions-cell-wrapper form { margin: 0; }
+    .actions-cell-wrapper .btn-act,
+    .actions-cell-wrapper .btn-action-history {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        height: 34px;
+        padding: 0 14px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .actions-cell-wrapper .btn-reschedule {
+        background: rgba(26, 115, 232, 0.08);
+        color: #1a73e8;
+        border: 1px solid rgba(26, 115, 232, 0.2);
+    }
+    .actions-cell-wrapper .btn-history-icon {
+        width: 34px;
+        padding: 0;
+        font-size: 0.9rem;
+    }
+    .actions-cell-wrapper .btn-action-history.is-disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
 
-    <!-- Header Navigation -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            Campus Facility Reservation System
+{% block content %}
+<main class="reservations-container">
+
+    <!-- Header & Back Navigation -->
+    <div class="reservations-header-wrapper">
+        <h1>Reservation Management</h1>
+    </div>
+
+    <!-- Alert Messages (shown in the success modal when JavaScript is on) -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert-message" data-tags="{{ message.tags }}">
+                    <i class="fa-solid fa-circle-info"></i> {{ message }}
+                </div>
+            {% endfor %}
         </div>
+    {% endif %}
 
-        <div class="topbar-right">
-            <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
-                <span>{{ request.user.username }}</span>
+    <!-- SEARCH AND FILTER SECTION -->
+    <div class="search-card">
+
+        <form method="GET" class="search-form">
+
+            <!-- Search Reservations -->
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    name="search"
+                    class="search-input"
+                    value="{{ search_query }}"
+                    placeholder="Search reservations..."
+                    aria-label="Search reservations"
+                >
             </div>
 
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Log out</span>
-                </button>
-            </form>
-        </div>
-    </header>
+            <!-- Reservation Status Filter -->
+            <select
+                name="status"
+                class="status-select"
+                aria-label="Filter by reservation status"
+            >
+                <option value="">All Statuses</option>
 
-    <main class="reservations-container">
-
-        <!-- Header & Back Navigation -->
-        <div class="reservations-header-wrapper">
-            <h1>Reservation Management</h1>
-            <a href="{% url 'admin_dashboard' %}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-
-        <!-- Alert Messages -->
-        {% if messages %}
-            <div class="messages-container">
-                {% for message in messages %}
-                    <div class="alert-message">
-                        <i class="fa-solid fa-circle-info"></i> {{ message }}
-                    </div>
+                {% for value, label in status_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if status_filter == value %}selected{% endif %}
+                    >
+                        {{ label }}
+                    </option>
                 {% endfor %}
-            </div>
+            </select>
+
+            <!-- Facility Filter -->
+            <select
+                name="facility"
+                class="status-select"
+                aria-label="Filter by facility"
+            >
+                <option value="">All Facilities</option>
+
+                {% for facility in facilities %}
+                    <option
+                        value="{{ facility.id }}"
+                        {% if facility_filter == facility.id|stringformat:"s" %}selected{% endif %}
+                    >
+                        {{ facility.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Reservation Date Filter -->
+            <input
+                type="date"
+                name="date"
+                class="status-select"
+                value="{{ date_filter }}"
+                aria-label="Filter by reservation date"
+                title="Reservation Date"
+            >
+
+            <!-- Apply Filters Button -->
+            <button type="submit" class="btn-search">
+                Search
+            </button>
+
+            <!-- Clear Filters Button -->
+            {% if search_query or status_filter or facility_filter or date_filter %}
+                <a href="{% url 'manage_reservations' %}" class="btn-clear">
+                    Clear Filters
+                </a>
+            {% endif %}
+
+        </form>
+
+        {% if date_error %}
+            <p role="alert" style="color: #b91c1c; margin-top: 12px;">
+                {{ date_error }}
+            </p>
         {% endif %}
 
+    </div>
 
-        <!-- SEARCH AND FILTER SECTION -->
-        <div class="search-card">
-
-            <form method="GET" class="search-form">
-
-                <!-- Search Reservations -->
-                <div class="search-input-wrapper">
-
-                    <i class="fa-solid fa-magnifying-glass"></i>
-
-                    <input
-                        type="text"
-                        name="search"
-                        class="search-input"
-                        value="{{ search_query }}"
-                        placeholder="Search reservations..."
-                        aria-label="Search reservations"
-                    >
-
-                </div>
-
-
-                <!-- Reservation Status Filter -->
-                <select
-                    name="status"
-                    class="status-select"
-                    aria-label="Filter by reservation status"
-                >
-
-                    <option value="">All Statuses</option>
-
-                    {% for value, label in status_choices %}
-
-                        <option
-                            value="{{ value }}"
-                            {% if status_filter == value %}
-                                selected
-                            {% endif %}
-                        >
-                            {{ label }}
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-
-                <!-- Facility Filter -->
-                <select
-                    name="facility"
-                    class="status-select"
-                    aria-label="Filter by facility"
-                >
-
-                    <option value="">All Facilities</option>
-
-                    {% for facility in facilities %}
-
-                        <option
-                            value="{{ facility.id }}"
-                            {% if facility_filter == facility.id|stringformat:"s" %}
-                                selected
-                            {% endif %}
-                        >
-                            {{ facility.name }}
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-
-                <!-- Reservation Date Filter -->
-                <input
-                    type="date"
-                    name="date"
-                    class="status-select"
-                    value="{{ date_filter }}"
-                    aria-label="Filter by reservation date"
-                    title="Reservation Date"
-                >
-
-
-                <!-- Apply Filters Button -->
-                <button
-                    type="submit"
-                    class="btn-search"
-                >
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    Search
-                </button>
-
-
-                <!-- Clear Filters Button -->
-                {% if search_query or status_filter or facility_filter or date_filter %}
-
-                    <a
-                        href="{% url 'manage_reservations' %}"
-                        class="btn-clear"
-                    >
-                        <i class="fa-solid fa-xmark"></i>
-                        Clear Filters
-                    </a>
-
-                {% endif %}
-
-            </form>
-
-            {% if date_error %}
-                <p
-                    role="alert"
-                    style="color: #b91c1c; margin-top: 12px;"
-                >
-                    {{ date_error }}
-                </p>
-            {% endif %}
-
+    <!-- Table Card Wrapper -->
+    <div class="table-card">
+        <div class="table-header-bar">
+            <h2>All Reservations</h2>
         </div>
 
-        <!-- Table Card Wrapper -->
-        <div class="table-card">
-            <div class="table-header-bar">
-                <h2>All Reservations</h2>
-            </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Facility</th>
+                        <th>Event / Purpose</th>
+                        <th>Participants</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
 
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Facility</th>
-                            <th>Event / Purpose</th>
-                            <th>Participants</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+                <tbody>
+                    {% for reservation in page_obj %}
+                    <tr>
+                        <td><strong>#{{ reservation.id }}</strong></td>
+                        <td>{{ reservation.user.username }}</td>
+                        <td>{{ reservation.facility.name }}</td>
+                        <td>
+                            {% if reservation.event_title %}
+                                {{ reservation.event_title }}
+                            {% else %}
+                                {{ reservation.purpose }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <i class="fa-solid fa-users" style="color: var(--ink-soft); font-size: 0.75rem; margin-right: 4px;"></i>
+                            {{ reservation.participant_count }}
+                        </td>
+                        <td>{{ reservation.start_time|date:"M d, Y h:i A" }}</td>
+                        <td>{{ reservation.end_time|date:"M d, Y h:i A" }}</td>
+                        <td>
+                            <span class="badge-status {{ reservation.status }}">
+                                <span class="status-dot"></span> {{ reservation.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions-cell-wrapper">
 
-                    <tbody>
-                        {% for reservation in page_obj %}
-                        <tr>
-                            <td><strong>#{{ reservation.id }}</strong></td>
-                            <td>{{ reservation.user.username }}</td>
-                            <td>{{ reservation.facility.name }}</td>
-                            <td>
-                                {% if reservation.event_title %}
-                                    {{ reservation.event_title }}
+                                <!-- History: disabled until the reservation has a decision / status change -->
+                                {% if reservation.status == 'pending' and not reservation.decision_at %}
+                                    <span class="btn-action-history btn-history-icon is-disabled" aria-disabled="true" aria-label="No history available yet" title="No history available yet">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </span>
                                 {% else %}
-                                    {{ reservation.purpose }}
+                                    <a href="{% url 'reservation_history' reservation.id %}"
+                                       class="btn-action-history btn-history-icon js-history-link"
+                                       aria-label="View history"
+                                       title="View history"
+                                       data-title="Reservation #{{ reservation.id }} History"
+                                       data-sub="{{ reservation.facility.name }} &middot; {{ reservation.user.username }}">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </a>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <i class="fa-solid fa-users" style="color: var(--ink-soft); font-size: 0.75rem; margin-right: 4px;"></i>
-                                {{ reservation.participant_count }}
-                            </td>
-                            <td>{{ reservation.start_time|date:"M d, Y h:i A" }}</td>
-                            <td>{{ reservation.end_time|date:"M d, Y h:i A" }}</td>
-                            <td>
-                                <span class="badge-status {{ reservation.status }}">
-                                    <span class="status-dot"></span> {{ reservation.get_status_display }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="actions-cell-wrapper">
-                                    <!-- History Link -->
-                                    <a href="{% url 'reservation_history' reservation.id %}" class="btn-action-history">
-                                        <i class="fa-solid fa-clock-rotate-left"></i> History
+
+                                {% if reservation.status == 'pending' %}
+                                    <!-- Approve: the reason is asked in a modal -->
+                                    <form
+                                        method="POST"
+                                        action="{% url 'update_reservation_status' reservation.id %}"
+                                        class="js-reason-form"
+                                        data-title="Approve Reservation #{{ reservation.id }}?"
+                                        data-sub="Add the reason for approving this reservation."
+                                        data-label="Reason for approval"
+                                        data-confirm="Approve"
+                                        data-info-user="{{ reservation.user.username }}"
+                                        data-info-facility="{{ reservation.facility.name }}"
+                                        data-info-event="{% if reservation.event_title %}{{ reservation.event_title }}{% else %}{{ reservation.purpose }}{% endif %}"
+                                        data-info-participants="{{ reservation.participant_count }}"
+                                        data-info-start="{{ reservation.start_time|date:'M d, Y h:i A' }}"
+                                        data-info-end="{{ reservation.end_time|date:'M d, Y h:i A' }}"
+                                    >
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="APPROVE">
+                                        <input type="hidden" name="reason" value="">
+                                        <button type="submit" class="btn-act approve">Approve</button>
+                                    </form>
+
+                                    <!-- Reject: the reason is asked in a modal -->
+                                    <form
+                                        method="POST"
+                                        action="{% url 'update_reservation_status' reservation.id %}"
+                                        class="js-reason-form"
+                                        data-title="Reject Reservation #{{ reservation.id }}?"
+                                        data-sub="Add the reason for rejecting this reservation."
+                                        data-label="Reason for rejection"
+                                        data-confirm="Reject"
+                                        data-info-user="{{ reservation.user.username }}"
+                                        data-info-facility="{{ reservation.facility.name }}"
+                                        data-info-event="{% if reservation.event_title %}{{ reservation.event_title }}{% else %}{{ reservation.purpose }}{% endif %}"
+                                        data-info-participants="{{ reservation.participant_count }}"
+                                        data-info-start="{{ reservation.start_time|date:'M d, Y h:i A' }}"
+                                        data-info-end="{{ reservation.end_time|date:'M d, Y h:i A' }}"
+                                        data-danger="1"
+                                    >
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="REJECT">
+                                        <input type="hidden" name="reason" value="">
+                                        <button type="submit" class="btn-act reject">Reject</button>
+                                    </form>
+
+                                {% elif reservation.status == 'approved' %}
+                                    <a href="{% url 'reschedule_reservation' reservation.id %}"
+                                       class="btn-action-history btn-reschedule js-form-link"
+                                       data-title="Reschedule Reservation #{{ reservation.id }}"
+                                       data-sub="{{ reservation.facility.name }} &middot; {{ reservation.user.username }}"
+                                       data-save="Reschedule"
+                                       data-info-reservation="#{{ reservation.id }}"
+                                       data-info-facility="{{ reservation.facility.name }}"
+                                       data-info-user="{{ reservation.user.username }}"
+                                       data-info-event="{% if reservation.event_title %}{{ reservation.event_title }}{% else %}{{ reservation.purpose }}{% endif %}"
+                                       data-info-status="{{ reservation.get_status_display }}"
+                                       data-info-current-start="{{ reservation.start_time|date:'F d, Y h:i A' }}"
+                                       data-info-current-end="{{ reservation.end_time|date:'F d, Y h:i A' }}">
+                                        Reschedule
                                     </a>
 
-                                    {% if reservation.status == 'pending' %}
-                                        <!-- Side-by-Side Approve & Reject Grid Container -->
-                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
+                                    <form method="POST" action="{% url 'update_reservation_status' reservation.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="CHECK_IN">
+                                        <button type="submit" class="btn-act check-in">Check In</button>
+                                    </form>
 
-                                            <!-- Approve Form -->
-                                            <form
-                                                method="POST"
-                                                action="{% url 'update_reservation_status' reservation.id %}"
-                                                style="margin: 0; display: flex; flex-direction: column; gap: 4px;"
-                                            >
-                                                {% csrf_token %}
-                                                <input type="hidden" name="action" value="APPROVE">
-                                                <input
-                                                    type="text"
-                                                    name="reason"
-                                                    class="action-input-reason"
-                                                    placeholder="Approval reason..."
-                                                    aria-label="Approval reason for reservation {{ reservation.id }}"
-                                                    maxlength="500"
-                                                    required
-                                                    style="width: 100%;"
-                                                >
-                                                <button
-                                                    type="submit"
-                                                    class="btn-act approve"
-                                                    style="width: 100%; justify-content: center;"
-                                                >
-                                                    <i class="fa-solid fa-check"></i>
-                                                    Approve
-                                                </button>
-                                            </form>
+                                    <form method="POST" action="{% url 'update_reservation_status' reservation.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="NO_SHOW">
+                                        <button type="submit" class="btn-act no-show">No Show</button>
+                                    </form>
 
-                                            <!-- Reject Form -->
-                                            <form
-                                                method="POST"
-                                                action="{% url 'update_reservation_status' reservation.id %}"
-                                                style="margin: 0; display: flex; flex-direction: column; gap: 4px;"
-                                            >
-                                                {% csrf_token %}
-                                                <input type="hidden" name="action" value="REJECT">
-                                                <input
-                                                    type="text"
-                                                    name="reason"
-                                                    class="action-input-reason"
-                                                    placeholder="Rejection reason..."
-                                                    aria-label="Rejection reason for reservation {{ reservation.id }}"
-                                                    maxlength="500"
-                                                    required
-                                                    style="width: 100%;"
-                                                >
-                                                <button
-                                                    type="submit"
-                                                    class="btn-act reject"
-                                                    style="width: 100%; justify-content: center;"
-                                                >
-                                                    <i class="fa-solid fa-xmark"></i>
-                                                    Reject
-                                                </button>
-                                            </form>
+                                    <!-- Cancel: the reason is asked in a modal -->
+                                    <form
+                                        method="POST"
+                                        action="{% url 'update_reservation_status' reservation.id %}"
+                                        class="js-reason-form"
+                                        data-title="Cancel Reservation #{{ reservation.id }}?"
+                                        data-sub="Add the reason for cancelling this reservation."
+                                        data-label="Reason for cancellation"
+                                        data-confirm="Cancel Reservation"
+                                        data-info-user="{{ reservation.user.username }}"
+                                        data-info-facility="{{ reservation.facility.name }}"
+                                        data-info-event="{% if reservation.event_title %}{{ reservation.event_title }}{% else %}{{ reservation.purpose }}{% endif %}"
+                                        data-info-participants="{{ reservation.participant_count }}"
+                                        data-info-start="{{ reservation.start_time|date:'M d, Y h:i A' }}"
+                                        data-info-end="{{ reservation.end_time|date:'M d, Y h:i A' }}"
+                                        data-danger="1"
+                                    >
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="CANCEL">
+                                        <input type="hidden" name="reason" value="">
+                                        <button type="submit" class="btn-act cancel">Cancel</button>
+                                    </form>
 
-                                        </div>
+                                {% elif reservation.status == 'checked_in' %}
+                                    <form method="POST" action="{% url 'update_reservation_status' reservation.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="COMPLETE">
+                                        <button type="submit" class="btn-act complete">Complete</button>
+                                    </form>
+                                {% endif %}
 
-                                    {% elif reservation.status == 'approved' %}
-                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                            <a href="{% url 'reschedule_reservation' reservation.id %}" class="btn-action-history" style="background: rgba(26,115,232,0.08); color: #1a73e8; border-color: rgba(26,115,232,0.2);">
-                                                <i class="fa-solid fa-calendar-days"></i> Reschedule
-                                            </a>
-
-                                            <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="action" value="CHECK_IN">
-                                                <button type="submit" class="btn-act check-in">
-                                                    <i class="fa-solid fa-right-to-bracket"></i> Check In
-                                                </button>
-                                            </form>
-
-                                            <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="action" value="NO_SHOW">
-                                                <button type="submit" class="btn-act no-show">
-                                                    <i class="fa-solid fa-user-slash"></i> No Show
-                                                </button>
-                                            </form>
-                                        </div>
-
-                                        <!-- Cancellation Form with Hidden Binding -->
-                                        <form id="cancel-form-{{ reservation.id }}" method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="display: none;">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="action" value="CANCEL">
-                                        </form>
-
-                                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
-                                            <input type="text" name="reason" form="cancel-form-{{ reservation.id }}" placeholder="Cancellation reason..." required class="action-input-reason" style="flex-grow: 1;">
-                                            <button type="submit" form="cancel-form-{{ reservation.id }}" class="btn-act cancel">
-                                                <i class="fa-solid fa-ban"></i> Cancel
-                                            </button>
-                                        </div>
-
-                                    {% elif reservation.status == 'checked_in' %}
-                                        <form method="POST" action="{% url 'update_reservation_status' reservation.id %}" style="margin: 0;">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="action" value="COMPLETE">
-                                            <button type="submit" class="btn-act complete">
-                                                <i class="fa-solid fa-flag-checkered"></i> Complete
-                                            </button>
-                                        </form>
-
-                                    {% else %}
-                                        <span style="font-size: 0.78rem; color: var(--ink-soft); font-style: italic;">No actions available</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="9" class="empty-cell">
-                                <i class="fa-solid fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
-                                No reservations found.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-
-            <!-- PAGINATION FOOTER -->
-            {% if page_obj.has_other_pages %}
-            <div class="pagination-container">
-                <!-- Previous Page -->
-                <div>
-                    {% if page_obj.has_previous %}
-                        <a
-                            href="?page={{ page_obj.previous_page_number }}&amp;search={{ search_query|urlencode }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;date={{ date_filter|urlencode }}"
-                            class="page-link-btn"
-                        >
-                            <i class="fa-solid fa-chevron-left"></i>
-                            Previous
-                        </a>
-                    {% endif %}
-                </div>
-
-
-                <!-- Current Page -->
-                <span>
-                    Page
-                    <strong>{{ page_obj.number }}</strong>
-                    of
-                    {{ page_obj.paginator.num_pages }}
-                </span>
-
-                <!-- Next Page -->
-                <div>
-                    {% if page_obj.has_next %}
-                        <a
-                            href="?page={{ page_obj.next_page_number }}&amp;search={{ search_query|urlencode }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;date={{ date_filter|urlencode }}"
-                            class="page-link-btn"
-                        >
-                            Next
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="empty-cell">
+                            <i class="fa-solid fa-calendar-xmark" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                            No reservations found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </main>
 
-</body>
-</html>
+        <!-- PAGINATION FOOTER -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-container">
+            <!-- Previous Page -->
+            <div>
+                {% if page_obj.has_previous %}
+                    <a
+                        href="?page={{ page_obj.previous_page_number }}&amp;search={{ search_query|urlencode }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;date={{ date_filter|urlencode }}"
+                        class="page-link-btn"
+                    >
+                        Previous
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Current Page -->
+            <span>
+                Page
+                <strong>{{ page_obj.number }}</strong>
+                of
+                {{ page_obj.paginator.num_pages }}
+            </span>
+
+            <!-- Next Page -->
+            <div>
+                {% if page_obj.has_next %}
+                    <a
+                        href="?page={{ page_obj.next_page_number }}&amp;search={{ search_query|urlencode }}&amp;status={{ status_filter|urlencode }}&amp;facility={{ facility_filter|urlencode }}&amp;date={{ date_filter|urlencode }}"
+                        class="page-link-btn"
+                    >
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</main>
+
+<!-- Without JavaScript, show messages inline as before -->
+<noscript><style>.messages-container { display: block !important; }</style></noscript>
+
+<!-- Shared modal script: this page has no Add/Edit form, only the reason prompts -->
+<script>
+    window.MF_CONFIG = { noun: 'reservation', addButton: '#noAddButton', editLinks: '#noEditLinks', toggleForms: '#noToggleForms', switchField: '' };
+</script>
+{% include "management/modal_script.html" %}
+{% endblock %}

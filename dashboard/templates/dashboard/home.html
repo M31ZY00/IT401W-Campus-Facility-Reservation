@@ -2,7 +2,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campus Facility Reservation System</title>
@@ -12,24 +11,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <!-- Profile modal styles -->
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 </head>
 <body>
 
     <header class="topbar">
-        <div class="topbar-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            School Name
+       <div class="topbar-brand">
+            Campus Facility Reservation System
         </div>
 
         <div class="topbar-right">
-            <div class="user-chip">
+
+            <!-- Opens the profile modal (falls back to the profile page without JS) -->
+            <a href="{% url 'profile' %}" class="user-chip" id="profileTrigger"
+               aria-haspopup="dialog">
                 <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
                 <span>{{ user.username }}</span>
-            </div>
-
-            <a href="{% url 'profile' %}" class="topbar-link">
-                <i class="fa-solid fa-user"></i>
-                <span>My Profile</span>
             </a>
 
             <form method="POST" action="{% url 'logout' %}" class="logout-form">
@@ -44,10 +42,6 @@
 
     <section class="hero">
         <div class="hero-inner">
-            <div class="eyebrow">
-                <i class="fa-solid fa-building-columns"></i>
-                Reservation System
-            </div>
             <h1>Welcome back, <span>{{ user.username }}</span>!</h1>
             <p>
                 Browse available campus facilities, submit bookings,
@@ -88,8 +82,119 @@
     </main>
 
     <footer class="footer">
-        &copy; {% now "Y" %} School Name &middot; Campus Facility Reservation System
+        Campus Facility Reservation System &copy; 2026. All rights reserved.
     </footer>
+
+    <!-- Profile modal: opens the profile as an overlay on this page -->
+    <script>
+    (function () {
+        var trigger = document.getElementById('profileTrigger');
+        if (!trigger) { return; }
+
+        var profileUrl = trigger.getAttribute('href');
+
+        // Build the overlay once
+        var modal = document.createElement('div');
+        modal.className = 'profile-overlay';
+        modal.id = 'profileModal';
+        modal.hidden = true;
+        document.body.appendChild(modal);
+
+        function parseDialog(html) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            return doc.querySelector('.profile-container');
+        }
+
+        function render(container) {
+            modal.innerHTML = '';
+            modal.appendChild(document.importNode(container, true));
+
+            var firstError = modal.querySelector('.field-error');
+            var field = firstError
+                ? firstError.closest('.profile-field').querySelector('input, select, textarea')
+                : modal.querySelector('.profile-field input:not([disabled]), .profile-field select, .profile-field textarea');
+            if (field) { field.focus(); }
+        }
+
+        function open() {
+            modal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function close() {
+            modal.hidden = true;
+            modal.innerHTML = '';
+            document.body.style.overflow = '';
+            trigger.focus();
+        }
+
+        function load() {
+            return fetch(profileUrl, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (res) {
+                return res.text();
+            }).then(function (html) {
+                var container = parseDialog(html);
+                if (!container) { throw new Error('No profile content'); }
+                render(container);
+                open();
+            });
+        }
+
+        // Open on click (modified clicks open the normal page)
+        trigger.addEventListener('click', function (e) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) { return; }
+            e.preventDefault();
+            load().catch(function () {
+                window.location.href = profileUrl; // fallback to full page
+            });
+        });
+
+        // Close: backdrop click
+        modal.addEventListener('mousedown', function (e) {
+            if (e.target === modal) { close(); }
+        });
+
+        // Close: X and Cancel
+        modal.addEventListener('click', function (e) {
+            if (e.target.closest('.profile-close, .profile-btn-cancel')) {
+                e.preventDefault();
+                close();
+            }
+        });
+
+        // Close: Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.hidden) { close(); }
+        });
+
+        // Submit without leaving the page
+        modal.addEventListener('submit', function (e) {
+            var form = e.target.closest('.profile-form');
+            if (!form) { return; }
+            e.preventDefault();
+
+            var btn = form.querySelector('.profile-btn-save');
+            if (btn) { btn.disabled = true; }
+
+            fetch(form.getAttribute('action') || profileUrl, {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (res) {
+                return res.text();
+            }).then(function (html) {
+                var container = parseDialog(html);
+                if (!container) { throw new Error('No profile content'); }
+                render(container);
+            }).catch(function () {
+                form.submit(); // fallback to normal submit
+            });
+        });
+    })();
+    </script>
 
 </body>
 </html>

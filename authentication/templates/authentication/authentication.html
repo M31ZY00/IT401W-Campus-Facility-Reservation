@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,7 +20,7 @@
 </head>
 <body>
 
-    <main class="card">
+    <main class="auth-card">
 
         <!-- Left: Brand Panel -->
         <section class="brand">
@@ -69,7 +68,7 @@
 
             {% if active_tab == 'register' %}
 
-                <!-- Registration Form -->
+                <!-- Registration Form (3 steps) -->
                 <form method="POST"
                       action="{% url 'register' %}"
                       class="login-form"
@@ -84,171 +83,207 @@
                         </p>
                     {% endfor %}
 
-                    <!-- Username -->
-                    <div class="field">
-                        <label for="{{ register_form.username.id_for_label }}">
-                            Username
-                        </label>
-
-                        {{ register_form.username }}
-
-                        {% for error in register_form.username.errors %}
-                            <p class="form-error" role="alert">
-                                {{ error }}
-                            </p>
-                        {% endfor %}
+                    <!-- Step indicator -->
+                    <div class="step-indicator" id="step-indicator" aria-hidden="true">
+                        <span class="step-dot"></span>
+                        <span class="step-dot"></span>
+                        <span class="step-dot"></span>
                     </div>
 
-                    <!-- First Name -->
-                    <div class="field">
-                        <label for="{{ register_form.first_name.id_for_label }}">
-                            First Name
-                        </label>
+                    <!-- ========== STEP 1: Name ========== -->
+                    <div class="form-step" data-step="1">
 
-                        {{ register_form.first_name }}
+                        <!-- First Name -->
+                        <div class="field">
+                            <label for="{{ register_form.first_name.id_for_label }}">
+                                First Name
+                            </label>
 
-                        {% for error in register_form.first_name.errors %}
-                            <p class="form-error" role="alert">
-                                {{ error }}
-                            </p>
-                        {% endfor %}
-                    </div>
+                            {{ register_form.first_name }}
 
-                    <!-- Last Name -->
-                    <div class="field">
-                        <label for="{{ register_form.last_name.id_for_label }}">
-                            Last Name
-                        </label>
-
-                        {{ register_form.last_name }}
-
-                        {% for error in register_form.last_name.errors %}
-                            <p class="form-error" role="alert">
-                                {{ error }}
-                            </p>
-                        {% endfor %}
-                    </div>
-
-                    <!-- Email Address -->
-                    <div class="field">
-                        <label for="{{ register_form.email.id_for_label }}">
-                            Email Address
-                        </label>
-
-                        {{ register_form.email }}
-
-                        {% for error in register_form.email.errors %}
-                            <p class="form-error" role="alert">
-                                {{ error }}
-                            </p>
-                        {% endfor %}
-                    </div>
-
-                    <!-- Contact Number -->
-                    <div class="field">
-                        <label for="{{ register_form.phone_number.id_for_label }}">
-                            Contact Number (Optional)
-                        </label>
-
-                        {{ register_form.phone_number }}
-
-                        {% for error in register_form.phone_number.errors %}
-                            <p class="form-error" role="alert">
-                                {{ error }}
-                            </p>
-                        {% endfor %}
-                    </div>
-
-                    <!-- Password -->
-                    <div class="field">
-                        <label for="{{ register_form.password1.id_for_label }}">
-                            Password
-                        </label>
-
-                        <div class="password-wrap">
-                            {{ register_form.password1 }}
-
-                            <button type="button"
-                                    class="toggle-password"
-                                    aria-label="Show password"
-                                    aria-pressed="false">
-                                <i class="fa-solid fa-eye"></i>
-                            </button>
+                            {% for error in register_form.first_name.errors %}
+                                <p class="form-error" role="alert">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
                         </div>
 
-                        {% for error in register_form.password1.errors %}
-                            <p class="form-error" role="alert">
-                                {{ error }}
-                            </p>
-                        {% endfor %}
+                        <!-- Last Name -->
+                        <div class="field">
+                            <label for="{{ register_form.last_name.id_for_label }}">
+                                Last Name
+                            </label>
 
-                        <!-- Password Requirements -->
-                        <div class="pw-popup" id="pw-popup">
-                            <div class="pw-popup-inner">
-                                <ul class="pw-rules"
-                                    id="pw-rules"
-                                    aria-live="polite">
+                            {{ register_form.last_name }}
 
-                                    <li data-rule="length">
-                                        <i class="fa-regular fa-circle"></i>
-                                        At least 8 characters
-                                    </li>
+                            {% for error in register_form.last_name.errors %}
+                                <p class="form-error" role="alert">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-                                    <li data-rule="upper">
-                                        <i class="fa-regular fa-circle"></i>
-                                        One uppercase letter
-                                    </li>
+                    <!-- ========== STEP 2: Contact ========== -->
+                    <div class="form-step" data-step="2">
 
-                                    <li data-rule="number">
-                                        <i class="fa-regular fa-circle"></i>
-                                        One number
-                                    </li>
+                        <!-- Email Address -->
+                        <div class="field">
+                            <label for="{{ register_form.email.id_for_label }}">
+                                Email Address
+                            </label>
 
-                                    <li data-rule="special">
-                                        <i class="fa-regular fa-circle"></i>
-                                        One special character (!@#$%^&amp;*)
-                                    </li>
+                            {{ register_form.email }}
 
-                                </ul>
+                            {% for error in register_form.email.errors %}
+                                <p class="form-error" role="alert">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Contact Number -->
+                        <div class="field">
+                            <label for="{{ register_form.phone_number.id_for_label }}">
+                                Contact Number (Optional)
+                            </label>
+
+                            {{ register_form.phone_number }}
+
+                            {% for error in register_form.phone_number.errors %}
+                                <p class="form-error" role="alert">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- ========== STEP 3: Account & Password ========== -->
+                    <div class="form-step" data-step="3">
+
+                        <!-- Username -->
+                        <div class="field">
+                            <label for="{{ register_form.username.id_for_label }}">
+                                Username
+                            </label>
+
+                            {{ register_form.username }}
+
+                            {% for error in register_form.username.errors %}
+                                <p class="form-error" role="alert">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Password -->
+                        <div class="field">
+                            <label for="{{ register_form.password1.id_for_label }}">
+                                Password
+                            </label>
+
+                            <div class="password-wrap">
+                                {{ register_form.password1 }}
+
+                                <button type="button"
+                                        class="toggle-password"
+                                        aria-label="Show password"
+                                        aria-pressed="false">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+
+                            {% for error in register_form.password1.errors %}
+                                <p class="form-error" role="alert">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+
+                            <!-- Password Requirements -->
+                            <div class="pw-popup" id="pw-popup">
+                                <div class="pw-popup-inner">
+                                    <ul class="pw-rules"
+                                        id="pw-rules"
+                                        aria-live="polite">
+
+                                        <li data-rule="length">
+                                            <i class="fa-regular fa-circle"></i>
+                                            At least 8 characters
+                                        </li>
+
+                                        <li data-rule="upper">
+                                            <i class="fa-regular fa-circle"></i>
+                                            One uppercase letter
+                                        </li>
+
+                                        <li data-rule="number">
+                                            <i class="fa-regular fa-circle"></i>
+                                            One number
+                                        </li>
+
+                                        <li data-rule="special">
+                                            <i class="fa-regular fa-circle"></i>
+                                            One special character (!@#$%^&amp;*)
+                                        </li>
+
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Confirm Password -->
-                    <div class="field">
-                        <label for="{{ register_form.password2.id_for_label }}">
-                            Confirm password
-                        </label>
+                        <!-- Confirm Password -->
+                        <div class="field">
+                            <label for="{{ register_form.password2.id_for_label }}">
+                                Confirm password
+                            </label>
 
-                        <div class="password-wrap">
-                            {{ register_form.password2 }}
+                            <div class="password-wrap">
+                                {{ register_form.password2 }}
 
-                            <button type="button"
-                                    class="toggle-password"
-                                    aria-label="Show password"
-                                    aria-pressed="false">
-                                <i class="fa-solid fa-eye"></i>
-                            </button>
+                                <button type="button"
+                                        class="toggle-password"
+                                        aria-label="Show password"
+                                        aria-pressed="false">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+
+                            <p class="match-msg"
+                               id="match-msg"
+                               aria-live="polite"></p>
+
+                            {% for error in register_form.password2.errors %}
+                                <p class="form-error" role="alert">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
                         </div>
-
-                        <p class="match-msg"
-                           id="match-msg"
-                           aria-live="polite"></p>
-
-                        {% for error in register_form.password2.errors %}
-                            <p class="form-error" role="alert">
-                                {{ error }}
-                            </p>
-                        {% endfor %}
                     </div>
 
-                    <!-- Register Button -->
-                    <button type="submit"
-                            class="btn btn-primary"
-                            id="register-submit"
-                            disabled>
-                        Create Account
-                    </button>
+                    <!-- Step Buttons -->
+                    <div class="step-actions">
+                        <button type="button"
+                                class="btn-back"
+                                id="back-btn"
+                                hidden>
+                            <i class="fa-solid fa-arrow-left"></i> Back
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-primary"
+                                id="next-btn"
+                                disabled>
+                            Next
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-primary"
+                                id="register-submit"
+                                disabled
+                                hidden>
+                            Create Account
+                        </button>
+                    </div>
 
                 </form>
 
@@ -263,6 +298,7 @@
                 <form method="POST"
                       action="{% url 'login' %}"
                       class="login-form"
+                      id="login-form"
                       novalidate>
 
                     {% csrf_token %}
@@ -314,7 +350,10 @@
                     </div>
 
                     <!-- Login Button -->
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            id="login-submit"
+                            disabled>
                         Log In
                     </button>
 
@@ -351,7 +390,7 @@
 
         {% if active_tab == 'register' %}
 
-        // Registration Password Validation
+        // ---------- Registration Password Validation ----------
         var username = document.getElementById('{{ register_form.username.id_for_label }}');
         var pw1 = document.getElementById('{{ register_form.password1.id_for_label }}');
         var pw2 = document.getElementById('{{ register_form.password2.id_for_label }}');
@@ -438,6 +477,7 @@
 
         [username, pw1, pw2].forEach(function (el) {
             el.addEventListener('input', validate);
+            el.addEventListener('change', validate);
         });
 
         validate();
@@ -445,6 +485,125 @@
         if (pw1.value && !validate()) {
             popup.classList.add('open');
         }
+
+        // ---------- Multi-step Navigation ----------
+        var TOTAL_STEPS = 3;
+        var stepTitles = ['Your name', 'Contact details', 'Account & password'];
+
+        var form = document.getElementById('register-form');
+        var steps = form.querySelectorAll('.form-step');
+        var dots = form.querySelectorAll('.step-dot');
+        var stepLabel = document.getElementById('step-label'); // optional
+        var nextBtn = document.getElementById('next-btn');
+        var backBtn = document.getElementById('back-btn');
+
+        var firstName = document.getElementById('{{ register_form.first_name.id_for_label }}');
+        var lastName = document.getElementById('{{ register_form.last_name.id_for_label }}');
+        var email = document.getElementById('{{ register_form.email.id_for_label }}');
+
+        // Jump to the step that has a server-side error (if any)
+        var current = 1;
+        {% if register_form.first_name.errors or register_form.last_name.errors %}
+            current = 1;
+        {% elif register_form.email.errors or register_form.phone_number.errors %}
+            current = 2;
+        {% elif register_form.username.errors or register_form.password1.errors or register_form.password2.errors %}
+            current = 3;
+        {% endif %}
+
+        // Next stays disabled until the current step is filled in
+        var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function stepIsComplete(n) {
+            if (n === 1) {
+                return firstName.value.trim() !== '' && lastName.value.trim() !== '';
+            }
+            if (n === 2) {
+                return emailRe.test(email.value.trim());
+            }
+            return true;
+        }
+
+        function updateNext() {
+            nextBtn.disabled = !stepIsComplete(current);
+        }
+
+        function goToStep(n) {
+            current = n;
+
+            steps.forEach(function (s) {
+                s.classList.toggle('active', Number(s.dataset.step) === n);
+            });
+
+            dots.forEach(function (d, i) {
+                d.classList.toggle('active', i + 1 === n);
+                d.classList.toggle('done', i + 1 < n);
+            });
+
+            if (stepLabel) {
+                stepLabel.textContent =
+                    'Step ' + n + ' of ' + TOTAL_STEPS + ' \u2014 ' + stepTitles[n - 1];
+            }
+
+            var last = n === TOTAL_STEPS;
+            backBtn.hidden = n === 1;
+            nextBtn.hidden = last;
+            submit.hidden = !last;
+            updateNext();
+
+            // Focus the first input of the new step
+            var firstInput = steps[n - 1].querySelector('input');
+            if (firstInput) firstInput.focus();
+        }
+
+        nextBtn.addEventListener('click', function () {
+            if (!nextBtn.disabled) {
+                goToStep(current + 1);
+            }
+        });
+
+        backBtn.addEventListener('click', function () {
+            if (current > 1) goToStep(current - 1);
+        });
+
+        // Enter key moves to the next step instead of submitting early
+        form.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && current < TOTAL_STEPS && e.target.tagName === 'INPUT') {
+                e.preventDefault();
+                nextBtn.click();
+            }
+        });
+
+        [firstName, lastName, email].forEach(function (el) {
+            el.addEventListener('input', updateNext);
+            el.addEventListener('change', updateNext); // covers browser autofill
+        });
+
+        goToStep(current);
+
+        // Re-check after load in case the browser autofills fields late
+        setTimeout(function () { updateNext(); validate(); }, 300);
+
+        {% else %}
+
+        // ---------- Login: disable Log In until both fields are filled ----------
+        var loginUser = document.getElementById('{{ form.username.id_for_label }}');
+        var loginPass = document.getElementById('{{ form.password.id_for_label }}');
+        var loginBtn = document.getElementById('login-submit');
+
+        function updateLogin() {
+            loginBtn.disabled = !(loginUser.value.trim() !== '' && loginPass.value !== '');
+        }
+
+        [loginUser, loginPass].forEach(function (el) {
+            el.addEventListener('input', updateLogin);
+            el.addEventListener('change', updateLogin); // covers browser autofill
+        });
+
+        updateLogin();
+
+        // Re-check after load in case the browser autofills fields late
+        setTimeout(updateLogin, 300);
 
         {% endif %}
 

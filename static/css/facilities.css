@@ -39,51 +39,6 @@
     margin-top: -64px;
 }
 
-/* ---------- Shared buttons ---------- */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px 22px;
-    font-family: var(--font-body);
-    font-size: 0.9rem;
-    font-weight: 700;
-    text-decoration: none;
-    border: 0;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), background-color 0.2s, color 0.2s;
-}
-
-.btn:hover { transform: translateY(-2px); }
-.btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-
-.btn-primary {
-    color: var(--white);
-    background: var(--navy);
-    box-shadow: 0 8px 18px rgba(20, 33, 61, 0.25);
-}
-
-.btn-primary:hover { box-shadow: 0 12px 26px rgba(20, 33, 61, 0.35); }
-
-.btn-gold {
-    color: var(--navy-deep);
-    background:var(--gold);
-    box-shadow: 0 8px 20px rgba(224, 179, 65, 0.4);
-}
-
-.btn-gold:hover { box-shadow: 0 12px 28px rgba(224, 179, 65, 0.55); }
-
-.btn-ghost {
-    color: var(--navy);
-    background: var(--grey);
-}
-
-.btn-ghost:hover { background: var(--line); }
-
-.btn-block { width: 100%; }
-
 /* ---------- Filter bar (list page) ---------- */
 .filter-card {
     display: grid;
@@ -402,9 +357,23 @@
 
 .split {
     display: grid;
-    grid-template-columns: minmax(300px, 380px) 1fr;
+    grid-template-columns: minmax(400px, 440px) 1fr;
     gap: 28px;
     align-items: start;
+}
+
+.split-details {
+    display: grid;
+    grid-template-columns: minmax(340px, 380px) 1fr;
+    gap: 28px;
+    align-items: stretch; /* Stretches cards to match the tallest one */
+}
+
+/* Optional: If your cards need to fill the height internally (e.g., for spacing out footers) */
+.split-details > * {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ---------- Left: list ---------- */
@@ -626,19 +595,20 @@ body.no-scroll { overflow: hidden; }
 
 /* Slim header instead of the big hero */
 .slim-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
     padding: 22px clamp(16px, 3vw, 40px);
     color: var(--white);
-    background: linear-gradient(135deg, var(--navy), var(--navy-soft));
 }
 
 .slim-head-inner {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    max-width: 1500px;
-    margin: 0 auto;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
 }
 
 .slim-head h1 {
@@ -646,19 +616,17 @@ body.no-scroll { overflow: hidden; }
     font-family: var(--font-display);
     font-size: clamp(1.3rem, 2.6vw, 1.8rem);
     line-height: 1.2;
+    color: var(--navy);
 }
 
-.slim-head h1 span { color: var(--gold); }
-.slim-head p { margin: 4px 0 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.75); }
+.slim-head p { color: var(--navy); margin: 4px 0 0; font-size: 0.9rem; }
 
 /* Wider content area, no overlap with a hero */
 .content.wide {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 24px clamp(16px, 3vw, 40px) 40px;
 }
 
-.content.wide .split { grid-template-columns: minmax(300px, 360px) 1fr; gap: 24px; }
 .content.wide .list-pane { top: 84px; max-height: calc(100vh - 104px); }
 
 /* One facility = details card + reserve card stacked */
@@ -883,11 +851,6 @@ body.no-scroll { overflow: hidden; }
 
 
 /* Facility availability */
-
-.availability-section {
-    margin-top: 28px;
-}
-
 .availability-heading h2 {
     margin-bottom: 8px;
 }

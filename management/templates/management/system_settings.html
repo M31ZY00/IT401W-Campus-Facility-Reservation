@@ -1,157 +1,117 @@
+{% extends "management/base_admin.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Settings - Campus Facility Reservation</title>
+{% block title %}System Settings{% endblock %}
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/system-settings.css' %}?v=2">
+{% endblock %}
 
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block content %}
+<main class="settings-container">
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=2">
-    <link rel="stylesheet" href="{% static 'css/system-settings.css' %}?v=2">
-</head>
-
-<body>
-
-    <!-- Top Navigation Bar -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <i><i class="fa-solid fa-graduation-cap"></i></i>
-            <span>CAMPUS FACILITY RESERVATION SYSTEM</span>
+    <!-- Page Header & Back Action -->
+    <div class="page-header-flex">
+        <div>
+            <h1 class="settings-main-title">System Settings</h1>
+            <p class="settings-subtitle">Configure reservation policies for the Campus Facility Reservation System.</p>
         </div>
-        <div class="topbar-right">
-            <div class="user-chip">
-                <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
-                <span>{{ request.user.username }}</span>
-            </div>
+    </div>
 
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
+    <!-- Django Messages Alert Stack -->
+    {% if messages %}
+        <div class="messages-stack">
+            {% for message in messages %}
+                <div class="alert-message {% if message.tags %}{{ message.tags }}{% endif %}">
+                    <i class="fa-solid fa-circle-info"></i> {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="settings-grid-layout">
+
+        <!-- Reservation Rules Configuration Form Card -->
+        <section class="settings-card">
+            <h2><i class="fa-solid fa-sliders" style="color: var(--gold); margin-right: 8px;"></i> Reservation Rules</h2>
+
+            <form method="POST" class="settings-form">
                 {% csrf_token %}
-                <button type="submit" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Log out</span>
-                </button>
-            </form>
-        </div>
-    </header>
 
-    <main class="settings-container">
-
-        <!-- Page Header & Back Action -->
-        <div class="page-header-flex">
-            <div>
-                <h1 class="settings-main-title">System Settings</h1>
-                <p class="settings-subtitle">Configure reservation policies for the Campus Facility Reservation System.</p>
-            </div>
-            <a href="{% url 'admin_dashboard' %}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-
-        <!-- Django Messages Alert Stack -->
-        {% if messages %}
-            <div class="messages-stack">
-                {% for message in messages %}
-                    <div class="alert-message {% if message.tags %}{{ message.tags }}{% endif %}">
-                        <i class="fa-solid fa-circle-info"></i> {{ message }}
+                {% if form.non_field_errors %}
+                    <div class="form-errors non-field">
+                        {{ form.non_field_errors }}
                     </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+                {% endif %}
 
-        <div class="settings-grid-layout">
-
-            <!-- Reservation Rules Configuration Form Card -->
-            <section class="settings-card">
-                <h2><i class="fa-solid fa-sliders" style="color: var(--gold); margin-right: 8px;"></i> Reservation Rules</h2>
-
-                <form method="POST" class="settings-form">
-                    {% csrf_token %}
-
-                    {% if form.non_field_errors %}
-                        <div class="form-errors non-field">
-                            {{ form.non_field_errors }}
-                        </div>
+                <div class="form-group">
+                    <label for="{{ form.max_booking_hours.id_for_label }}">
+                        Maximum Booking Duration (Hours)
+                    </label>
+                    {{ form.max_booking_hours }}
+                    <small class="form-help">Maximum number of hours allowed for a single reservation.</small>
+                    {% if form.max_booking_hours.errors %}
+                        <div class="form-errors">{{ form.max_booking_hours.errors }}</div>
                     {% endif %}
+                </div>
 
-                    <div class="form-group">
-                        <label for="{{ form.max_booking_hours.id_for_label }}">
-                            Maximum Booking Duration (Hours)
-                        </label>
-                        {{ form.max_booking_hours }}
-                        <small class="form-help">Maximum number of hours allowed for a single reservation.</small>
-                        {% if form.max_booking_hours.errors %}
-                            <div class="form-errors">{{ form.max_booking_hours.errors }}</div>
+                <div class="form-group">
+                    <label for="{{ form.advance_booking_days.id_for_label }}">
+                        Advance Booking Window (Days)
+                    </label>
+                    {{ form.advance_booking_days }}
+                    <small class="form-help">Maximum number of days before an event that a student can submit a reservation.</small>
+                    {% if form.advance_booking_days.errors %}
+                        <div class="form-errors">{{ form.advance_booking_days.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-save">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Settings
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- Current Configuration Overview Card -->
+        <section class="settings-card config-summary-card">
+            <h2>Current Configuration</h2>
+
+            <ul class="config-list">
+                <li>
+                    <span class="config-label">Max Booking Duration</span>
+                    <strong class="config-value">{{ setting.max_booking_hours }} hours</strong>
+                </li>
+                <li>
+                    <span class="config-label">Advance Booking Window</span>
+                    <strong class="config-value">{{ setting.advance_booking_days }} days</strong>
+                </li>
+                <li>
+                    <span class="config-label">Last Updated</span>
+                    <span class="config-meta">{{ setting.updated_at|date:"M d, Y h:i A"|default:"—" }}</span>
+                </li>
+                <li>
+                    <span class="config-label">Updated By</span>
+                    <span class="config-meta">
+                        {% if setting.updated_by %}
+                            <i class="fa-regular fa-user" style="margin-right: 4px;"></i>{{ setting.updated_by.username }}
+                        {% else %}
+                            System Default
                         {% endif %}
-                    </div>
+                    </span>
+                </li>
+            </ul>
+        </section>
 
-                    <div class="form-group">
-                        <label for="{{ form.advance_booking_days.id_for_label }}">
-                            Advance Booking Window (Days)
-                        </label>
-                        {{ form.advance_booking_days }}
-                        <small class="form-help">Maximum number of days before an event that a student can submit a reservation.</small>
-                        {% if form.advance_booking_days.errors %}
-                            <div class="form-errors">{{ form.advance_booking_days.errors }}</div>
-                        {% endif %}
-                    </div>
+    </div>
 
-                    <div class="form-actions">
-                        <button type="submit" class="btn-save">
-                            <i class="fa-solid fa-floppy-disk"></i> Save Settings
-                        </button>
-                    </div>
+</main>
+{% endblock %}
 
-                </form>
-            </section>
-
-            <!-- Current Configuration Overview Card -->
-            <section class="settings-card config-summary-card">
-                <h2>Current Configuration</h2>
-
-                <ul class="config-list">
-                    <li>
-                        <span class="config-label">Max Booking Duration</span>
-                        <strong class="config-value">{{ setting.max_booking_hours }} hours</strong>
-                    </li>
-                    <li>
-                        <span class="config-label">Advance Booking Window</span>
-                        <strong class="config-value">{{ setting.advance_booking_days }} days</strong>
-                    </li>
-                    <li>
-                        <span class="config-label">Last Updated</span>
-                        <span class="config-meta">{{ setting.updated_at|date:"M d, Y h:i A"|default:"—" }}</span>
-                    </li>
-                    <li>
-                        <span class="config-label">Updated By</span>
-                        <span class="config-meta">
-                            {% if setting.updated_by %}
-                                <i class="fa-regular fa-user" style="margin-right: 4px;"></i>{{ setting.updated_by.username }}
-                            {% else %}
-                                System Default
-                            {% endif %}
-                        </span>
-                    </li>
-                </ul>
-            </section>
-
-        </div>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer settings-footer">
-        Campus Facility Reservation System &copy; 2026. All rights reserved.
-    </footer>
-
-</body>
-</html>
+{% block footer %}
+<footer class="footer settings-footer">
+    Campus Facility Reservation System &copy; 2026. All rights reserved.
+</footer>
+{% endblock %}
