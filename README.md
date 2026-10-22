@@ -502,13 +502,14 @@ The diagrams describe the systems' entity relations, workflows and architecture.
 python manage.py test
 ```
 
-A static inventory found **153 `test_*` definitions across seven test modules** (`authentication`, `facilities`, `management`, and four modules in `reservations`); `dashboard/tests.py` is an empty placeholder. A definition count is not a pass count.
+there are **153 `test_*` definitions across seven test modules** (`authentication`, `facilities`, `management`, and four modules in `reservations`); these are for the Database backend tests
 
 **Latest test run:** `[paste date, command, and result summary from your own run]`
 
 **Competing-approvals demonstration (Business Rule 3):** the existing tests cover a conflicting approval being rejected (`test_admin_cannot_approve_conflicting_reservation`) but I found no test that runs two approvals concurrently. `[describe or link the demonstration showing only one of two competing approvals succeeds, or mark as outstanding]`
 
-**Acceptance / usability testing:** `[This part and automated testing under Part 6 of the activity was removed and is not in the Final Project worksheet]`
+**Test results**
+[place links to test results here]
 
 ---
 
