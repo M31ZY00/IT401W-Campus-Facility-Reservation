@@ -528,11 +528,13 @@ These tests cover specified scenarios and do not exhaust all possible browser in
 
 ### Test Results
 
-- [Boundary Value and Concurrency Test Results](Boundary_Value_Concurrency_Test_Results.docx)
-- [Browser Behavior Test Results](Browser_Behavior_Test_Results.docx)
-- [Database Backend Testing Results](Database_Backend_Testing_Results.docx)
+- [Boundary Value and Concurrency Test Results](documentation/testing/Boundary_Value_Concurrency_Test_Results.docx)
+- [Browser Behavior Test Results](documentation/testing/Browser_Behavior_Test_Results.docx)
+- [Database Backend Testing Results](documentation/testing/Database_Backend_Testing_Results.docx)
 
 > **Note:** The results above reflect the recorded test runs. Update the totals if subsequent executions produce different results.
+
+**Test Case List:** [List of Documented Test Cases](documentation/testing/Master_Test_Case_List.xlsx)
 
 ## Evidence Index
 
