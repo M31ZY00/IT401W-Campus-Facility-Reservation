@@ -498,20 +498,41 @@ The diagrams describe the systems' entity relations, workflows and architecture.
 
 ## Testing
 
+### Database / Backend Tests
+
+Run the Django test suite with:
+
 ```bash
-python manage.py test
+python manage.py test -v 2
 ```
 
-there are **153 `test_*` definitions across seven test modules** (`authentication`, `facilities`, `management`, and four modules in `reservations`); these are for the Database backend tests
+The original database/backend suite contains **153 `test_` definitions across seven test modules** covering authentication, facilities, management, and reservations.
 
-**Latest test run:** `[paste date, command, and result summary from your own run]`
+The supplementary automated tests add **nine boundary-value tests** and **one concurrency test**, bringing the expected total to **163 test methods**.
 
-**Competing-approvals demonstration (Business Rule 3):** the existing tests cover a conflicting approval being rejected (`test_admin_cannot_approve_conflicting_reservation`) but I found no test that runs two approvals concurrently. `[describe or link the demonstration showing only one of two competing approvals succeeds, or mark as outstanding]`
+**Latest recorded test run:** 163 tests — 162 passed, 1 failed. The concurrency test failed when simultaneous conflicting approvals caused an SQLite database-lock error (`OperationalError: database table is locked`).
 
-**Test results**
-[place links to test results here]
+All nine boundary-value tests passed in the recorded run.
 
----
+**Competing approvals (Business Rule 3):** The existing `test_admin_cannot_approve_conflicting_reservation` checks rejection of a conflicting approval. The separate concurrent-approval test remains unresolved: one approval succeeded while the other encountered a database-lock error. Successful handling of simultaneous conflicting approvals has therefore not been demonstrated.
+
+### Browser Behavior Tests
+
+Browser behavior is evaluated through **manual testing**, rather than automated Playwright or Selenium tests. The test cases cover navigation, buttons, forms, reservation workflows, administrator actions, responsive layouts, printing, and exporting.
+
+The recorded browser test results contain **13 test cases: 12 passed and 1 failed**. The identified failure is the unstyled Event Detail page. Other tested buttons and routing behaved as expected.
+
+Screenshots provide supporting evidence where appropriate, but cannot independently prove every functional behavior.
+
+These tests cover specified scenarios and do not exhaust all possible browser interactions or guarantee that the application is defect-free.
+
+### Test Results
+
+- [Boundary Value and Concurrency Test Results](Boundary_Value_Concurrency_Test_Results.docx)
+- [Browser Behavior Test Results](Browser_Behavior_Test_Results.docx)
+- [Database Backend Testing Results](Database_Backend_Testing_Results.docx)
+
+> **Note:** The results above reflect the recorded test runs. Update the totals if subsequent executions produce different results.
 
 ## Evidence Index
 
