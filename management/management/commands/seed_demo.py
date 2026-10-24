@@ -909,6 +909,3 @@ class Command(BaseCommand):
         self.stdout.write(
             "BASIC USERS: 8 fictional name-based accounts"
         )
-        self.stdout.write(
-            "Existing passwords and linked records were preserved."
-        )
