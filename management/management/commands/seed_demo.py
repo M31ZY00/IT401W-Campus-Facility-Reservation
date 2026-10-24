@@ -675,7 +675,7 @@ class Command(BaseCommand):
         for index, details in enumerate(future_details):
             facility_index, start_hour, final_status = details
 
-            title = EVENT_TITLES[index + 8]
+            title = f"{EVENT_TITLES[index + 8]} ({future_day:%Y-%m-%d})"
             user = users[index % 8]
             facility = facilities[facility_index]
 
@@ -683,8 +683,8 @@ class Command(BaseCommand):
             end = start + timedelta(hours=1)
 
             if Reservation.objects.filter(
-                user=user,
-                event_title=title,
+                    user=user,
+                    event_title=title,
             ).exists():
                 continue
 
@@ -852,7 +852,7 @@ class Command(BaseCommand):
 
         # CHECK OVERLAPPING RESERVATIONS
         first_approved = Reservation.objects.get(
-            event_title=EVENT_TITLES[8],
+            event_title=f"{EVENT_TITLES[8]} ({future_day:%Y-%m-%d})",
             user=users[0],
         )
 

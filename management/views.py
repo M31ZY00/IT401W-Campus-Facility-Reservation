@@ -667,38 +667,6 @@ def update_reservation_status(request, reservation_id):
 
     return redirect('manage_reservations')
 
-
-@admin_required
-def view_audit_logs(request):
-    search_query = request.GET.get('search', '').strip()
-    action_filter = request.GET.get('action', '').strip()
-
-    logs = AuditLog.objects.select_related(
-        'admin_user'
-    ).order_by('-timestamp')
-
-    if search_query:
-        logs = logs.filter(
-            Q(admin_user__username__icontains=search_query) |
-            Q(model_name__icontains=search_query) |
-            Q(description__icontains=search_query)
-        )
-
-    valid_actions = dict(AuditLog.ACTION_CHOICES)
-
-    if action_filter in valid_actions:
-        logs = logs.filter(action=action_filter)
-
-    paginator = Paginator(logs, 20)
-    page_obj = paginator.get_page(request.GET.get('page'))
-
-    return render(request, 'management/audit_logs.html', {
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'action_filter': action_filter,
-        'action_choices': AuditLog.ACTION_CHOICES,
-    })
-
 @admin_required
 def reservation_history(request, reservation_id):
 
