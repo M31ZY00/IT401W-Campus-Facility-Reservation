@@ -1,0 +1,238 @@
+/* EVENT DETAIL PAGE */
+
+.event-detail-container {
+    max-width: 1200px;
+}
+
+.event-subtitle {
+    margin: 8px 0 0;
+    color: var(--ink-soft, #5b6578);
+    font-size: 0.9rem;
+}
+
+/* CARDS */
+
+.event-card {
+    background: var(--white, #ffffff);
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 14px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
+}
+
+.event-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 1.25rem 1.5rem;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--line, #e1e7f1);
+}
+
+.event-card-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--navy, #14213d);
+    font-family: var(--font-display, 'Cinzel', serif);
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.event-card-header h2 i {
+    color: var(--gold, #fda30f);
+}
+
+/* INFORMATION GRID */
+
+.event-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    padding: 1.5rem;
+}
+
+.event-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.event-info-wide {
+    grid-column: 1 / -1;
+}
+
+.event-label {
+    color: var(--ink-soft, #5b6578);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.event-value {
+    color: var(--ink, #1b2437);
+    font-size: 0.95rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+/* EMPTY STATES */
+
+.event-empty-state {
+    padding: 35px 20px;
+    text-align: center;
+    color: var(--ink-soft, #5b6578);
+}
+
+.event-empty-state i {
+    display: block;
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    color: #a0a8b5;
+}
+
+.event-empty-state p {
+    margin: 0;
+}
+
+/* INCIDENT REPORTS */
+
+.incident-list {
+    padding: 1.5rem;
+}
+
+.incident-item {
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line, #e1e7f1);
+    border-left: 4px solid var(--gold, #fda30f);
+    border-radius: 10px;
+    background: #fafbfc;
+}
+
+.incident-item:last-child {
+    margin-bottom: 0;
+}
+
+.incident-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    color: var(--ink-soft, #5b6578);
+}
+
+.incident-meta i {
+    margin-right: 5px;
+}
+
+.incident-item p {
+    margin: 0;
+    color: var(--ink, #1b2437);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+/* INCIDENT FORM */
+
+.incident-form {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.incident-form label {
+    color: var(--navy, #14213d);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.incident-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    border: 1px solid var(--line, #e1e7f1);
+    border-radius: 10px;
+    background: var(--grey, #f1f4f9);
+    color: var(--ink, #1b2437);
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.incident-form textarea:focus {
+    outline: none;
+    border-color: var(--gold, #fda30f);
+    background: #ffffff;
+}
+
+.incident-form .btn-filter {
+    align-self: flex-end;
+}
+
+/* FOOTER */
+
+.event-footer-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 2rem;
+}
+
+.event-footer-actions .btn-filter {
+    text-decoration: none;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+    .event-info-grid {
+        grid-template-columns: 1fr;
+        padding: 1.25rem;
+        gap: 18px;
+    }
+
+    .event-info-wide {
+        grid-column: auto;
+    }
+
+    .event-card-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .event-card-header h2 {
+        font-size: 0.85rem;
+    }
+
+    .incident-list,
+    .incident-form {
+        padding: 1.25rem;
+    }
+
+    .event-footer-actions {
+        flex-direction: column;
+    }
+
+    .event-footer-actions a {
+        width: 100%;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+
+    .incident-form .btn-filter {
+        width: 100%;
+        justify-content: center;
+    }
+}
