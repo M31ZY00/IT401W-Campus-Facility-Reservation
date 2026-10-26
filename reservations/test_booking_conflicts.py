@@ -1,8 +1,10 @@
 from datetime import datetime, time, timedelta
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import OperationalError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -248,3 +250,38 @@ class BookingCancellationTests(BookingTestBase):
 
         reservation.refresh_from_db()
         self.assertEqual(reservation.status, 'approved')
+
+
+class BookingDatabaseErrorTests(BookingTestBase):
+
+    def test_database_error_shows_message_and_saves_nothing(self):
+        self.client.force_login(self.user)
+
+        data = {
+            'event_title': 'Database error check',
+            'purpose': 'Checking the error message',
+            'participant_count': 10,
+            'start_time': self.at(9).strftime('%Y-%m-%dT%H:%M'),
+            'end_time': self.at(10).strftime('%Y-%m-%dT%H:%M'),
+        }
+
+        with patch.object(
+            Reservation,
+            'save',
+            side_effect=OperationalError('database is locked')
+        ):
+            response = self.client.post(
+                reverse('create_reservation', args=[self.facility.pk]),
+                data
+            )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIn(
+            'database conflict',
+            ' '.join(response.context['form'].non_field_errors())
+        )
+
+        self.assertEqual(Reservation.objects.count(), 0)
+        self.assertEqual(ReservationChange.objects.count(), 0)
+        self.assertEqual(AuditLog.objects.count(), 0)

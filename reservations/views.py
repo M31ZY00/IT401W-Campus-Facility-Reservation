@@ -74,6 +74,14 @@ def create_reservation(request, facility_id):
                     '; '.join(error.messages)
                 )
 
+            except DatabaseError:
+
+                form.add_error(
+                    None,
+                    'The reservation could not be saved '
+                    'due to a database conflict. Please try again.'
+                )
+
     return render(
         request,
         'reservations/create_reservation.html',
