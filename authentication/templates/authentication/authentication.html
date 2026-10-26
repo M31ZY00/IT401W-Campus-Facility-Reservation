@@ -24,10 +24,10 @@
 
         <!-- Left: Brand Panel -->
         <section class="brand">
-            <div class="badge">
-                <i class="fa-solid fa-graduation-cap"></i>
-                School Name
-            </div>
+<!--            <div class="badge">-->
+<!--                <i class="fa-solid fa-graduation-cap"></i>-->
+<!--                School Name-->
+<!--            </div>-->
 
             <div class="brand-text">
                 <h1>Campus Facility</h1>
@@ -189,7 +189,7 @@
                                         class="toggle-password"
                                         aria-label="Show password"
                                         aria-pressed="false">
-                                    <i class="fa-solid fa-eye"></i>
+                                        <i class="fa-solid fa-eye-slash"></i>
                                 </button>
                             </div>
 
@@ -244,7 +244,7 @@
                                         class="toggle-password"
                                         aria-label="Show password"
                                         aria-pressed="false">
-                                    <i class="fa-solid fa-eye"></i>
+                                        <i class="fa-solid fa-eye-slash"></i>
                                 </button>
                             </div>
 
@@ -338,7 +338,7 @@
                                     class="toggle-password"
                                     aria-label="Show password"
                                     aria-pressed="false">
-                                <i class="fa-solid fa-eye"></i>
+                                    <i class="fa-solid fa-eye-slash"></i>
                             </button>
                         </div>
 
@@ -383,8 +383,8 @@
                 btn.setAttribute('aria-pressed', show ? 'true' : 'false');
                 btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
 
-                btn.querySelector('i').className =
-                    show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+               btn.querySelector('i').className =
+                  show ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
             });
         });
 

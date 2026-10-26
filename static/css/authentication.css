@@ -63,7 +63,7 @@ body {
     color: inherit;
     border-radius: 10px;
     padding: 12px 18px;
-    font: inherit;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     flex: 0 0 auto !important;
@@ -184,7 +184,6 @@ h1 {
     border-color: var(--navy);
 }
 
-.login-form .btn { margin-top: 4px; }
 
 .field-help {
     font-size: 0.8rem;
