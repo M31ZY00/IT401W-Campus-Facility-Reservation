@@ -5,7 +5,7 @@ This document summarizes the contributions of the five team members using GitHub
 ## Individual Contributions
 
 ### CAASI, Humphrey A.
-- **Contribution:** Database & Backend Testing
+- **Contribution:** Database, Backend Testing, Concurrency Testing & Bug Fixing
 - **Evidence:** ![contribution](screenshots/contribution-evidence/humphrey.png)
 
 ### DE BELEN, Anne Gheela D.
@@ -21,7 +21,7 @@ This document summarizes the contributions of the five team members using GitHub
 - **Evidence:** ![contribution](screenshots/contribution-evidence/sam.png)
 
 ### SANTOS, Mischa Mae
-- **Contribution:** Final Integration
+- **Contribution:** Initial Backend Development, Bug Fixing, System Testing & Final Integration
 - **Evidence:** ![contribution](screenshots/contribution-evidence/mischa.png)
 
 ## Documentation
