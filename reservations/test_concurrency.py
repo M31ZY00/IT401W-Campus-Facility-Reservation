@@ -6,14 +6,14 @@ from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
-from django.db import OperationalError, connection
+from django.db import connection
 from django.test import Client, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from facilities.models import Facility, FacilityCategory
-from management.models import SystemSetting
-from reservations.models import Reservation
+from management.models import AuditLog, SystemSetting
+from reservations.models import Reservation, ReservationChange
 
 MANILA = ZoneInfo('Asia/Manila')
 ROUNDS = 10
@@ -138,17 +138,20 @@ class ConcurrencyTestBase(TransactionTestCase):
 
         return action
 
+    def booking_data(self, day, hour):
+        return {
+            'event_title': 'Race booking',
+            'purpose': 'Concurrency check',
+            'participant_count': 10,
+            'start_time': self.at(day, hour).strftime('%Y-%m-%dT%H:%M'),
+            'end_time': self.at(day, hour + 1).strftime('%Y-%m-%dT%H:%M'),
+        }
+
     def book(self, client, day, hour):
         def action():
             response = client.post(
                 reverse('create_reservation', args=[self.facility.pk]),
-                {
-                    'event_title': 'Race booking',
-                    'purpose': 'Concurrency check',
-                    'participant_count': 10,
-                    'start_time': self.at(day, hour).strftime('%Y-%m-%dT%H:%M'),
-                    'end_time': self.at(day, hour + 1).strftime('%Y-%m-%dT%H:%M'),
-                }
+                self.booking_data(day, hour)
             )
 
             return response.status_code
@@ -269,10 +272,19 @@ class LockedDatabaseTests(ConcurrencyTestBase):
         locker = self.hold_lock()
 
         try:
-            with self.assertRaises(OperationalError):
-                self.book(self.user_clients[0], 3, 9)()
+            response = self.user_clients[0].post(
+                reverse('create_reservation', args=[self.facility.pk]),
+                self.booking_data(3, 9)
+            )
         finally:
             self.release_lock(locker)
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIn(
+            'database conflict',
+            ' '.join(response.context['form'].non_field_errors())
+        )
 
         self.assertEqual(Reservation.objects.count(), 0)
 
@@ -292,3 +304,5 @@ class LockedDatabaseTests(ConcurrencyTestBase):
 
         reservation.refresh_from_db()
         self.assertEqual(reservation.status, 'pending')
+        self.assertEqual(ReservationChange.objects.count(), 0)
+        self.assertEqual(AuditLog.objects.count(), 0)
